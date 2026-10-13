@@ -41,6 +41,8 @@ extern dvar_t *sv_pure;
 extern dvar_t *sv_showCommands;
 extern dvar_t *sv_floodProtect;
 extern dvar_t *rcon_password;
+extern dvar_t *sv_rconMaxAttempts;
+extern dvar_t *sv_rconLockTime;
 extern dvar_t *sv_timeout;
 extern dvar_t *sv_zombietime;
 extern dvar_t *sv_hostname;

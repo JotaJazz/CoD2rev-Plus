@@ -29,6 +29,161 @@ void SV_FlushRedirect( char *outputbuf )
 }
 
 /*
+==============================================================================
+
+RCON BRUTE FORCE PROTECTION
+
+Every address gets a few attempts. After sv_rconMaxAttempts wrong passwords
+inside sv_rconLockTime seconds the address is ignored by rcon for
+sv_rconLockTime seconds. A correct password clears the counter. Addresses on the
+server machine itself (127.x.x.x) are never locked. sv_rconMaxAttempts 0 disables the lock.
+
+==============================================================================
+*/
+#define MAX_RCON_TRACKED 64
+
+typedef struct
+{
+	netadr_t adr;
+	int failures;
+	int firstFailureTime;
+	int lockedUntil;
+	int lastSeen;
+	bool inUse;
+} rconAttempt_t;
+
+static rconAttempt_t rconAttempts[MAX_RCON_TRACKED];
+
+static rconAttempt_t *SV_RconAttemptForAddress( netadr_t from, bool create )
+{
+	int now = Sys_Milliseconds();
+	int i;
+
+	for ( i = 0; i < MAX_RCON_TRACKED; i++ )
+	{
+		if ( rconAttempts[i].inUse && NET_CompareBaseAdr( rconAttempts[i].adr, from ) )
+		{
+			rconAttempts[i].lastSeen = now;
+			return &rconAttempts[i];
+		}
+	}
+
+	if ( !create )
+	{
+		return NULL;
+	}
+
+	// Take a free slot, otherwise recycle the least recently seen address,
+	// preferring addresses that aren't currently locked
+	rconAttempt_t *slot = NULL;
+
+	for ( i = 0; i < MAX_RCON_TRACKED; i++ )
+	{
+		rconAttempt_t *entry = &rconAttempts[i];
+
+		if ( !entry->inUse )
+		{
+			slot = entry;
+			break;
+		}
+
+		if ( !slot )
+		{
+			slot = entry;
+			continue;
+		}
+
+		bool entryLocked = entry->lockedUntil - now > 0;
+		bool slotLocked = slot->lockedUntil - now > 0;
+
+		if ( entryLocked != slotLocked )
+		{
+			if ( slotLocked )
+			{
+				slot = entry;
+			}
+		}
+		else if ( entry->lastSeen - slot->lastSeen < 0 )
+		{
+			slot = entry;
+		}
+	}
+
+	memset( slot, 0, sizeof( *slot ) );
+	slot->adr = from;
+	slot->inUse = true;
+	slot->lastSeen = now;
+
+	return slot;
+}
+
+static bool SV_RconIsExempt( netadr_t from )
+{
+	// Tools running on the server machine itself (127.x.x.x) are trusted
+	return NET_IsLocalAddress( from ) || ( from.type == NA_IP && from.ip[0] == 127 );
+}
+
+static bool SV_RconIsLocked( netadr_t from )
+{
+	if ( !sv_rconMaxAttempts->current.integer || SV_RconIsExempt( from ) )
+	{
+		return false;
+	}
+
+	rconAttempt_t *entry = SV_RconAttemptForAddress( from, false );
+
+	return entry && entry->lockedUntil && entry->lockedUntil - Sys_Milliseconds() > 0;
+}
+
+static void SV_RconRegisterResult( netadr_t from, bool valid )
+{
+	if ( !sv_rconMaxAttempts->current.integer || SV_RconIsExempt( from ) )
+	{
+		return;
+	}
+
+	if ( valid )
+	{
+		rconAttempt_t *entry = SV_RconAttemptForAddress( from, false );
+
+		if ( entry )
+		{
+			memset( entry, 0, sizeof( *entry ) );
+		}
+
+		return;
+	}
+
+	rconAttempt_t *entry = SV_RconAttemptForAddress( from, true );
+
+	if ( !entry )
+	{
+		return;
+	}
+
+	int now = Sys_Milliseconds();
+	int window = sv_rconLockTime->current.integer * 1000;
+
+	// Start counting again once the previous burst of failures is old enough
+	if ( !entry->failures || now - entry->firstFailureTime > window )
+	{
+		entry->failures = 0;
+		entry->firstFailureTime = now;
+	}
+
+	entry->failures++;
+
+	if ( entry->failures >= sv_rconMaxAttempts->current.integer )
+	{
+		entry->lockedUntil = now + window;
+		entry->failures = 0;
+
+		Com_Printf( "Rcon: %s locked for %i seconds after %i failed attempts\n",
+		            NET_AdrToString( from ), sv_rconLockTime->current.integer, sv_rconMaxAttempts->current.integer );
+	}
+}
+
+/*
 ===============
 SVC_RemoteCommand
 An rcon packet arrived from the network.
@@ -72,6 +227,13 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	}
 #endif
 
+	// Ignore locked addresses before they can use up the global rcon slot below
+	if ( SV_RconIsLocked( from ) )
+	{
+		Com_DPrintf( "SVC_RemoteCommand: %s is locked out, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
 	// TTimo - show_bug.cgi?id=534
 	time = Com_Milliseconds();
 	if ( lasttime && time < ( lasttime + 500 ) )
@@ -92,6 +254,11 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	{
 		valid = qtrue;
 		Com_Printf( "Rcon from %s:\n%s\n", NET_AdrToString( from ), Cmd_Argv( 2 ) );
+	}
+
+	if ( rcon_password->current.string[0] )
+	{
+		SV_RconRegisterResult( from, valid );
 	}
 
 	// start redirecting all print outputs to the packet

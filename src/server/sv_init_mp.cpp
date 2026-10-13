@@ -27,6 +27,8 @@ dvar_t *sv_iwdNames;
 dvar_t *sv_referencedIwds;
 dvar_t *sv_referencedIwdNames;
 dvar_t *rcon_password;
+dvar_t *sv_rconMaxAttempts;
+dvar_t *sv_rconLockTime;
 dvar_t *sv_privatePassword;
 dvar_t *sv_fps;
 dvar_t *sv_timeout;
@@ -103,6 +105,8 @@ void SV_InitDvar()
 	// server vars
 	rcon_password = Dvar_RegisterString("rcon_password", "", DVAR_CHANGEABLE_RESET);
 	sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", DVAR_CHANGEABLE_RESET);
+	sv_rconMaxAttempts = Dvar_RegisterInt("sv_rconMaxAttempts", 5, 0, 100, DVAR_CHANGEABLE_RESET);
+	sv_rconLockTime = Dvar_RegisterInt("sv_rconLockTime", 600, 0, 86400, DVAR_CHANGEABLE_RESET);
 	sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, DVAR_CHANGEABLE_RESET);
 	sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, DVAR_CHANGEABLE_RESET);
 	sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, DVAR_CHANGEABLE_RESET);

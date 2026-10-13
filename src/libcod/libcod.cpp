@@ -26,7 +26,7 @@ int client_challenge_ping[MAX_CLIENTS] = {0};
 void RegisterLibcodDvars()
 {
 	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	sv_master[1] = Dvar_RegisterString("sv_master2", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_master[1] = Dvar_RegisterString("sv_master2", COMMUNITY_MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_master[3] = Dvar_RegisterString("sv_master4", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_master[4] = Dvar_RegisterString("sv_master5", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
@@ -557,10 +557,54 @@ void hook_ClientUserinfoChanged(int clientNum)
 	Scr_FreeThread(ret);
 }
 
+/*
+=================
+SV_ResolveMaster_libcod
+
+Resolves sv_master<index+1> when needed. Returns true when adr holds a
+usable address. A failed lookup is retried on the next cycle instead of
+wiping the dvar, so a temporary DNS problem doesn't drop the master for
+the rest of the session.
+=================
+*/
+static bool SV_ResolveMaster_libcod( int index, netadr_t *adr )
+{
+	dvar_t *master = sv_master[index];
+
+	if ( !master->current.string[0] )
+	{
+		return false;
+	}
+
+	if ( master->modified || adr->type == NA_BOT || adr->type == NA_BAD )
+	{
+		master->modified = qfalse;
+
+		Com_Printf( "Resolving %s\n", master->current.string );
+		if ( !NET_StringToAdr( master->current.string, adr ) )
+		{
+			Com_Printf( "Couldn't resolve address: %s (will retry later)\n", master->current.string );
+			adr->type = NA_BAD;
+			return false;
+		}
+
+		// Use the default master port unless one was given as "host:port"
+		if ( !strchr( master->current.string, ':' ) )
+		{
+			adr->port = BigShort( PORT_MASTER );
+		}
+
+		Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", master->current.string,
+		            adr->ip[0], adr->ip[1], adr->ip[2], adr->ip[3],
+		            BigShort( adr->port ) );
+	}
+
+	return true;
+}
+
 void SV_MasterHeartbeat_libcod(const char *hbname)
 {
 	static netadr_t	adr[MAX_MASTER_SERVERS];
-	char heartbeat[32];
 	int	i;
 
 	// "dedicated 1" is for lan play, "dedicated 2" is for inet public play
@@ -577,42 +621,13 @@ void SV_MasterHeartbeat_libcod(const char *hbname)
 		// send to group masters
 		for ( i = 0 ; i < MAX_MASTER_SERVERS ; i++ )
 		{
-			if ( !sv_master[i]->current.string[0] )
+			if ( !SV_ResolveMaster_libcod( i, &adr[i] ) )
 			{
 				continue;
 			}
 
-			// see if we haven't already resolved the name
-			// do it when needed
-			if ( sv_master[i]->modified || !adr[i].type )
-			{
-				sv_master[i]->modified = qfalse;
-
-				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
-				if ( !NET_StringToAdr( sv_master[i]->current.string, &adr[i] ) )
-				{
-					// if the address failed to resolve, clear it
-					// so we don't take repeated dns hits
-					Com_Printf( "Couldn't resolve address: %s\n", sv_master[i]->current.string );
-					Dvar_SetString(sv_master[i], "");
-					sv_master[i]->modified = qfalse;
-					continue;
-				}
-				if ( !strstr( ":", sv_master[i]->current.string ) )
-				{
-					adr[i].port = BigShort( PORT_MASTER );
-				}
-				Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", sv_master[i]->current.string,
-				            adr[i].ip[0], adr[i].ip[1], adr[i].ip[2], adr[i].ip[3],
-				            BigShort( adr[i].port ) );
-			}
-
-			if (strlen(sv_master[i]->current.string))
-			{
-				Com_Printf( "Sending heartbeat to %s\n", sv_master[i]->current.string );
-				sprintf(heartbeat, "heartbeat %s\n", hbname);
-				NET_OutOfBandPrint( NS_SERVER, adr[i], heartbeat );
-			}
+			Com_Printf( "Sending heartbeat to %s\n", sv_master[i]->current.string );
+			NET_OutOfBandPrint( NS_SERVER, adr[i], va( "heartbeat %s\n", hbname ) );
 		}
 	}
 
@@ -624,40 +639,12 @@ void SV_MasterHeartbeat_libcod(const char *hbname)
 		// send to group masters
 		for ( i = 0 ; i < MAX_MASTER_SERVERS ; i++ )
 		{
-			if ( !sv_master[i]->current.string[0] )
+			if ( !SV_ResolveMaster_libcod( i, &adr[i] ) )
 			{
 				continue;
 			}
 
-			// see if we haven't already resolved the name
-			// do it when needed
-			if ( sv_master[i]->modified || !adr[i].type )
-			{
-				sv_master[i]->modified = qfalse;
-
-				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
-				if ( !NET_StringToAdr( sv_master[i]->current.string, &adr[i] ) )
-				{
-					// if the address failed to resolve, clear it
-					// so we don't take repeated dns hits
-					Com_Printf( "Couldn't resolve address: %s\n", sv_master[i]->current.string );
-					Dvar_SetString(sv_master[i], "");
-					sv_master[i]->modified = qfalse;
-					continue;
-				}
-				if ( !strstr( ":", sv_master[i]->current.string ) )
-				{
-					adr[i].port = BigShort( PORT_MASTER );
-				}
-				Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", sv_master[i]->current.string,
-				            adr[i].ip[0], adr[i].ip[1], adr[i].ip[2], adr[i].ip[3],
-				            BigShort( adr[i].port ) );
-			}
-
-			if (strlen(sv_master[i]->current.string))
-			{
-				SVC_Status(adr[i]);
-			}
+			SVC_Status( adr[i] );
 		}
 	}
 }

@@ -217,6 +217,8 @@ typedef void (*xcommand_t)(void);
 
 // NERVE - SMF - wolf multiplayer master servers
 #define MASTER_SERVER_NAME "cod2master.activision.com"
+// Community master used by CoD2x clients (https://github.com/eyza-cod2/CoD2x)
+#define COMMUNITY_MASTER_SERVER_NAME "master.cod2x.me"
 #define HEARTBEAT_GAME "COD-2"
 #define HEARTBEAT_DEAD "flatline"
 #define PORT_MASTER 20710

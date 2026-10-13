@@ -923,6 +923,18 @@ static void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value)
 	}
 }
 
+/*
+==============
+Dvar_IsSensitive
+
+Dvars whose values must never end up in the console log
+==============
+*/
+static bool Dvar_IsSensitive(const dvar_t *dvar)
+{
+	return !I_stricmp(dvar->name, "rcon_password") || !I_stricmp(dvar->name, "sv_privatePassword");
+}
+
 static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
 {
 	bool shouldFreeString;
@@ -936,7 +948,7 @@ static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
 		return;
 	}
 
-	Com_PrintMessage(CON_CHANNEL_LOGFILEONLY, va("      dvar set %s %s\n", dvar->name, Dvar_ValueToString(dvar, value)));
+	Com_PrintMessage(CON_CHANNEL_LOGFILEONLY, va("      dvar set %s %s\n", dvar->name, Dvar_IsSensitive(dvar) ? "********" : Dvar_ValueToString(dvar, value)));
 	if (!Dvar_ValueInDomain(dvar->type, value, dvar->domain))
 	{
 		Com_Printf("'%s' is not a valid value for dvar '%s'\n", Dvar_ValueToString(dvar, value), dvar->name);
