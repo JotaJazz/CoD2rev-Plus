@@ -11,7 +11,7 @@ jobs:
     name: Linux (32-bit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install 32-bit toolchain
         run: |
           sudo apt-get update
@@ -20,7 +20,7 @@ jobs:
         run: |
           mkdir -p bin obj
           make -j"$(nproc)" CC="gcc -m32" bin/cod2rev_lnxded
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cod2rev_lnxded
           path: bin/cod2rev_lnxded
@@ -30,7 +30,7 @@ jobs:
     name: Windows (MinGW cross-build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install MinGW-w64
         run: |
           sudo apt-get update
@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p bin obj
           make -j"$(nproc)" OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cod2rev_win32
           path: |

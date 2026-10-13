@@ -39,6 +39,7 @@ El resultado queda en `bin/` y los objetos intermedios en `obj/`.
 Necesita el compilador MinGW-w64 de 32 bits (`i686-w64-mingw32`).
 
 ```bash
+mkdir -p bin obj
 make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
 ```
 
@@ -46,11 +47,17 @@ Genera `bin/cod2rev_win32.exe`.
 
 ### Linux
 
+El servidor es un binario x86 de 32 bits. En un sistema de 64 bits hace falta el soporte de 32 bits de GCC (en Debian y Ubuntu, los paquetes `gcc-multilib` y `g++-multilib`):
+
 ```bash
-make
+make CC="gcc -m32"
 ```
 
-Genera `bin/cod2rev_lnxded`. El servidor original es un binario x86 de 32 bits, así que en un sistema de 64 bits hace falta un compilador que genere 32 bits. El `Makefile` no lo fuerza y este fork no ha tocado la compilación de Linux.
+Genera `bin/cod2rev_lnxded`.
+
+### Compilación automática
+
+Cada push a `master` compila ambas versiones en GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Los binarios resultantes se pueden descargar como artefactos desde la pestaña [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) del repositorio.
 
 ### Opciones del Makefile
 
