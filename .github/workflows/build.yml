@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Linux (32-bit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+      - name: Build
+        run: |
+          mkdir -p bin obj
+          make -j"$(nproc)" CC="gcc -m32" bin/cod2rev_lnxded
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cod2rev_lnxded
+          path: bin/cod2rev_lnxded
+          if-no-files-found: error
+
+  windows:
+    name: Windows (MinGW cross-build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix binutils-mingw-w64-i686
+      - name: Build
+        run: |
+          mkdir -p bin obj
+          make -j"$(nproc)" OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cod2rev_win32
+          path: |
+            bin/cod2rev_win32.exe
+            scripts/windows/iniciar_cod2rev.bat
+          if-no-files-found: error
