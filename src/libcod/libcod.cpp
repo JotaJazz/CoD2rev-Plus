@@ -782,12 +782,13 @@ const char *SV_ModifyConfigstringIwdChkSum( client_t *client, int index )
 {
 	if ( index == CS_SYSTEMINFO && client->netchan.protocol == 119 )
 	{
-		char tmp[MAX_STRING_CHARS];
-		static char info[MAX_STRING_CHARS];
+		// the systeminfo string can be up to BIG_INFO_STRING long
+		char tmp[BIG_INFO_STRING];
+		static char info[BIG_INFO_STRING];
 
 		memset( info, 0, sizeof( info ) );
 
-		strcpy(tmp, sv.configstrings[index]);
+		I_strncpyz(tmp, sv.configstrings[index], sizeof(tmp));
 
 		char *part = strtok(tmp, " ");
 
