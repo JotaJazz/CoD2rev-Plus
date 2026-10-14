@@ -198,7 +198,7 @@ void gsc_exec_async_create()
 	else if (stackGetParamString(2, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(2, valueVector))
 	{
@@ -289,7 +289,7 @@ void gsc_exec_async_create_nosave()
 	else if (stackGetParamString(2, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(2, valueVector))
 	{

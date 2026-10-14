@@ -41,6 +41,26 @@ void gsc_utils_getarraykeys()
 	}
 }
 
+// Appends formatted text to a COD2_MAX_STRINGLENGTH buffer, truncating instead of overflowing it
+static int gsc_utils_append(char *result, int num, const char *format, ...)
+{
+	va_list va;
+	int room = COD2_MAX_STRINGLENGTH - num;
+	int written;
+
+	va_start(va, format);
+	written = vsnprintf(result + num, room, format, va);
+	va_end(va);
+
+	if (written < 0)
+		return num;
+
+	if (written >= room)
+		return COD2_MAX_STRINGLENGTH - 1;
+
+	return num + written;
+}
+
 void gsc_utils_printf()
 {
 	char result[COD2_MAX_STRINGLENGTH];
@@ -63,7 +83,8 @@ void gsc_utils_printf()
 		{
 			if (str[i + 1] == '%')
 			{
-				result[num++] = '%';
+				if (num < COD2_MAX_STRINGLENGTH - 1)
+					result[num++] = '%';
 				i++;
 			}
 			else
@@ -76,31 +97,31 @@ void gsc_utils_printf()
 				case STACK_STRING:
 					const char *tmp_str;
 					stackGetParamString(param, &tmp_str); // no error checking, since we know it's a string
-					num += sprintf(&(result[num]), "%s", tmp_str);
+					num = gsc_utils_append(result, num, "%s", tmp_str);
 					break;
 
 				case STACK_VECTOR:
 					float vec[3];
 					stackGetParamVector(param, vec);
-					num += sprintf(&(result[num]), "(%.2f, %.2f, %.2f)", vec[0], vec[1], vec[2]);
+					num = gsc_utils_append(result, num, "(%.2f, %.2f, %.2f)", vec[0], vec[1], vec[2]);
 					break;
 
 				case STACK_FLOAT:
 					float tmp_float;
 					stackGetParamFloat(param, &tmp_float);
-					num += sprintf(&(result[num]), "%.3f", tmp_float); // need a way to define precision
+					num = gsc_utils_append(result, num, "%.3f", tmp_float); // need a way to define precision
 					break;
 
 				case STACK_INT:
 					int tmp_int;
 					stackGetParamInt(param, &tmp_int);
-					num += sprintf(&(result[num]), "%d", tmp_int);
+					num = gsc_utils_append(result, num, "%d", tmp_int);
 					break;
 
 				case STACK_INT64:
 					long int tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
-					num += sprintf(&(result[num]), "%ld", tmp_int64);
+					num = gsc_utils_append(result, num, "%ld", tmp_int64);
 					break;
 				}
 
@@ -108,11 +129,12 @@ void gsc_utils_printf()
 			}
 		}
 		else
-			result[num++] = str[i];
+			if (num < COD2_MAX_STRINGLENGTH - 1)
+				result[num++] = str[i];
 	}
 
 	result[num] = '\0';
-	Com_Printf(result);
+	Com_Printf("%s", result);
 	stackPushBool(qtrue);
 }
 
@@ -138,7 +160,8 @@ void gsc_utils_sprintf()
 		{
 			if (str[i + 1] == '%')
 			{
-				result[num++] = '%';
+				if (num < COD2_MAX_STRINGLENGTH - 1)
+					result[num++] = '%';
 				i++;
 			}
 			else
@@ -151,31 +174,31 @@ void gsc_utils_sprintf()
 				case STACK_STRING:
 					const char *tmp_str;
 					stackGetParamString(param, &tmp_str); // no error checking, since we know it's a string
-					num += sprintf(&(result[num]), "%s", tmp_str);
+					num = gsc_utils_append(result, num, "%s", tmp_str);
 					break;
 
 				case STACK_VECTOR:
 					float vec[3];
 					stackGetParamVector(param, vec);
-					num += sprintf(&(result[num]), "(%.2f, %.2f, %.2f)", vec[0], vec[1], vec[2]);
+					num = gsc_utils_append(result, num, "(%.2f, %.2f, %.2f)", vec[0], vec[1], vec[2]);
 					break;
 
 				case STACK_FLOAT:
 					float tmp_float;
 					stackGetParamFloat(param, &tmp_float);
-					num += sprintf(&(result[num]), "%.3f", tmp_float); // need a way to define precision
+					num = gsc_utils_append(result, num, "%.3f", tmp_float); // need a way to define precision
 					break;
 
 				case STACK_INT:
 					int tmp_int;
 					stackGetParamInt(param, &tmp_int);
-					num += sprintf(&(result[num]), "%d", tmp_int);
+					num = gsc_utils_append(result, num, "%d", tmp_int);
 					break;
 
 				case STACK_INT64:
 					long int tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
-					num += sprintf(&(result[num]), "%ld", tmp_int64);
+					num = gsc_utils_append(result, num, "%ld", tmp_int64);
 					break;
 				}
 
@@ -183,7 +206,8 @@ void gsc_utils_sprintf()
 			}
 		}
 		else
-			result[num++] = str[i];
+			if (num < COD2_MAX_STRINGLENGTH - 1)
+				result[num++] = str[i];
 	}
 
 	result[num] = '\0';

@@ -25,6 +25,8 @@ Dieses Repository ist ein Fork von [voron00/CoD2rev_Server](https://github.com/v
   - Ein DNS-Fehler wird erneut versucht, statt den Master zu löschen.
 - **Spielversion beim Kompilieren wählbar:** Der Server lässt sich als 1.0 oder als 1.3 bauen.
 - **Überlauf bei Game-Pass-Clients behoben:** Das Senden der Systeminformationen an einen Client mit Protokoll 119 konnte einen Puffer überlaufen lassen und den Server zum Absturz bringen.
+- **Große Nachrichten von 1.3-Clients:** Fragmentierte Nachrichten von 1.3-Clients wurden falsch gelesen und verworfen; sie werden jetzt im 1.3-Format gelesen.
+- **Begrenzte Zeichenketten in den libcod-Skriptfunktionen:** `printf` und `sprintf` von libcod, die asynchronen SQLite- und exec-Aufrufe und das Umbenennen von Spielern schreiben nicht mehr über ihre Puffer hinaus, wenn ein Skript lange Zeichenketten übergibt.
 - **Einfacheres Bauen:** `make` erzeugt direkt die 32-Bit-Linux-Binärdatei, `make windows` cross-kompiliert für Windows, und GitHub Actions baut bei jedem Push alle Varianten.
 - **Beispiel-`server.cfg`:** `scripts/server.cfg.example` listet alle Variablen auf, die der Server registriert; `scripts/gen_server_cfg.py` erzeugt sie neu aus dem Quellcode.
 - **Startskripte:** `scripts/windows/iniciar_cod2rev.bat` und `scripts/linux/iniciar_cod2rev.sh`, mit einem LAN- und einem Internet-Modus.

@@ -283,7 +283,7 @@ void gsc_async_sqlite_create_query()
 	else if (stackGetParamString(3, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(3, valueVector))
 	{
@@ -405,7 +405,7 @@ void gsc_async_sqlite_create_query_nosave()
 	else if (stackGetParamString(3, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(3, valueVector))
 	{
@@ -527,7 +527,7 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 	else if (stackGetParamString(3, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(3, valueVector))
 	{
@@ -649,7 +649,7 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 	else if (stackGetParamString(3, &valueString))
 	{
 		newtask->valueType = STRING_VALUE;
-		strcpy(newtask->stringValue, valueString);
+		I_strncpyz(newtask->stringValue, valueString, sizeof(newtask->stringValue));
 	}
 	else if (stackGetParamVector(3, valueVector))
 	{

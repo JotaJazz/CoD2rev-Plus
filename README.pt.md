@@ -25,6 +25,8 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
   - Uma falha de DNS é repetida em vez de apagar o master.
 - **Versão do jogo selecionável ao compilar:** o servidor pode ser compilado como 1.0 ou como 1.3.
 - **Correção de um overflow com clientes Game Pass:** enviar a informação do sistema a um cliente com o protocolo 119 podia exceder um buffer e fazer o servidor falhar.
+- **Mensagens grandes de clientes 1.3:** as mensagens fragmentadas enviadas pelos clientes 1.3 eram mal lidas e descartadas; agora são lidas no formato da 1.3.
+- **Strings limitadas nas funções de script do libcod:** `printf` e `sprintf` do libcod, as chamadas assíncronas de SQLite e exec e a mudança de nome de jogadores já não escrevem fora dos seus buffers quando um script passa strings longas.
 - **Compilação mais simples:** `make` gera diretamente o binário Linux de 32 bits, `make windows` faz a compilação cruzada para Windows e o GitHub Actions compila todas as variantes em cada push.
 - **`server.cfg` de exemplo:** `scripts/server.cfg.example` lista todas as variáveis que o servidor regista; `scripts/gen_server_cfg.py` volta a gerá-lo a partir do código.
 - **Lançadores:** `scripts/windows/iniciar_cod2rev.bat` e `scripts/linux/iniciar_cod2rev.sh`, com um modo LAN e um modo internet.
