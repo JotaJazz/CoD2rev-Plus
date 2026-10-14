@@ -2,7 +2,7 @@
 CC = gcc
 WINDRES=windres
 
-# Game version to build: 115 = 1.0, 118 = 1.3. Run "make clean" when changing it.
+# Game version to build: 115 = 1.0, 118 = 1.3.
 PROTOCOL=115
 
 CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
@@ -32,7 +32,11 @@ endif
 
 # Setup directory names.
 BIN_DIR=bin
-OBJ_DIR=obj
+# Each platform and game version keeps its own objects, so they can be built side by side.
+OBJ_ROOT=obj
+OBJ_DIR=$(OBJ_ROOT)/$(BIN_NAME)_$(PROTOCOL)
+# Records which game version the binary in bin/ was built for.
+BUILD_STAMP=$(BIN_DIR)/.$(BIN_NAME).build
 SRC_DIR=src
 
 LINUX_DIR=$(SRC_DIR)/unix
@@ -135,11 +139,21 @@ cod2rev: mkdir $(TARGET)
 	$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
 	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
+	@echo $(PROTOCOL) > $(BUILD_STAMP)
+
+# Create the output folders before compiling anything, also with -j.
+$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
+$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ): | mkdir
+
+# Link again when the binary in bin/ was built for another game version.
+ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL))
+.PHONY: $(TARGET)
+endif
 
 ifeq ($(OS),Windows_NT)
 mkdir:
 	if not exist $(BIN_DIR) md $(BIN_DIR)
-	if not exist $(OBJ_DIR) md $(OBJ_DIR)
+	if not exist $(subst /,\,$(OBJ_DIR)) md $(subst /,\,$(OBJ_DIR))
 	$(MYSQL_COPY_CMD)
 else
 mkdir:
@@ -230,21 +244,23 @@ clean:
 	del /Q /S "$(BIN_DIR)\$(BIN_NAME)$(BIN_EXT)"
 	del /Q /S "$(BIN_DIR)\$(LIB_NAME)$(LIB_EXT)"
 	del /Q /S "$(BIN_DIR)\libmysql.dll"
-	del /Q /S "$(OBJ_DIR)\*.o"
-	del /Q /S "$(OBJ_DIR)\*.res"
+	del /Q /S "$(BIN_DIR)\.$(BIN_NAME).build"
+	del /Q /S "$(OBJ_ROOT)\*.o"
+	del /Q /S "$(OBJ_ROOT)\*.res"
+	del /Q /S "$(OBJ_ROOT)\*.d"
 else
 clean:
 	rm -f $(BIN_DIR)/$(BIN_NAME)$(BIN_EXT)
 	rm -f $(BIN_DIR)/$(LIB_NAME)$(LIB_EXT)
-	rm -f $(OBJ_DIR)/*.o
-	rm -f $(OBJ_DIR)/*.d
+	rm -f $(BUILD_STAMP)
+	rm -rf $(OBJ_ROOT)
 endif
 
 
 # Cross-compile the Windows binary from Linux with MinGW-w64.
 MINGW_PREFIX=i686-w64-mingw32
 windows:
-	mkdir -p $(BIN_DIR) $(OBJ_DIR)
+	mkdir -p $(BIN_DIR) $(OBJ_ROOT)/cod2rev_win32_$(PROTOCOL)
 	$(MAKE) OS=Windows_NT CC=$(MINGW_PREFIX)-gcc-posix WINDRES=$(MINGW_PREFIX)-windres $(BIN_DIR)/cod2rev_win32.exe
 
 .PHONY: cod2rev mkdir clean windows

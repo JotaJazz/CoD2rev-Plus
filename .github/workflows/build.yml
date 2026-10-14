@@ -1,9 +1,19 @@
 name: Build
 
+# Only build when something that affects the binaries changes;
+# documentation and script edits do not start a run.
 on:
   push:
     branches: [master]
+    paths:
+      - "src/**"
+      - "Makefile"
+      - ".github/workflows/build.yml"
   pull_request:
+    paths:
+      - "src/**"
+      - "Makefile"
+      - ".github/workflows/build.yml"
   workflow_dispatch:
 
 jobs:
@@ -26,8 +36,7 @@ jobs:
           sudo apt-get install -y gcc-multilib g++-multilib
       - name: Build
         run: |
-          mkdir -p bin obj
-          make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }} bin/cod2rev_lnxded
+          make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }}
       - uses: actions/upload-artifact@v7
         with:
           name: cod2rev_lnxded-${{ matrix.version }}
@@ -53,7 +62,6 @@ jobs:
           sudo apt-get install -y gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix binutils-mingw-w64-i686
       - name: Build
         run: |
-          mkdir -p bin obj
           make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }} windows
       - uses: actions/upload-artifact@v7
         with:
