@@ -580,7 +580,7 @@ Scr_LocalizationError
 */
 void Scr_LocalizationError( int iParm, const char *pszErrorMessage )
 {
-	Com_Error(ERR_LOCALIZATION, pszErrorMessage);
+	Com_Error(ERR_LOCALIZATION, "%s", pszErrorMessage);
 }
 
 /*
@@ -2075,7 +2075,7 @@ void GScr_LogPrint()
 		iStringLen += l;
 	}
 
-	G_LogPrintf(string);
+	G_LogPrintf("%s", string);
 }
 
 /*

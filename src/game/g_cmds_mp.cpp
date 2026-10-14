@@ -1079,7 +1079,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 		{
 			kicknum = atoi(arg2);
 
-			if ( (kicknum || !I_stricmp(arg2, "0")) && kicknum < MAX_CLIENTS && level.clients[kicknum].sess.connected == CON_CONNECTED )
+			if ( (kicknum || !I_stricmp(arg2, "0")) && kicknum >= 0 && kicknum < level.maxclients && level.clients[kicknum].sess.connected == CON_CONNECTED )
 			{
 				I_strncpyz(cleanName, level.clients[kicknum].sess.cs.name, sizeof(cleanName));
 				I_CleanStr(cleanName);

@@ -1801,6 +1801,11 @@ static void SV_VerifyIwds_f( client_t *cl )
 
 		// store number to compare against (minus one cause the last is the number of checksums)
 		nClientPaks = i - 1;
+		if ( nClientPaks < 0 )
+		{
+			bGood = qfalse;
+			break;
+		}
 
 		// make sure none of the client check sums are the same
 		// so the client can't send 5 the same checksums
@@ -2108,19 +2113,17 @@ static void SV_WWWDownload_f( client_t *cl )
 
 	if ( !Q_stricmp( subcmd, "done" ) )
 	{
-		cl->download = 0;
-		cl->downloadName[0] = 0;
+		SV_CloseDownload(cl);
 		cl->clientDownloadingWWW = 0;
 		return;
 	}
 
 	if ( !Q_stricmp( subcmd, "fail" ) )
 	{
-		cl->download = 0;
-		cl->downloadName[0] = 0;
+		Com_Printf( "Client '%s' reported that the http download of '%s' failed, falling back to a server download\n", cl->name, cl->downloadName);
+		SV_CloseDownload(cl);
 		cl->clientDownloadingWWW = 0;
 		cl->wwwFallback = 1;
-		Com_Printf( "Client '%s' reported that the http download of '%s' failed, falling back to a server download\n", cl->name, cl->downloadName);
 		SV_SendClientGameState(cl);
 		return;
 	}
@@ -2129,8 +2132,7 @@ static void SV_WWWDownload_f( client_t *cl )
 	{
 		Com_Printf( "WARNING: client '%s' reports that the redirect download for '%s' had wrong checksum.\n", cl->name, cl->downloadName);
 		Com_Printf("         you should check your download redirect configuration.\n");
-		cl->download = 0;
-		cl->downloadName[0] = 0;
+		SV_CloseDownload(cl);
 		cl->clientDownloadingWWW = 0;
 		cl->wwwFallback = 1;
 		SV_SendClientGameState(cl);

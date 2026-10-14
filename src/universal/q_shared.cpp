@@ -1032,7 +1032,7 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
 		return;
 	}
 
-	if (strlen(newi) + strlen(s) > MAX_INFO_STRING)
+	if (strlen(newi) + strlen(s) >= MAX_INFO_STRING)
 	{
 		Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
 		return;
@@ -1106,7 +1106,7 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 		return;
 	}
 
-	if (strlen(newi) + strlen(s) > BIG_INFO_STRING)
+	if (strlen(newi) + strlen(s) >= BIG_INFO_STRING)
 	{
 		Com_Printf("Big info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n",
 		           key, value, s);

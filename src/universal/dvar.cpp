@@ -863,7 +863,7 @@ static bool Dvar_CanChangeValue(const dvar_t *dvar, DvarValue value, DvarSetSour
 		return true;
 	}
 
-	Com_Printf(reason);
+	Com_Printf("%s", reason);
 	return false;
 }
 

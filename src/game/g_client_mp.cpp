@@ -562,7 +562,7 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 #if LIBCOD_COMPILE_PLAYER == 1 // proxy support
 	extern char proxy_realip[MAX_CLIENTS][16];
 	char realIP[16];
-	strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
+	I_strncpyz(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(realIP));
 
 	if (strlen(realIP) != 0)
 	{
