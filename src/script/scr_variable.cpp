@@ -3528,7 +3528,7 @@ void Scr_AddFields( const char *path, const char *extension )
 
 	for ( i = 0; i < numFiles; i++ )
 	{
-		sprintf(filename, "%s/%s", path, files[i]);
+		Com_sprintf(filename, sizeof(filename), "%s/%s", path, files[i]);
 		Scr_AddFieldsForFile(filename);
 	}
 

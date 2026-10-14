@@ -9,7 +9,7 @@ message. The game folder is only read: logs and configs go to a temporary home
 folder. The server runs in LAN mode (dedicated 1), so nothing is sent to the
 master servers. Exits with 0 when every check passes.
 """
-import argparse, os, random, re, secrets, socket, string, subprocess, sys, tempfile, time
+import argparse, os, random, re, secrets, socket, string, subprocess, sys, tempfile, time, zipfile
 
 import cod2client
 
@@ -97,6 +97,15 @@ def check_client(port, protocol, password, check):
         if not got:
             return
 
+        # stock and server-only iwds must be refused, any other loaded iwd sent
+        refused = b'EXE_CANTAUTODLGAMEIWD'
+        reply = client.download(server_id, 'main/iw_00.iwd')
+        check('stock iwd download refused', refused in reply)
+        reply = client.download(server_id, 'main/zz_svr_smoke.iwd')
+        check('server-only iwd download refused', refused in reply)
+        reply = client.download(server_id, 'main/zz_smoke_download.iwd')
+        check('mod iwd download starts', refused not in reply and b'PK\x03\x04' in reply)
+
         client.enter_game(server_id, 2.0)
         ping = (players(port) or {}).get('smokeclient')
         check('client enters the game', ping is not None and 0 <= ping < 999, f'ping {ping}')
@@ -143,6 +152,11 @@ def main():
     failures = []
 
     with tempfile.TemporaryDirectory(prefix='cod2rev_smoke_') as home:
+        # two iwds for the download checks: one server-only, one a client may get
+        os.makedirs(os.path.join(home, 'main'))
+        for name in ('zz_svr_smoke.iwd', 'zz_smoke_download.iwd'):
+            with zipfile.ZipFile(os.path.join(home, 'main', name), 'w') as z:
+                z.writestr('smoke/%s.txt' % name, 'cod2rev smoke test\n')
         log_path = os.path.join(home, 'server.log')
         with open(log_path, 'wb') as log:
             server = subprocess.Popen(

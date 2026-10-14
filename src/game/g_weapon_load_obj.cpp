@@ -108,7 +108,7 @@ static bool G_ParseWeaponAccurayGraphInternal( WeaponDef *weaponDef, const char 
 		return true;
 	}
 
-	sprintf(string, "accuracy/%s/%s", dirName, graphName);
+	Com_sprintf(string, sizeof(string), "accuracy/%s/%s", dirName, graphName);
 	l = FS_FOpenFileByMode(string, &f, FS_READ);
 
 	if ( l < 0 )

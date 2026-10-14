@@ -305,6 +305,35 @@ int I_stricmp(const char *s0, const char *s1)
 	return I_strnicmp(s0, s1, 0x7FFFFFFF);
 }
 
+/*
+=============
+I_strcmpConstantTime
+
+Returns 0 when the strings are equal. Every character is compared, so the time
+taken does not tell how much of a guessed password was right.
+=============
+*/
+int I_strcmpConstantTime(const char *s0, const char *s1)
+{
+	size_t len0, len1, len, i;
+	unsigned char diff;
+
+	assert(s0);
+	assert(s1);
+
+	len0 = strlen(s0);
+	len1 = strlen(s1);
+	len = len0 > len1 ? len0 : len1;
+	diff = len0 != len1;
+
+	for ( i = 0; i < len; i++ )
+	{
+		diff |= (unsigned char)( i < len0 ? s0[i] : 0 ) ^ (unsigned char)( i < len1 ? s1[i] : 0 );
+	}
+
+	return diff;
+}
+
 char *I_strlwr(char *s)
 {
 	char* iter;

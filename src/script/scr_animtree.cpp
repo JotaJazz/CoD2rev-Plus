@@ -747,7 +747,7 @@ bool Scr_LoadAnimTreeInternal( const char *filename, unsigned int parentNode, un
 	const char *oldSourceBuf, *oldFilename, *sourceBuffer;
 	char extFilename[MAX_QPATH];
 
-	sprintf(extFilename, "animtrees/%s.atr", filename);
+	Com_sprintf(extFilename, sizeof(extFilename), "animtrees/%s.atr", filename);
 	oldSourceBuf = scrParserPub.sourceBuf;
 
 	sourceBuffer = Scr_AddSourceBuffer(NULL, extFilename, NULL, true);

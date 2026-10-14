@@ -399,6 +399,7 @@ void I_strncpyz( char *dest, const char *src, int destsize );
 int I_strnicmp(const char *s0, const char *s1, int n);
 int I_strncmp( const char *s1, const char *s2, int n );
 int I_stricmp( const char *s1, const char *s2 );
+int I_strcmpConstantTime( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
 char *I_strupr( char *s1 );
 void I_strncat( char *dest, int size, const char *src );

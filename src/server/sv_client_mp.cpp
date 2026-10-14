@@ -747,7 +747,7 @@ void SV_DirectConnect( netadr_t from )
 
 	// check for privateClient password
 	password = Info_ValueForKey( userinfo, "password" );
-	if ( !strcmp( password, sv_privatePassword->current.string ) )
+	if ( !I_strcmpConstantTime( password, sv_privatePassword->current.string ) )
 	{
 		startIndex = 0;
 	}
@@ -1090,7 +1090,8 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	int curindex;
 	int rate;
 	int blockspersnap;
-	int iwdFile;
+	char downloadBase[MAX_QPATH];
+	char *ext;
 	char errorMessage[MAX_STRING_CHARS];
 
 	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
@@ -1116,10 +1117,34 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 		return;
 	}
 
+	// The stock iwds are never sent, and neither are the _svr_ ones, which hold
+	// what only the server should have. FS_iwIwd takes the name without the
+	// extension; with it, it never matched and every stock iwd could be fetched.
+	// Checked before the www redirect so it applies there too.
+	I_strncpyz(downloadBase, cl->downloadName, sizeof(downloadBase));
+	ext = strrchr(downloadBase, '.');
+	if ( ext && !I_stricmp(ext, ".iwd") )
+	{
+		*ext = 0;
+	}
+	I_strlwr(downloadBase);
+
+	if ( FS_iwIwd(downloadBase, BASEGAME) || strstr(downloadBase, "_svr_") )
+	{
+		Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
+		Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
+		MSG_WriteByte( msg, svc_download );
+		MSG_WriteShort( msg, 0 ); // client is expecting block zero
+		MSG_WriteLong( msg, -1 ); // illegal file size
+		MSG_WriteString( msg, errorMessage );
+		*cl->downloadName = 0;
+		return;
+	}
+
 #ifdef LIBCOD
 	if (*sv_downloadMessage->current.string)
 	{
-		Com_sprintf(errorMessage, sizeof(errorMessage), sv_downloadMessage->current.string);
+		Com_sprintf(errorMessage, sizeof(errorMessage), "%s", sv_downloadMessage->current.string);
 		MSG_WriteByte( msg, svc_download );
 		MSG_WriteShort( msg, 0 ); // client is expecting block zero
 		MSG_WriteLong( msg, -1 ); // illegal file size
@@ -1148,18 +1173,11 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 
 		Com_Printf( "clientDownload: %d : begining \"%s\"\n", cl - svs.clients, cl->downloadName );
 
-		iwdFile = FS_iwIwd(cl->downloadName, BASEGAME);
-
-		if ( !sv_allowDownload->current.boolean || iwdFile ||
+		if ( !sv_allowDownload->current.boolean ||
 		        ( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 )
 		{
 			// cannot auto-download file
-			if (iwdFile)
-			{
-				Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
-				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
-			}
-			else if ( !sv_allowDownload->current.boolean )
+			if ( !sv_allowDownload->current.boolean )
 			{
 				Com_Printf("clientDownload: %d : \"%s\" download disabled", cl - svs.clients, cl->downloadName);
 				if (sv_pure->current.boolean)
@@ -2304,6 +2322,13 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
 	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msg->cursize - msg->readcount, msgBuf, sizeof(msgBuf));
 
+	// a message that fills the buffer was cut short, so its end cannot be trusted
+	if ( decompressMsg.cursize == decompressMsg.maxsize )
+	{
+		SV_DropClient(cl, "oversize client message");
+		return;
+	}
+
 	// if this is a usercmd from a previous gamestate,
 	// ignore it or retransmit the current gamestate
 	//
@@ -2316,7 +2341,8 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	// don't drop as long as previous command was a nextdl, after a dl is done, downloadName is set back to ""
 	// but we still need to read the next message to move to next download or send gamestate
 	// I don't like this hack though, it must have been working fine at some point, suspecting the fix is somewhere else
-	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !cl->downloadingWWW && !cl->clientDownloadingWWW )
+	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !strstr(cl->lastClientCommandString, "nextdl")
+	        && !cl->downloadingWWW && !cl->clientDownloadingWWW )
 	{
 		if ( (cl->serverId & 0xF0) == (sv_serverId_value & 0xF0) )   // TTimo - use a comparison here to catch multiple map_restart
 		{

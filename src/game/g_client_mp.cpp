@@ -552,7 +552,7 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	{
 		// check for a password
 		value = Info_ValueForKey( userinfo, "password" );
-		if ( g_password->current.string[0] && Q_stricmp( g_password->current.string, "none" ) && strcmp( g_password->current.string, value ) != 0 )
+		if ( g_password->current.string[0] && Q_stricmp( g_password->current.string, "none" ) && I_strcmpConstantTime( g_password->current.string, value ) != 0 )
 		{
 			G_FreeEntity(ent);
 			return "GAME_INVALIDPASSWORD";

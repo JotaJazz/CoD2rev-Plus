@@ -309,6 +309,20 @@ class Client:
     def command(self, server_id, text):
         return self.commands(server_id, [text])
 
+    def download(self, server_id, name, seconds=2.0):
+        """Asks for a file as the client's auto-download does, before entering
+        the game, and returns the server messages that followed, decoded.
+        Messages sent before the server read the command are still encoded
+        with the previous command, so both keys are tried."""
+        previous = self.last_command
+        self.command(server_id, 'download %s' % name)
+        out = []
+        for sequence, data in self.receive(seconds):
+            for string in (self.last_command, previous):
+                out.append(huffman_decompress(
+                    xor_codec(data[4:], (self.challenge ^ sequence) & 0xff, string)))
+        return b''.join(out)
+
     def request_gamestate(self, server_id, seconds=5.0):
         """Sends a message from an older map, which makes the server send the
         gamestate, and reads the client number and checksum feed at its end.

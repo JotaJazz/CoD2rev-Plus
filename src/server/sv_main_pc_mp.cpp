@@ -245,7 +245,7 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	const char *password = Cmd_Argv( 1 );
 
 	if ( !strlen( rcon_password->current.string ) ||
-	        strcmp( password, rcon_password->current.string ) )
+	        I_strcmpConstantTime( password, rcon_password->current.string ) )
 	{
 		valid = qfalse;
 		Com_Printf( "Bad rcon from %s:\n%s\n", NET_AdrToString( from ), Cmd_Argv( 2 ) );
