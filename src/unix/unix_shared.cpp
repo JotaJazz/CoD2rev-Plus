@@ -60,18 +60,20 @@ unsigned long sys_timeBase = 0;
 int curtime;
 int Sys_Milliseconds (void)
 {
-	struct timeval tp;
+	struct timespec ts;
 
-	gettimeofday(&tp, NULL);
-	
+	// The wall clock can be stepped at any time (NTP, VM time sync), and every step
+	// showed up as a frame hitch, so measure game time with the monotonic clock.
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+
 	if (!sys_timeBase)
 	{
-		sys_timeBase = tp.tv_sec;
-		return tp.tv_usec/1000;
+		sys_timeBase = ts.tv_sec;
+		return ts.tv_nsec/1000000;
 	}
 
-	curtime = (tp.tv_sec - sys_timeBase)*1000 + tp.tv_usec/1000;
-	
+	curtime = (ts.tv_sec - sys_timeBase)*1000 + ts.tv_nsec/1000000;
+
 	return curtime;
 }
 

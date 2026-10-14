@@ -31,6 +31,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers; `scripts/gen_server_cfg.py` regenerates it from the source.
 - **`dedicated` is honoured:** `+set dedicated 1` was ignored and every server announced itself to the master servers. Now `1` keeps the server off the public list and `2`, the default, announces it.
 - **Game files on Windows drives:** the Linux build could not see the game files on file systems with large inode numbers, such as Windows drives under WSL. It is now built with 64-bit file offsets.
+- **Steady game clock on Linux:** the server measured time with the wall clock, so every clock correction (NTP, virtual machine time sync) froze the game for a moment. It now uses the monotonic clock.
 - **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map and answers queries.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode.
 

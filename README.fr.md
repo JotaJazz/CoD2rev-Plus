@@ -31,6 +31,7 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 - **`server.cfg` d'exemple :** `scripts/server.cfg.example` liste toutes les variables enregistrées par le serveur ; `scripts/gen_server_cfg.py` le régénère à partir du code.
 - **`dedicated` est respecté :** `+set dedicated 1` était ignoré et tous les serveurs s'annonçaient aux serveurs maîtres. Désormais, `1` garde le serveur hors de la liste publique et `2`, la valeur par défaut, l'annonce.
 - **Fichiers du jeu sur des disques Windows :** la compilation Linux ne voyait pas les fichiers du jeu sur les systèmes de fichiers à grands numéros d'inode, comme les disques Windows sous WSL. Elle est maintenant compilée avec des décalages de fichier sur 64 bits.
+- **Horloge de jeu stable sous Linux :** le serveur mesurait le temps avec l'horloge système, si bien que chaque correction de l'heure (NTP, synchronisation d'une machine virtuelle) figeait la partie un instant. Il utilise désormais l'horloge monotone.
 - **Test de bon fonctionnement :** `scripts/smoke_test.py` démarre le serveur Linux avec un vrai dossier du jeu et vérifie qu'il charge une carte et répond aux requêtes.
 - **Lanceurs :** `scripts/windows/iniciar_cod2rev.bat` et `scripts/linux/iniciar_cod2rev.sh`, avec un mode réseau local et un mode internet.
 
