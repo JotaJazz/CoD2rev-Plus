@@ -14,6 +14,9 @@ else
 # The server is 32-bit only, so force it on 64-bit hosts (needs gcc-multilib and g++-multilib).
 CFLAGS+=-m32
 LFLAGS+=-m32
+# Without 64-bit file offsets and inodes a 32-bit binary cannot list or open files
+# on file systems with large inode numbers (Windows drives under WSL, big XFS volumes).
+CFLAGS+=-D_FILE_OFFSET_BITS=64
 LLIBS=-lm -lpthread -lstdc++ -ldl
 endif
 

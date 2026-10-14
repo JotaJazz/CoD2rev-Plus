@@ -69,7 +69,10 @@ set sv_rconLockTime 600         // lockout length in seconds
 
 // --- Master servers (only used with dedicated 2) ---
 // sv_master1 defaults to cod2master.activision.com and sv_master2 to master.cod2x.me.
+// sv_master2 is set here because the server saves it in config_mp_server.cfg, and a
+// file saved by an older build can hold an empty value that overrides the default.
 // sv_master3 to sv_master5 are free; host:port is accepted.
+set sv_master2 "master.cod2x.me"
 set sv_master3 ""
 set sv_master4 ""
 set sv_master5 ""
@@ -157,7 +160,7 @@ DESC = {
  'player_strafeSpeedScale':'speed multiplier when strafing',
  'player_backSpeedScale':'speed multiplier when moving backwards',
  'player_spectateSpeedScale':'speed multiplier for spectators',
- 'dedicated':'0 = listen server, 1 = LAN, 2 = internet (announced to the master servers)',
+ 'dedicated':'1 = LAN or direct IP only, 2 = internet (announced to the master servers)',
  'sv_cheats':'allow cheat-protected variables and commands',
  'net_ip':'local address to bind to',
  'net_port':'UDP port',
@@ -214,6 +217,9 @@ for x in d:
     if not n.startswith('"'): continue
     n = n.strip('"')
     seen.setdefault(n, []).append(x)
+# the engine registers some dvars before the game does; its registration is the one that counts
+for xs in seen.values():
+    xs.sort(key=lambda x: x['file'] != 'src/qcommon/common.cpp')
 
 def val(v):
     v = MAC.get(v, v)

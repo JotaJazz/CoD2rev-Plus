@@ -29,6 +29,9 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 - **Chaînes bornées dans les fonctions de script de libcod :** `printf` et `sprintf` de libcod, les appels asynchrones SQLite et exec et le renommage des joueurs n'écrivent plus au-delà de leurs tampons quand un script passe de longues chaînes.
 - **Compilation simplifiée :** `make` produit directement le binaire Linux 32 bits, `make windows` fait la compilation croisée pour Windows et GitHub Actions compile toutes les variantes à chaque push.
 - **`server.cfg` d'exemple :** `scripts/server.cfg.example` liste toutes les variables enregistrées par le serveur ; `scripts/gen_server_cfg.py` le régénère à partir du code.
+- **`dedicated` est respecté :** `+set dedicated 1` était ignoré et tous les serveurs s'annonçaient aux serveurs maîtres. Désormais, `1` garde le serveur hors de la liste publique et `2`, la valeur par défaut, l'annonce.
+- **Fichiers du jeu sur des disques Windows :** la compilation Linux ne voyait pas les fichiers du jeu sur les systèmes de fichiers à grands numéros d'inode, comme les disques Windows sous WSL. Elle est maintenant compilée avec des décalages de fichier sur 64 bits.
+- **Test de bon fonctionnement :** `scripts/smoke_test.py` démarre le serveur Linux avec un vrai dossier du jeu et vérifie qu'il charge une carte et répond aux requêtes.
 - **Lanceurs :** `scripts/windows/iniciar_cod2rev.bat` et `scripts/linux/iniciar_cod2rev.sh`, avec un mode réseau local et un mode internet.
 
 ### Nouvelles variables
@@ -42,7 +45,7 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 
 - **La version se choisit à la compilation.** Par défaut, le serveur est compilé en 1.0 (protocole 115) ; avec `PROTOCOL=118`, il est compilé en 1.3. Le serveur annonce cette version aux serveurs maîtres, il apparaît donc dans la liste de serveurs des clients de cette même version.
 - **La compilation 1.0 accepte aussi d'autres versions par IP directe.** Avec libcod, activé par défaut, elle accepte les connexions utilisant les protocoles 115 à 119, ce qui inclut la 1.3 (protocole 118) et la version Game Pass (protocole 119). La connexion par IP directe à cette compilation a été testée, y compris avec un client CoD2x 1.4.x.
-- **La compilation 1.3 n'accepte que les clients au protocole 118.** Elle compile pour Linux et Windows, mais n'a pas encore été testée en jeu. Les clients [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 se connectent eux aussi avec le protocole 118, et leur liste de serveurs n'affiche que ceux qui annoncent le protocole 118 ou 120 ; c'est donc cette compilation qu'ils peuvent voir.
+- **La compilation 1.3 n'accepte que les clients au protocole 118.** Elle compile pour Linux et Windows et le binaire Linux passe le test de bon fonctionnement (il démarre, charge une carte et répond en 1.3), mais elle n'a pas encore été testée avec des joueurs. Les clients [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 se connectent eux aussi avec le protocole 118, et leur liste de serveurs n'affiche que ceux qui annoncent le protocole 118 ou 120 ; c'est donc cette compilation qu'ils peuvent voir.
 
 ## Compilation
 

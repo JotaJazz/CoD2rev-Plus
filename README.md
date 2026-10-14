@@ -29,6 +29,9 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Bounded strings in libcod script functions:** the libcod `printf` and `sprintf`, the asynchronous SQLite and exec calls and the player rename no longer write past their buffers when a script passes long strings.
 - **Simpler builds:** `make` builds the 32-bit Linux binary directly, `make windows` cross-compiles for Windows, and GitHub Actions builds every variant on each push.
 - **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers; `scripts/gen_server_cfg.py` regenerates it from the source.
+- **`dedicated` is honoured:** `+set dedicated 1` was ignored and every server announced itself to the master servers. Now `1` keeps the server off the public list and `2`, the default, announces it.
+- **Game files on Windows drives:** the Linux build could not see the game files on file systems with large inode numbers, such as Windows drives under WSL. It is now built with 64-bit file offsets.
+- **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map and answers queries.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode.
 
 ### New variables
@@ -42,7 +45,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 
 - **The version is chosen when building.** By default the server is built as 1.0 (protocol 115); with `PROTOCOL=118` it is built as 1.3. The server announces that version to the master servers, so it shows up in the server list of clients of that same version.
 - **The 1.0 build also accepts other versions by direct IP.** With libcod, which is enabled by default, it accepts connections using protocols 115 to 119, which includes 1.3 (protocol 118) and the Game Pass version (protocol 119). Direct IP connections to this build have been tested, including with a CoD2x 1.4.x client.
-- **The 1.3 build only accepts protocol 118 clients.** It compiles for Linux and Windows, but it has not been tested in play yet. [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 clients also connect with protocol 118, and their server browser only lists servers that report protocol 118 or 120, so this is the build they can see.
+- **The 1.3 build only accepts protocol 118 clients.** It compiles for Linux and Windows and the Linux binary passes the smoke test (it starts, loads a map and answers as 1.3), but it has not been tested with players yet. [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 clients also connect with protocol 118, and their server browser only lists servers that report protocol 118 or 120, so this is the build they can see.
 
 ## Building
 
