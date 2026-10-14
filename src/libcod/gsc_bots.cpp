@@ -366,4 +366,59 @@ void gsc_bots_switchtoweaponid(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+
+// Presses (1) or releases (0) one button of a bot, for the methods below
+static void gsc_bots_set_button(scr_entref_t id, const char *name, int button)
+{
+	int pressed;
+
+	if ( ! stackGetParams("i", &pressed))
+	{
+		stackError("%s() argument is undefined or has a wrong type", name);
+		stackPushUndefined();
+		return;
+	}
+
+	if (id.entnum >= MAX_CLIENTS)
+	{
+		stackError("%s() entity %i is not a player", name, id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	client_t *client = &svs.clients[id.entnum];
+
+	if (client->netchan.remoteAddress.type != NA_BOT)
+	{
+		stackError("%s() player %i is not a bot", name, id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	extern int bot_buttons[MAX_CLIENTS];
+
+	if (!pressed)
+		bot_buttons[id.entnum] &= ~button;
+	else
+		bot_buttons[id.entnum] |= button;
+
+	stackPushBool(qtrue);
+}
+
+// The use key plants and defuses the bomb and picks up weapons
+void gsc_bots_usebutton(scr_entref_t id)
+{
+	gsc_bots_set_button(id, "gsc_bots_usebutton", BUTTON_USE);
+}
+
+void gsc_bots_throwsmoke(scr_entref_t id)
+{
+	gsc_bots_set_button(id, "gsc_bots_throwsmoke", BUTTON_SMOKE);
+}
+
+void gsc_bots_holdbreath(scr_entref_t id)
+{
+	gsc_bots_set_button(id, "gsc_bots_holdbreath", BUTTON_HOLDBREATH);
+}
+
 #endif

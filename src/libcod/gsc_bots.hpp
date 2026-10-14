@@ -13,5 +13,8 @@ void gsc_bots_meleeweapon(scr_entref_t id);
 void gsc_bots_reloadweapon(scr_entref_t id);
 void gsc_bots_adsaim(scr_entref_t id);
 void gsc_bots_switchtoweaponid(scr_entref_t id);
+void gsc_bots_usebutton(scr_entref_t id);
+void gsc_bots_throwsmoke(scr_entref_t id);
+void gsc_bots_holdbreath(scr_entref_t id);
 
 #endif

@@ -37,6 +37,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **libcod proxy address and downloads:** the real address that a local proxy passes in the `ip` userinfo key is only trusted from `127.0.0.1`, must be an IPv4 address and is cleared on every connect. A `donedl` from a player already in the game no longer makes the server resend the whole gamestate.
 - **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages.
 - **Simple bots:** `mods/bots` is a small script mod whose bots walk towards the nearest enemy and shoot what they see, using the libcod bot functions. They have no waypoints. `scripts/install_bots.py` installs it; `bots_count` and `bots_skill` control them.
+- **More bot buttons in libcod:** the script methods `useButton`, `throwSmoke` and `holdBreath` make a bot press use (to plant or defuse the bomb), throw a smoke grenade or hold its breath, like the existing `fireWeapon` and `throwNade`. Each takes `1` to press and `0` to release.
 - **Fewer stalls and a cleaner startup:** the master server name is resolved once instead of on every authorization timeout, and the server no longer warns about every `+set` on the command line.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode.
 

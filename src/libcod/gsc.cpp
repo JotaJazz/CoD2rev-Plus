@@ -265,6 +265,9 @@ scr_method_t scriptMethods[] =
 	{"reloadweapon", gsc_bots_reloadweapon, 0},
 	{"adsaim", gsc_bots_adsaim, 0},
 	{"switchtoweaponid", gsc_bots_switchtoweaponid, 0},
+	{"usebutton", gsc_bots_usebutton, 0},
+	{"throwsmoke", gsc_bots_throwsmoke, 0},
+	{"holdbreath", gsc_bots_holdbreath, 0},
 #endif
 
 #if LIBCOD_COMPILE_ENTITY == 1
