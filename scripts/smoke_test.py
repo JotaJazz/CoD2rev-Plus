@@ -3,9 +3,11 @@
 
     python3 scripts/smoke_test.py /path/to/CoD2 [--protocol 118] [--binary bin/cod2rev_lnxded]
 
-The game folder is only read: logs and configs go to a temporary home folder.
-The server runs in LAN mode (dedicated 1), so nothing is sent to the master
-servers. Exits with 0 when every check passes.
+Besides the queries, a minimal client (cod2client.py) connects, receives the
+gamestate, enters the game and sends commands, one of them in a fragmented
+message. The game folder is only read: logs and configs go to a temporary home
+folder. The server runs in LAN mode (dedicated 1), so nothing is sent to the
+master servers. Exits with 0 when every check passes.
 """
 import argparse, os, random, re, secrets, socket, string, subprocess, sys, tempfile, time
 

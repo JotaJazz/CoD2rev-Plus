@@ -33,6 +33,8 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 - **Fichiers du jeu sur des disques Windows :** la compilation Linux ne voyait pas les fichiers du jeu sur les systèmes de fichiers à grands numéros d'inode, comme les disques Windows sous WSL. Elle est maintenant compilée avec des décalages de fichier sur 64 bits.
 - **Horloge de jeu stable sous Linux :** le serveur mesurait le temps avec l'horloge système, si bien que chaque correction de l'heure (NTP, synchronisation d'une machine virtuelle) figeait la partie un instant. Il utilise désormais l'horloge monotone.
 - **Entrée réseau renforcée :** un joueur connecté pouvait faire planter le serveur ou écraser sa mémoire avec un message compressé trop grand, un message fragmenté, un nom contenant `%` (les modes de jeu d'origine l'écrivent dans le journal), `callvote clientkick` avec un numéro négatif ou des paquets vocaux. Ces chemins vérifient désormais les limites, et les fichiers des téléchargements HTTP interrompus sont fermés.
+- **Bots après un changement de carte :** après un changement de carte, les bots restaient connectés mais hors de la partie, en occupant leur emplacement, si bien que le mod de bots en ajoutait d'autres jusqu'à remplir le serveur. Ils reviennent maintenant dans la partie dès que la nouvelle carte est chargée.
+- **Adresse du proxy libcod et téléchargements :** l'adresse réelle qu'un proxy local transmet dans la clé `ip` du userinfo n'est acceptée que depuis `127.0.0.1`, doit être une adresse IPv4 et est effacée à chaque connexion. Un `donedl` d'un joueur déjà en partie ne fait plus renvoyer tout le gamestate par le serveur.
 - **Test de bon fonctionnement :** `scripts/smoke_test.py` démarre le serveur Linux avec un vrai dossier du jeu et vérifie qu'il charge une carte, répond aux requêtes et accepte un client minimal (`scripts/cod2client.py`) qui reçoit le gamestate, entre dans la partie et envoie des commandes, y compris dans des messages fragmentés.
 - **Bots simples :** `mods/bots` est un petit mod de scripts dont les bots marchent vers l'ennemi le plus proche et tirent sur ce qu'ils voient, à l'aide des fonctions de bots de libcod. Ils n'utilisent pas de points de passage. `scripts/install_bots.py` l'installe ; `bots_count` et `bots_skill` les contrôlent.
 - **Moins de blocages et un démarrage plus propre :** le nom du serveur maître est résolu une seule fois au lieu de l'être à chaque expiration de l'autorisation, et le serveur n'affiche plus d'avertissement pour chaque `+set` de la ligne de commande.
@@ -115,6 +117,27 @@ Copiez `cod2rev_lnxded` et `scripts/linux/iniciar_cod2rev.sh` dans le dossier du
 
 `run_bin.sh` est le script de test du projet d'origine : il démarre `bin/cod2rev_lnxded` en mode développeur avec les triches activées et des bots de test. Il sert d'exemple de paramètres, pas de configuration pour un vrai serveur.
 
+## Tests
+
+`scripts/smoke_test.py` a besoin d'un serveur compilé et d'un dossier du jeu :
+
+```bash
+python3 scripts/smoke_test.py /chemin/vers/CoD2
+make PROTOCOL=118 && python3 scripts/smoke_test.py /chemin/vers/CoD2 --protocol 118
+```
+
+Il démarre le serveur en mode LAN avec un dossier utilisateur temporaire, le dossier du jeu n'est donc que lu. Il vérifie que le serveur charge une carte et répond à `getinfo`, `getstatus` et rcon, et que `scripts/cod2client.py`, un client minimal, peut se connecter, recevoir le gamestate, entrer dans la partie et envoyer des commandes, y compris dans un message découpé en fragments. Utilisez un dossier du jeu avec les `.iwd` d'origine : des mods dans `main` qui remplacent les scripts des modes de jeu peuvent empêcher la carte de se charger.
+
+Pour chercher des erreurs mémoire, compilez le serveur avec AddressSanitizer dans un dossier séparé et passez ce binaire avec `--binary` :
+
+```bash
+make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m32 -fsanitize=address"
+```
+
+`CFLAGS` donné en ligne de commande remplace celui du Makefile, il faut donc répéter `-m32` et `-D_FILE_OFFSET_BITS=64`. Laisser tourner cette compilation un moment avec le mod de bots et un `sv_mapRotation` court couvre aussi les changements de carte et le jeu.
+
 ## Structure du dépôt
 
 | Chemin | Contenu |
@@ -129,7 +152,8 @@ Copiez `cod2rev_lnxded` et `scripts/linux/iniciar_cod2rev.sh` dans le dossier du
 | `src/win32`, `src/unix` | Code propre à chaque plateforme. |
 | `src/zlib` | Copie de zlib. |
 | `test` | Matériel de rétro-ingénierie : base de données IDA, tables d'offsets et chargeur de test. |
-| `scripts` | Lanceurs pour Windows et Linux, le `server.cfg` d'exemple et son générateur. |
+| `scripts` | Lanceurs pour Windows et Linux, le `server.cfg` d'exemple et son générateur, l'installateur des bots, et le test de bon fonctionnement avec son client minimal. |
+| `mods/bots` | Le mod de scripts des bots simples. |
 
 ## Licence
 

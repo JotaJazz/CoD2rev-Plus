@@ -33,6 +33,8 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 - **Ficheiros do jogo em discos do Windows:** a compilação de Linux não via os ficheiros do jogo em sistemas de ficheiros com números de inode grandes, como os discos do Windows sob WSL. Agora é compilada com offsets de ficheiro de 64 bits.
 - **Relógio de jogo estável em Linux:** o servidor media o tempo com o relógio do sistema, pelo que cada correção da hora (NTP, sincronização de uma máquina virtual) congelava o jogo por um instante. Agora usa o relógio monotónico.
 - **Entrada de rede mais robusta:** um jogador ligado podia derrubar o servidor ou sobrescrever a sua memória com uma mensagem comprimida demasiado grande, uma mensagem fragmentada, um nome com `%` (os modos de jogo originais escrevem-no no log), `callvote clientkick` com um número negativo ou pacotes de voz. Agora esses caminhos verificam os limites, e os ficheiros das transferências HTTP interrompidas são fechados.
+- **Bots depois de uma mudança de mapa:** ao mudar de mapa, os bots continuavam ligados mas fora da partida, a ocupar o seu slot, pelo que o mod de bots acrescentava outros até encher o servidor. Agora voltam à partida assim que o novo mapa carrega.
+- **Endereço do proxy do libcod e transferências:** o endereço real que um proxy local passa na chave `ip` do userinfo só é aceite a partir de `127.0.0.1`, tem de ser um endereço IPv4 e é apagado em cada ligação. Um `donedl` de um jogador que já está na partida já não faz o servidor reenviar o gamestate completo.
 - **Teste de fumo:** `scripts/smoke_test.py` inicia o servidor de Linux com uma pasta real do jogo e verifica que carrega um mapa, responde às consultas e deixa entrar um cliente mínimo (`scripts/cod2client.py`) que recebe o gamestate, entra na partida e envia comandos, também em mensagens fragmentadas.
 - **Bots simples:** `mods/bots` é um pequeno mod de scripts cujos bots caminham para o inimigo mais próximo e disparam sobre o que veem, usando as funções de bots do libcod. Não usam pontos de rota. `scripts/install_bots.py` instala-o; `bots_count` e `bots_skill` controlam-nos.
 - **Menos bloqueios e um arranque mais limpo:** o nome do master server é resolvido uma única vez em vez de em cada espera de autorização esgotada, e o servidor já não avisa por cada `+set` da linha de comandos.
@@ -115,6 +117,27 @@ Copie `cod2rev_lnxded` e `scripts/linux/iniciar_cod2rev.sh` para a pasta do jogo
 
 `run_bin.sh` é o script de testes do projeto original: inicia `bin/cod2rev_lnxded` em modo de desenvolvimento com cheats ativados e bots de teste. Serve de exemplo de parâmetros, não de configuração para um servidor real.
 
+## Testes
+
+`scripts/smoke_test.py` precisa de um servidor compilado e de uma pasta do jogo:
+
+```bash
+python3 scripts/smoke_test.py /caminho/para/CoD2
+make PROTOCOL=118 && python3 scripts/smoke_test.py /caminho/para/CoD2 --protocol 118
+```
+
+Inicia o servidor em modo LAN com uma pasta de utilizador temporária, pelo que a pasta do jogo só é lida. Verifica que o servidor carrega um mapa e responde a `getinfo`, `getstatus` e rcon, e que `scripts/cod2client.py`, um cliente mínimo, consegue ligar-se, receber o gamestate, entrar na partida e enviar comandos, também numa mensagem dividida em fragmentos. Use uma pasta do jogo com os `.iwd` originais: mods em `main` que substituem os scripts dos modos de jogo podem impedir que o mapa carregue.
+
+Para procurar erros de memória, compile o servidor com AddressSanitizer numa pasta à parte e passe esse binário com `--binary`:
+
+```bash
+make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m32 -fsanitize=address"
+```
+
+`CFLAGS` na linha de comandos substitui o do Makefile, pelo que é preciso repetir `-m32` e `-D_FILE_OFFSET_BITS=64`. Deixar essa compilação a correr algum tempo com o mod de bots e um `sv_mapRotation` curto cobre também as mudanças de mapa e a partida.
+
 ## Estrutura do repositório
 
 | Caminho | Conteúdo |
@@ -129,7 +152,8 @@ Copie `cod2rev_lnxded` e `scripts/linux/iniciar_cod2rev.sh` para a pasta do jogo
 | `src/win32`, `src/unix` | Código específico de cada plataforma. |
 | `src/zlib` | Cópia do zlib. |
 | `test` | Material da engenharia reversa: base de dados do IDA, tabelas de offsets e carregador de testes. |
-| `scripts` | Lançadores para Windows e Linux, o `server.cfg` de exemplo e o seu gerador. |
+| `scripts` | Lançadores para Windows e Linux, o `server.cfg` de exemplo e o seu gerador, o instalador dos bots, e o teste de fumo com o seu cliente mínimo. |
+| `mods/bots` | O mod de scripts dos bots simples. |
 
 ## Licença
 

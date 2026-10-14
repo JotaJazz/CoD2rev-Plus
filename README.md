@@ -33,6 +33,8 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Game files on Windows drives:** the Linux build could not see the game files on file systems with large inode numbers, such as Windows drives under WSL. It is now built with 64-bit file offsets.
 - **Steady game clock on Linux:** the server measured time with the wall clock, so every clock correction (NTP, virtual machine time sync) froze the game for a moment. It now uses the monotonic clock.
 - **Network input hardening:** a connected player could crash the server or overwrite its memory with an oversized compressed message, a fragmented message, a name containing `%` (written to the log by the stock gametypes), `callvote clientkick` with a negative number or voice packets. These paths are now bounds-checked, and the file handles of interrupted HTTP downloads are closed.
+- **Bots after a map change:** after a map change, bots stayed connected but out of the game, holding their slots, so the bots mod kept adding more until the server was full. They now come back into the game as soon as the new map loads.
+- **libcod proxy address and downloads:** the real address that a local proxy passes in the `ip` userinfo key is only trusted from `127.0.0.1`, must be an IPv4 address and is cleared on every connect. A `donedl` from a player already in the game no longer makes the server resend the whole gamestate.
 - **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages.
 - **Simple bots:** `mods/bots` is a small script mod whose bots walk towards the nearest enemy and shoot what they see, using the libcod bot functions. They have no waypoints. `scripts/install_bots.py` installs it; `bots_count` and `bots_skill` control them.
 - **Fewer stalls and a cleaner startup:** the master server name is resolved once instead of on every authorization timeout, and the server no longer warns about every `+set` on the command line.
@@ -115,6 +117,27 @@ Copy `cod2rev_lnxded` and `scripts/linux/iniciar_cod2rev.sh` into the game folde
 
 `run_bin.sh` is the original project's test script: it starts `bin/cod2rev_lnxded` in developer mode with cheats enabled and test bots. It is useful as an example of parameters, not as a configuration for a real server.
 
+## Testing
+
+`scripts/smoke_test.py` needs a built server and a game folder:
+
+```bash
+python3 scripts/smoke_test.py /path/to/CoD2
+make PROTOCOL=118 && python3 scripts/smoke_test.py /path/to/CoD2 --protocol 118
+```
+
+It starts the server in LAN mode with a temporary home folder, so the game folder is only read. It checks that the server loads a map and answers `getinfo`, `getstatus` and rcon, and that `scripts/cod2client.py`, a minimal client, can connect, receive the gamestate, enter the game and send commands, including a message split into fragments. Use a game folder with the stock `.iwd` files: mods in `main` that replace the gametype scripts can stop the map from loading.
+
+To look for memory errors, build the server with AddressSanitizer in a separate folder and pass that binary with `--binary`:
+
+```bash
+make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m32 -fsanitize=address"
+```
+
+`CFLAGS` given on the command line replaces the Makefile's, so `-m32` and `-D_FILE_OFFSET_BITS=64` must be repeated. Running that build for a while with the bots mod and a short `sv_mapRotation` also covers map changes and gameplay.
+
 ## Repository layout
 
 | Path | Contents |
@@ -129,7 +152,8 @@ Copy `cod2rev_lnxded` and `scripts/linux/iniciar_cod2rev.sh` into the game folde
 | `src/win32`, `src/unix` | Platform-specific code. |
 | `src/zlib` | Copy of zlib. |
 | `test` | Reverse-engineering material: IDA database, offset tables and test loader. |
-| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator. |
+| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, and the smoke test with its minimal client. |
+| `mods/bots` | The simple bots script mod. |
 
 ## License
 
