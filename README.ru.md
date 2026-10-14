@@ -1,6 +1,6 @@
 # CoD2rev_Server (форк JotaJazz)
 
-[Español](README.md) · [English](README.en.md) · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **Русский**
+[Español](README.es.md) · [English](README.md) · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **Русский**
 
 Исходный код выделенного сервера **Call of Duty 2** (версия 1.0, протокол 115), полученный методом обратной разработки.
 Он исправляет ряд ошибок оригинальных бинарных файлов и позволяет расширять возможности сервера.

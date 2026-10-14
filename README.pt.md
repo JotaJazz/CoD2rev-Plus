@@ -1,6 +1,6 @@
 # CoD2rev_Server (fork do JotaJazz)
 
-[Español](README.md) · [English](README.en.md) · **Português** · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
+[Español](README.es.md) · [English](README.md) · **Português** · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 Código-fonte, obtido por engenharia reversa, do servidor dedicado de **Call of Duty 2** (versão 1.0, protocolo 115).
 Corrige vários erros dos binários originais e permite estender a funcionalidade do servidor.

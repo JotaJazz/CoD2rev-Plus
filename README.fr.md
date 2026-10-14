@@ -1,6 +1,6 @@
 # CoD2rev_Server (fork de JotaJazz)
 
-[Español](README.md) · [English](README.en.md) · [Português](README.pt.md) · **Français** · [Deutsch](README.de.md) · [Русский](README.ru.md)
+[Español](README.es.md) · [English](README.md) · [Português](README.pt.md) · **Français** · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 Code source, obtenu par rétro-ingénierie, du serveur dédié de **Call of Duty 2** (version 1.0, protocole 115).
 Il corrige plusieurs bogues des binaires d'origine et permet d'étendre les fonctionnalités du serveur.
