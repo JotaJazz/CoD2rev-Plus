@@ -40,4 +40,4 @@
 bin/**
 main/**
 obj/**
-obj_test/**
+obj_test/**__pycache__/
