@@ -2,7 +2,7 @@
 
 [Español](README.es.md) · [English](README.md) · **Português** · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
-Código-fonte, obtido por engenharia reversa, do servidor dedicado de **Call of Duty 2** (versão 1.0, protocolo 115).
+Código-fonte, obtido por engenharia reversa, do servidor dedicado de **Call of Duty 2** (versões 1.0 e 1.3).
 Corrige vários erros dos binários originais e permite estender a funcionalidade do servidor.
 
 Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), onde foi feito todo o trabalho de engenharia reversa. Aqui só são acrescentadas as alterações descritas em [Alterações deste fork](#alterações-deste-fork).
@@ -23,6 +23,7 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
   - `sv_master2` vem configurado com `master.cod2x.me`, o master da comunidade CoD2x.
   - O formato `host:porta` em `sv_master1`–`sv_master5` agora funciona.
   - Uma falha de DNS é repetida em vez de apagar o master.
+- **Versão do jogo selecionável ao compilar:** o servidor pode ser compilado como 1.0 ou como 1.3.
 - **Lançador para Windows:** `scripts/windows/iniciar_cod2rev.bat`.
 
 ### Variáveis novas
@@ -34,9 +35,9 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 
 ## Versões do jogo
 
-- **O servidor identifica-se como 1.0** (protocolo 115). É o que anuncia aos master servers e nas suas respostas de informação.
-- **Aceita clientes de outras versões.** Com o libcod, que vem ativado por predefinição, admite ligações com protocolos de 115 a 119. Isso inclui a 1.3 (protocolo 118) e a versão do Game Pass (protocolo 119), com ajustes por cliente no código de rede.
-- **Não testado com clientes reais neste fork.** O que está acima resulta da leitura do código. Como o servidor se anuncia com o protocolo 115, é possível que um cliente de outra versão não o veja na sua lista de servidores e tenha de se ligar por IP.
+- **A versão é escolhida ao compilar.** Por predefinição o servidor é compilado como 1.0 (protocolo 115); com `PROTOCOL=118` é compilado como 1.3. O servidor anuncia essa versão aos master servers, pelo que aparece na lista de servidores dos clientes dessa mesma versão.
+- **A compilação 1.0 aceita também outras versões por IP direto.** Com o libcod, que vem ativado por predefinição, admite ligações com protocolos de 115 a 119, o que inclui a 1.3 (protocolo 118) e a versão do Game Pass (protocolo 119). A ligação por IP direto a esta compilação foi testada, também com um cliente CoD2x 1.4.x.
+- **A compilação 1.3 só aceita clientes com o protocolo 118.** Compila para Linux e Windows, mas ainda não foi testada num jogo.
 
 ## Compilar
 
@@ -62,6 +63,10 @@ make CC="gcc -m32"
 ```
 
 Gera `bin/cod2rev_lnxded`.
+
+### Versão do jogo
+
+Acrescente `PROTOCOL=118` ao comando `make` para compilar o servidor como 1.3; sem ele, ou com `PROTOCOL=115`, é compilado como 1.0. Execute `make clean` antes de mudar de uma versão para a outra. A compilação automática publica as duas versões para cada plataforma.
 
 ### Compilação automática
 
