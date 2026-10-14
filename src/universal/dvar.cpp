@@ -834,6 +834,13 @@ static bool Dvar_CanChangeValue(const dvar_t *dvar, DvarValue value, DvarSetSour
 		return true;
 	}
 
+	// Setting a protected dvar to the value it already has changes nothing, so do not complain.
+	// The command line is applied twice at startup and used to print a warning for every "+set".
+	if (Dvar_ValuesEqual(dvar->type, value, dvar->current))
+	{
+		return true;
+	}
+
 	reason = NULL;
 	if (dvar->flags & DVAR_ROM)
 	{

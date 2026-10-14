@@ -1257,7 +1257,8 @@ int main ( int argc, char* argv[] )
   Sys_InitMainThread();
   Dvar_Init();
   Sys_ParseArgs( argc, argv );  // bk010104 - added this for support
-  Sys_SetDefaultCDPath(argv[0]);
+  // No default CD path: argv[0] is the executable, not a folder, and only added
+  // search paths that cannot exist. fs_cdpath can still be set on the command line.
 
   // merge the command line, this is kinda silly
   for (len = 1, i = 1; i < argc; i++)

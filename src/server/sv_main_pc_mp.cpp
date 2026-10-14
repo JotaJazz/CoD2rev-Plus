@@ -323,7 +323,9 @@ netadr_t *SV_MasterAddress()
 	static netadr_t sv_master_address;
 	unsigned short port;
 
-	if ( sv_master_address.type == NA_BAD )
+	// Resolve only once: the lookup blocks the whole server, and this is called
+	// for every challenge that is waiting on the authorize server.
+	if ( sv_master_address.type != NA_BOT )
 	{
 		return &sv_master_address;
 	}
