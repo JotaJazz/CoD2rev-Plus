@@ -33,6 +33,8 @@ Dieses Repository ist ein Fork von [voron00/CoD2rev_Server](https://github.com/v
 - **Spieldateien auf Windows-Laufwerken:** Der Linux-Build konnte die Spieldateien auf Dateisystemen mit großen Inode-Nummern nicht sehen, etwa auf Windows-Laufwerken unter WSL. Er wird jetzt mit 64-Bit-Dateioffsets gebaut.
 - **Stabile Spieluhr unter Linux:** Der Server hat die Zeit mit der Systemuhr gemessen, sodass jede Zeitkorrektur (NTP, Zeitsynchronisation einer virtuellen Maschine) das Spiel kurz einfrieren ließ. Jetzt verwendet er die monotone Uhr.
 - **Funktionstest:** `scripts/smoke_test.py` startet den Linux-Server mit einem echten Spielordner und prüft, ob er eine Karte lädt und Anfragen beantwortet.
+- **Einfache Bots:** `mods/bots` ist ein kleiner Skript-Mod, dessen Bots auf den nächsten Gegner zulaufen und auf das schießen, was sie sehen; er nutzt die Bot-Funktionen von libcod. Wegpunkte gibt es nicht. `scripts/install_bots.py` installiert ihn; `bots_count` und `bots_skill` steuern die Bots.
+- **Weniger Hänger und ein saubererer Start:** Der Name des Master-Servers wird nur einmal aufgelöst statt bei jedem Zeitüberlauf der Autorisierung, und der Server warnt nicht mehr bei jedem `+set` der Befehlszeile.
 - **Startskripte:** `scripts/windows/iniciar_cod2rev.bat` und `scripts/linux/iniciar_cod2rev.sh`, mit einem LAN- und einem Internet-Modus.
 
 ### Neue Variablen
@@ -46,7 +48,7 @@ Dieses Repository ist ein Fork von [voron00/CoD2rev_Server](https://github.com/v
 
 - **Die Version wird beim Kompilieren gewählt.** Standardmäßig wird der Server als 1.0 gebaut (Protokoll 115); mit `PROTOCOL=118` wird er als 1.3 gebaut. Der Server meldet diese Version an die Master-Server und erscheint daher in der Serverliste von Clients derselben Version.
 - **Der 1.0-Build akzeptiert per direkter IP auch andere Versionen.** Mit libcod, das standardmäßig aktiviert ist, nimmt er Verbindungen mit den Protokollen 115 bis 119 an, also auch 1.3 (Protokoll 118) und die Game-Pass-Version (Protokoll 119). Die Verbindung per direkter IP zu diesem Build wurde getestet, auch mit einem CoD2x-1.4.x-Client.
-- **Der 1.3-Build akzeptiert nur Clients mit Protokoll 118.** Er kompiliert für Linux und Windows, und die Linux-Binärdatei besteht den Funktionstest (sie startet, lädt eine Karte und antwortet als 1.3), wurde aber noch nicht mit Spielern getestet. Auch [CoD2x](https://github.com/callofduty2x/CoD2x)-1.4-Clients verbinden sich mit Protokoll 118, und ihre Serverliste zeigt nur Server an, die Protokoll 118 oder 120 melden; dies ist also der Build, den sie sehen können.
+- **Der 1.3-Build akzeptiert nur Clients mit Protokoll 118.** Er wurde unter Linux und Windows gestartet, lädt dort eine Karte und antwortet als 1.3, und auf dem Linux-Build wurde mit einem CoD2x-1.4-Client gespielt. Auch [CoD2x](https://github.com/callofduty2x/CoD2x)-1.4-Clients verbinden sich mit Protokoll 118, und ihre Serverliste zeigt nur Server an, die Protokoll 118 oder 120 melden; dies ist also der Build, den sie sehen können.
 
 ## Kompilieren
 

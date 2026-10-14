@@ -33,6 +33,8 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 - **Ficheiros do jogo em discos do Windows:** a compilação de Linux não via os ficheiros do jogo em sistemas de ficheiros com números de inode grandes, como os discos do Windows sob WSL. Agora é compilada com offsets de ficheiro de 64 bits.
 - **Relógio de jogo estável em Linux:** o servidor media o tempo com o relógio do sistema, pelo que cada correção da hora (NTP, sincronização de uma máquina virtual) congelava o jogo por um instante. Agora usa o relógio monotónico.
 - **Teste de fumo:** `scripts/smoke_test.py` inicia o servidor de Linux com uma pasta real do jogo e verifica que carrega um mapa e responde às consultas.
+- **Bots simples:** `mods/bots` é um pequeno mod de scripts cujos bots caminham para o inimigo mais próximo e disparam sobre o que veem, usando as funções de bots do libcod. Não usam pontos de rota. `scripts/install_bots.py` instala-o; `bots_count` e `bots_skill` controlam-nos.
+- **Menos bloqueios e um arranque mais limpo:** o nome do master server é resolvido uma única vez em vez de em cada espera de autorização esgotada, e o servidor já não avisa por cada `+set` da linha de comandos.
 - **Lançadores:** `scripts/windows/iniciar_cod2rev.bat` e `scripts/linux/iniciar_cod2rev.sh`, com um modo LAN e um modo internet.
 
 ### Variáveis novas
@@ -46,7 +48,7 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 
 - **A versão é escolhida ao compilar.** Por predefinição o servidor é compilado como 1.0 (protocolo 115); com `PROTOCOL=118` é compilado como 1.3. O servidor anuncia essa versão aos master servers, pelo que aparece na lista de servidores dos clientes dessa mesma versão.
 - **A compilação 1.0 aceita também outras versões por IP direto.** Com o libcod, que vem ativado por predefinição, admite ligações com protocolos de 115 a 119, o que inclui a 1.3 (protocolo 118) e a versão do Game Pass (protocolo 119). A ligação por IP direto a esta compilação foi testada, também com um cliente CoD2x 1.4.x.
-- **A compilação 1.3 só aceita clientes com o protocolo 118.** Compila para Linux e Windows e o binário de Linux passa o teste de fumo (inicia, carrega um mapa e responde como 1.3), mas ainda não foi testada com jogadores. Os clientes [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 também se ligam com o protocolo 118, e a sua lista de servidores só mostra os que informam o protocolo 118 ou 120, pelo que esta é a compilação que conseguem ver.
+- **A compilação 1.3 só aceita clientes com o protocolo 118.** Foi iniciada em Linux e em Windows, onde carrega um mapa e responde como 1.3, e na compilação de Linux já se jogou com um cliente CoD2x 1.4. Os clientes [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 também se ligam com o protocolo 118, e a sua lista de servidores só mostra os que informam o protocolo 118 ou 120, pelo que esta é a compilação que conseguem ver.
 
 ## Compilar
 
