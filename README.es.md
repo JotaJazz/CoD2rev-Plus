@@ -24,6 +24,9 @@ Este repositorio es un fork de [voron00/CoD2rev_Server](https://github.com/voron
   - El formato `host:puerto` en `sv_master1`–`sv_master5` ahora funciona.
   - Un fallo de DNS se reintenta en vez de borrar el master.
 - **Versión del juego seleccionable al compilar:** el servidor se puede compilar como 1.0 o como 1.3.
+- **Corrección de un desbordamiento con clientes Game Pass:** enviar la información del sistema a un cliente con protocolo 119 podía desbordar un búfer y tumbar el servidor.
+- **Compilación más simple:** `make` genera directamente el binario Linux de 32 bits, `make windows` hace la compilación cruzada para Windows y GitHub Actions compila todas las variantes en cada push.
+- **`server.cfg` de ejemplo:** `scripts/server.cfg.example` lista todas las variables que registra el servidor.
 - **Lanzador para Windows:** `scripts/windows/iniciar_cod2rev.bat`.
 
 ### Variables nuevas
@@ -88,7 +91,7 @@ El servidor necesita los archivos del juego original (la carpeta `main` con sus 
 ### Windows
 
 1. Copiar `cod2rev_win32.exe` y `scripts/windows/iniciar_cod2rev.bat` a la carpeta del juego, junto a `main`.
-2. Tener un `server.cfg` en `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) es un punto de partida comentado (en inglés).
+2. Tener un `server.cfg` en `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) configura las opciones habituales y lista el resto de variables que registra el servidor con su valor por defecto (comentarios en inglés).
 3. Ejecutar `iniciar_cod2rev.bat`.
 
 El lanzador arranca el servidor en el puerto `28970`, para no chocar con el cliente del juego que usa el `28960` en el mismo PC, y carga el mapa `mp_toujane`. Usa `dedicated 1` (LAN o IP directa); con `dedicated 2` el servidor se anuncia en la lista pública.

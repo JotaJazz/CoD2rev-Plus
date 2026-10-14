@@ -24,6 +24,9 @@ Dieses Repository ist ein Fork von [voron00/CoD2rev_Server](https://github.com/v
   - Das Format `Host:Port` in `sv_master1`–`sv_master5` funktioniert jetzt.
   - Ein DNS-Fehler wird erneut versucht, statt den Master zu löschen.
 - **Spielversion beim Kompilieren wählbar:** Der Server lässt sich als 1.0 oder als 1.3 bauen.
+- **Überlauf bei Game-Pass-Clients behoben:** Das Senden der Systeminformationen an einen Client mit Protokoll 119 konnte einen Puffer überlaufen lassen und den Server zum Absturz bringen.
+- **Einfacheres Bauen:** `make` erzeugt direkt die 32-Bit-Linux-Binärdatei, `make windows` cross-kompiliert für Windows, und GitHub Actions baut bei jedem Push alle Varianten.
+- **Beispiel-`server.cfg`:** `scripts/server.cfg.example` listet alle Variablen auf, die der Server registriert.
 - **Windows-Starter:** `scripts/windows/iniciar_cod2rev.bat`.
 
 ### Neue Variablen
@@ -88,7 +91,7 @@ Der Server braucht die Dateien des Originalspiels (den Ordner `main` mit seinen 
 ### Windows
 
 1. `cod2rev_win32.exe` und `scripts/windows/iniciar_cod2rev.bat` in den Spielordner kopieren, neben `main`.
-2. Eine `server.cfg` in `main` bereithalten. [`scripts/server.cfg.example`](scripts/server.cfg.example) ist eine kommentierte Vorlage (auf Englisch).
+2. Eine `server.cfg` in `main` bereithalten. [`scripts/server.cfg.example`](scripts/server.cfg.example) setzt die üblichen Optionen und listet alle übrigen Variablen, die der Server registriert, mit ihrem Standardwert auf (Kommentare auf Englisch).
 3. `iniciar_cod2rev.bat` ausführen.
 
 Der Starter startet den Server auf Port `28970`, damit er nicht mit dem Spielclient kollidiert, der auf demselben PC `28960` benutzt, und lädt die Karte `mp_toujane`. Er verwendet `dedicated 1` (LAN oder direkte IP); mit `dedicated 2` wird der Server in der öffentlichen Liste angekündigt.

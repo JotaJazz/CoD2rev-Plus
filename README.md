@@ -24,6 +24,9 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
   - The `host:port` format in `sv_master1`–`sv_master5` now works.
   - A DNS failure is retried instead of clearing the master.
 - **Game version selectable at build time:** the server can be built as 1.0 or as 1.3.
+- **Overflow fix for Game Pass clients:** sending the system info to a client using protocol 119 could overflow a buffer and crash the server.
+- **Simpler builds:** `make` builds the 32-bit Linux binary directly, `make windows` cross-compiles for Windows, and GitHub Actions builds every variant on each push.
+- **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers.
 - **Windows launcher:** `scripts/windows/iniciar_cod2rev.bat`.
 
 ### New variables
@@ -88,7 +91,7 @@ The server needs the original game files (the `main` folder with its `.iwd` file
 ### Windows
 
 1. Copy `cod2rev_win32.exe` and `scripts/windows/iniciar_cod2rev.bat` into the game folder, next to `main`.
-2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) is a commented starting point.
+2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) sets the usual options and lists every other variable the server registers with its default value.
 3. Run `iniciar_cod2rev.bat`.
 
 The launcher starts the server on port `28970`, to avoid clashing with the game client that uses `28960` on the same PC, and loads the map `mp_toujane`. It uses `dedicated 1` (LAN or direct IP); with `dedicated 2` the server is announced on the public list.

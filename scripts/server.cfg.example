@@ -1,6 +1,18 @@
 // Example server configuration for CoD2rev_Server.
 // Copy it to the "main" folder of the game as server.cfg and edit it.
 // Do not commit your real server.cfg: it holds passwords.
+//
+// The first part sets the variables most servers change.
+// The second part lists every other variable the server registers, commented
+// out and with its default value, so copying this file changes nothing else.
+// Remove the leading "//" to use one.
+//
+// Not listed here: the scr_* variables of each gametype, which are defined by
+// the game scripts inside the .iwd files and not by the server.
+
+// =============================================================================
+// Common settings
+// =============================================================================
 
 // --- Identity ---
 set sv_hostname "My CoD2 server"
@@ -12,6 +24,7 @@ set g_password ""               // password to join; empty = public
 // --- Remote console ---
 // Leave rcon_password empty to keep rcon unusable.
 set rcon_password ""
+set sv_allowRcon 1              // 0 = ignore every rcon packet
 set sv_rconMaxAttempts 5        // wrong passwords per IP before the lockout, 0 = no lockout
 set sv_rconLockTime 600         // lockout length in seconds
 
@@ -19,6 +32,8 @@ set sv_rconLockTime 600         // lockout length in seconds
 // sv_master1 defaults to cod2master.activision.com and sv_master2 to master.cod2x.me.
 // sv_master3 to sv_master5 are free; host:port is accepted.
 set sv_master3 ""
+set sv_master4 ""
+set sv_master5 ""
 
 // --- Network ---
 set sv_fps 20
@@ -48,3 +63,225 @@ set g_logSync 0
 // --- Map rotation ---
 // The launcher starts the first map itself; the rotation is used from then on.
 set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gametype tdm map mp_dawnville"
+
+// =============================================================================
+// Every other variable (defaults shown)
+// =============================================================================
+// Notes after each variable:
+//   read-only             set by the server, cannot be changed
+//   command line only     must be given as "+set name value" when starting
+//   needs sv_cheats 1     ignored unless cheats are enabled
+
+// --- Server ---
+// set sv_keywords ""                          // string: free text shown to server browsers
+// protocol = 115                              // int, read-only: network protocol of this build: 115 = 1.0, 118 = 1.3
+// set sv_allowAnonymous 0                     // bool: allow clients flagged as anonymous
+// set sv_showCommands 0                       // bool: print every client command to the console
+// set sv_voice 0                              // bool: enable in-game voice chat
+// set sv_voiceQuality 1                       // int, 0 to 9: voice chat codec quality
+// sv_serverid = 0                             // int, read-only: changes on every map load
+// sv_iwds                                     // string, read-only: checksums of the loaded .iwd files
+// sv_iwdNames                                 // string, read-only: names of the loaded .iwd files
+// sv_referencedIwds                           // string, read-only: checksums of the .iwd files the map uses
+// sv_referencedIwdNames                       // string, read-only: names of the .iwd files the map uses
+// set sv_zombietime 2                         // int, 0 to 1800: seconds a disconnected client slot is kept before it is freed
+// set sv_reconnectlimit 3                     // int, 0 to 1800: minimum seconds between reconnects from the same address
+// set sv_padPackets 0                         // int, 0 or more: add padding bytes to outgoing packets (debugging)
+// set sv_allowedClan1 ""                      // string
+// set sv_allowedClan2 ""                      // string
+// set sv_packet_info 0                        // bool
+// set sv_showAverageBPS 0                     // bool
+// set sv_mapRotationCurrent ""                // string: remaining part of the rotation, managed by the server
+// set sv_debugRate 0                          // bool
+// set sv_debugReliableCmds 0                  // bool
+// set nextmap ""                              // string: command run when the map ends
+// com_expectedHunkUsage = 0                   // int, 0 or more, read-only
+// set sv_wwwDlDisconnected 0                  // bool: disconnect clients while they download over HTTP
+
+// --- libcod extensions ---
+// set sv_master1 "cod2master.activision.com"  // string: first master server
+// set sv_master2 "master.cod2x.me"            // string: second master server
+// set fs_library ""                           // string: folder used by the libcod manymaps map download
+// set g_playerCollision 1                     // bool: players collide with each other
+// set g_playerEject 1                         // bool: push apart players stuck inside each other
+// set sv_downloadMessage ""                   // string: if set, downloads are refused and this text is shown instead
+// set sv_fastDownload 0                       // bool: send in-game downloads faster
+// set sv_cracked 0                            // bool: accept clients whatever the key authorization server answers
+// set sv_kickbots 0                           // bool: drop bots when the map restarts or changes
+// set jump_bounceEnable 0                     // bool, needs sv_cheats 1: keep speed when landing on slopes (bouncing)
+// set g_mantleBlockEnable 1                   // bool
+// set g_fixedWeaponSpreads 0                  // bool: use a fixed spread pattern instead of random spread
+// set g_dropGrenadeOnDeath 1                  // bool: a player killed while holding a primed grenade drops it
+
+// --- Game rules ---
+// mapname                                     // string, read-only: map currently loaded
+// set sv_cheats 0                             // bool: allow cheat-protected variables and commands
+// gamename = "Call of Duty 2"                 // string, read-only: game name reported to browsers
+// gamedate                                    // string, read-only
+// sv_mapname                                  // string, read-only: map currently loaded
+// set g_synchronousClients 0                  // bool: force clients to wait for the server each frame (for demo recording)
+// set g_banIPs ""                             // string: list of banned addresses
+// set dedicated 0                             // int, 0 to 2, applies on the next map or restart: 0 = listen server, 1 = LAN, 2 = internet (announced to the master servers)
+// set g_speed 190                             // int: player movement speed
+// set g_gravity 800                           // float, 1 or more: world gravity
+// set g_knockback 1000                        // float: knockback applied by damage
+// set g_weaponAmmoPools 0                     // bool
+// set g_maxDroppedWeapons 16                  // int, 1 to 32: maximum dropped weapons kept on the map
+// set g_inactivity 0                          // int, 0 or more: seconds before an inactive player is kicked, 0 = never
+// set g_debugDamage 0                         // bool, needs sv_cheats 1
+// set g_debugBullets 0                        // int, -3 to 6, needs sv_cheats 1
+// set g_motd ""                               // string: message of the day
+// set g_playerCollisionEjectSpeed 25          // int, 0 to 32000
+// set g_dropForwardSpeed 10                   // float, 0 to 1000
+// set g_dropUpSpeedBase 10                    // float, 0 to 1000
+// set g_dropUpSpeedRand 5                     // float, 0 to 1000
+// set g_clonePlayerMaxVelocity 80             // float, 0 or more
+// set voice_global 0                          // bool: voice chat is heard by both teams
+// set voice_localEcho 0                       // bool: players hear their own voice
+// set voice_deadChat 0                        // bool: dead players can voice chat with living ones
+// set g_listEntity 0                          // bool
+// set g_deadChat 0                            // bool: dead players can chat with living ones
+// set g_voiceChatTalkingDuration 500          // int, 0 to 10000
+// set g_ScoresBanner_Allies "mpflag_american" // string
+// set g_ScoresBanner_Axis "mpflag_german"     // string
+// set g_ScoresBanner_None "mpflag_none"       // string
+// set g_ScoresBanner_Spectators "mpflag_spectator" // string
+// set g_TeamName_Allies "GAME_ALLIES"         // string: name shown for the allied team
+// set g_TeamName_Axis "GAME_AXIS"             // string: name shown for the axis team
+// set g_TeamColor_Allies "0.5 0.5 1.0 1.0"    // colour: colour of the allied team (red green blue alpha)
+// set g_TeamColor_Axis "1.0 0.5 0.5 1.0"      // colour: colour of the axis team (red green blue alpha)
+// set g_smoothClients 1                       // bool: smooth other players between snapshots
+// set g_oldVoting 1                           // bool
+// set g_voteAbstainWeight 0.5                 // float, 0 to 1.0
+// set g_no_script_spam 0                      // bool
+// set g_debugLocDamage 0                      // bool, needs sv_cheats 1
+// set g_friendlyfireDist 256                  // float, 0 to 15000, needs sv_cheats 1
+// set g_friendlyNameDist 15000                // float, 0 to 15000, needs sv_cheats 1
+// set player_meleeRange 64                    // float, 0 to 1000, needs sv_cheats 1: reach of the melee attack
+// set player_meleeWidth 10                    // float, 0 to 1000, needs sv_cheats 1
+// set player_meleeHeight 10                   // float, 0 to 1000, needs sv_cheats 1
+// set g_dumpAnims -1                          // int, -1 to 1023, needs sv_cheats 1
+// set g_useholdtime 0                         // int, 0 or more
+// set g_useholdspawndelay 1                   // int, 0 to 10, needs sv_cheats 1
+// set g_mantleBlockTimeBuffer 500             // int, 0 to 60000, needs sv_cheats 1
+
+// --- Player movement and physics ---
+// set jump_height 39                          // float, 0 to 128, needs sv_cheats 1: jump height
+// set jump_stepSize 18                        // float, 0 to 64, needs sv_cheats 1
+// set jump_slowdownEnable 1                   // bool, needs sv_cheats 1: slow players down after a jump
+// set jump_ladderPushVel 128                  // float, 0 to 1024, needs sv_cheats 1
+// set jump_spreadAdd 64                       // float, 0 to 512, needs sv_cheats 1
+// set mantle_enable 1                         // bool, needs sv_cheats 1: allow climbing over obstacles
+// set mantle_debug 0                          // bool, needs sv_cheats 1
+// set mantle_check_range 20                   // float, 0 to 128, needs sv_cheats 1
+// set mantle_check_radius 0.1                 // float, 0 to 15, needs sv_cheats 1
+// set mantle_check_angle 60                   // float, 0 to 180, needs sv_cheats 1
+// set mantle_view_yawcap 60                   // float, 0 to 180, needs sv_cheats 1
+// set player_view_pitch_up 85                 // float, 0 to 90, needs sv_cheats 1
+// set player_view_pitch_down 85               // float, 0 to 90, needs sv_cheats 1
+// set bg_ladder_yawcap 100                    // float, 0 to 360, needs sv_cheats 1
+// set bg_prone_yawcap 85                      // float, 0 to 360, needs sv_cheats 1
+// set bg_foliagesnd_minspeed 40               // float, 0 or more, needs sv_cheats 1
+// set bg_foliagesnd_maxspeed 180              // float, 0 or more, needs sv_cheats 1
+// set bg_foliagesnd_slowinterval 1500         // int, 0 or more, needs sv_cheats 1
+// set bg_foliagesnd_fastinterval 500          // int, 0 or more, needs sv_cheats 1
+// set bg_foliagesnd_resetinterval 500         // int, 0 or more, needs sv_cheats 1
+// set bg_fallDamageMinHeight 256              // float, 1 or more, needs sv_cheats 1: fall height at which damage starts
+// set bg_fallDamageMaxHeight 480              // float, 1 or more, needs sv_cheats 1: fall height that kills
+// set inertiaMax 50                           // float, 0 to 1000, needs sv_cheats 1
+// set inertiaDebug 0                          // bool, needs sv_cheats 1
+// set inertiaAngle 0                          // float, -1 to 1, needs sv_cheats 1
+// set friction 5.5                            // float, 0 to 100, needs sv_cheats 1: ground friction
+// set stopspeed 100                           // float, 0 to 1000, needs sv_cheats 1: speed below which a player stops
+// set bg_swingSpeed 0.2                       // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeStanding 0.0070000002    // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeDucked 0.0074999998      // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeProne 0.029999999        // float, 0 to 1, needs sv_cheats 1
+// set bg_bobMax 8                             // float, 0 to 36, needs sv_cheats 1
+// set bg_aimSpreadMoveSpeedThreshold 11       // float, 0 to 300, needs sv_cheats 1
+// set player_breath_hold_time 4.5             // float, 0 to 30, needs sv_cheats 1: seconds a sniper can hold breath
+// set player_breath_gasp_time 1               // float, 0 to 30, needs sv_cheats 1
+// set player_breath_fire_delay 0              // float, 0 to 30, needs sv_cheats 1
+// set player_breath_gasp_scale 4.5            // float, 0 to 50, needs sv_cheats 1
+// set player_breath_hold_lerp 4               // float, 0 to 50, needs sv_cheats 1
+// set player_breath_gasp_lerp 6               // float, 0 to 50, needs sv_cheats 1
+// set player_breath_snd_lerp 2                // float, 0 to 100, needs sv_cheats 1
+// set player_breath_snd_delay 1               // float, 0 to 2, needs sv_cheats 1
+// set player_toggleBinoculars 1               // bool
+// set player_scopeExitOnDamage 0              // bool, needs sv_cheats 1
+// set player_adsExitDelay 0                   // int, 0 to 1000, needs sv_cheats 1
+// player_moveThreshhold = 10                  // float, 0.0000000099999999 to 20, read-only, needs sv_cheats 1
+// player_footstepsThreshhold = 0              // float, 0 to 50000, read-only, needs sv_cheats 1
+// set player_strafeSpeedScale 0.80000001      // float, 0 to 20, needs sv_cheats 1: speed multiplier when strafing
+// set player_backSpeedScale 0.69999999        // float, 0 to 20, needs sv_cheats 1: speed multiplier when moving backwards
+// set player_spectateSpeedScale 2             // float, 0 to 20, needs sv_cheats 1: speed multiplier for spectators
+// set player_turnAnims 0                      // bool, needs sv_cheats 1
+// set player_dmgtimer_timePerPoint 100        // float, 0 or more, needs sv_cheats 1
+// set player_dmgtimer_maxTime 750             // float, 0 or more, needs sv_cheats 1
+// set player_dmgtimer_minScale 0              // float, 0 to 1, needs sv_cheats 1
+// set player_dmgtimer_stumbleTime 500         // int, 0 to 2000, needs sv_cheats 1
+// set player_dmgtimer_flinchTime 500          // int, 0 to 2000, needs sv_cheats 1
+
+// --- Network ---
+// set showpackets 0                           // bool: print every packet
+// set showdrop 0                              // bool: print dropped packets
+// set packetDebug 0                           // bool
+// set net_profile 0                           // int, 0 to 2
+// set net_showprofile 0                       // int, 0 to 3
+// set net_lanauthorize 0                      // bool: also check the keys of clients on the local network
+// set net_ip "localhost"                      // string, applies on the next map or restart: local address to bind to
+// set net_port 28960                          // int, 0 to 65535, applies on the next map or restart: UDP port
+// set net_noudp 0                             // bool: disable UDP networking
+// set net_noipx 0                             // bool, applies on the next map or restart, Windows only
+// set net_socksEnabled 0                      // bool, applies on the next map or restart, Windows only
+// set net_socksServer ""                      // string, applies on the next map or restart, Windows only
+// set net_socksPort 1080                      // int, 0 to 65535, applies on the next map or restart, Windows only
+// set net_socksUsername ""                    // string, applies on the next map or restart, Windows only
+// set net_socksPassword ""                    // string, applies on the next map or restart, Windows only
+
+// --- File system ---
+// set fs_game ""                              // string, command line only: mod folder
+// set fs_debug 0                              // int, 0 to 2: print file system activity
+// set fs_copyfiles 0                          // bool, command line only
+// set fs_cdpath <set at startup>              // string, command line only: extra read-only game folder
+// set fs_basepath <set at startup>            // string, command line only: folder where the game is installed
+// set fs_basegame ""                          // string, command line only
+// set fs_useOldAssets 0                       // bool
+// set fs_homepath <set at startup>            // string, command line only: folder where logs and downloaded files are written
+// set fs_restrict 0                           // bool, command line only: restrict the server to demo content
+// set fs_ignoreLocalized 0                    // bool, command line only: ignore localized .iwd files
+
+// --- Engine ---
+// version                                     // string, read-only: full version string of this build
+// shortversion                                // string, read-only: game version of this build
+// com_errorMessage                            // string, read-only
+// com_errorTitle                              // string, read-only
+// set com_maxfps 85                           // int, 0 to 1000: frame rate cap
+// set developer 0                             // int, 0 to 2: developer mode: extra console output
+// set developer_script 0                      // bool: enable script debugging features
+// set logfile 0                               // int, 0 to 2: write the console to console_mp.log: 0 = off, 1 = buffered, 2 = flushed on every line
+// set timescale 1.0                           // float, 0.001 to 1000.0, needs sv_cheats 1: game speed multiplier
+// set fixedtime 0                             // int, 0 to 1000, needs sv_cheats 1
+// set viewlog 0                               // int, 0 to 2, needs sv_cheats 1: show the console window
+// sv_paused = 0                               // int, 0 to 2, read-only
+// cl_paused = 0                               // int, 0 to 2, read-only
+// sv_running = 0                              // bool, read-only: 1 while a map is loaded
+// set com_introPlayed 0                       // bool
+// set com_animCheck 0                         // bool
+// set loc_language 0                          // int, 0 to 13, applies on the next map or restart: language index: 0 English, 1 French, 2 German, 3 Italian, 4 Spanish, 5 British, 6 Russian, 7 Polish
+// set loc_forceEnglish 0                      // bool, applies on the next map or restart: always use English strings
+// set loc_translate 1                         // bool, applies on the next map or restart
+// set loc_warnings 0                          // bool
+// set loc_warningsAsErrors 0                  // bool
+// set com_hunkMegs 160                        // int, 1 to 512, applies on the next map or restart: megabytes of memory reserved for game data
+
+// --- Platform ---
+// arch = "linux i386"                         // string, read-only
+// username                                    // string, read-only
+// set ttycon 0                                // bool, applies on the next map or restart, Linux only: enable the terminal console
+// set in_mouse 1                              // bool, applies on the next map or restart, Windows only
+// set sys_cpustring "detect"                  // string, Windows only
+// set sys_cpuid <set at startup>              // int, 0 to 2147483647, applies on the next map or restart, Windows only
+// set vid_xpos 3                              // int, -4096 to 4096, Windows only
+// set vid_ypos 22                             // int, -4096 to 4096, Windows only
+// set r_fullscreen 1                          // bool, applies on the next map or restart, Windows only
