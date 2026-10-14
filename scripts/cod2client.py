@@ -1,10 +1,12 @@
-"""A minimal CoD2 client for tests: connects to a server and sends client commands.
+"""A minimal CoD2 client for tests.
 
-It speaks just enough of the protocol to get a client slot and run commands
-through the same path as a real player (netchan, XOR decoding, Huffman
-decompression, SV_ClientCommand). It never enters the game or reads snapshots.
+It speaks just enough of the protocol to take a client slot, receive the
+gamestate, enter the game and send client commands and moves through the same
+path as a real player: netchan (including fragments both ways), the XOR keys,
+Huffman compression, SV_ClientCommand and SV_UserMove. It does not parse
+snapshots, so it never knows where its player is.
 """
-import random, socket
+import random, socket, time
 
 PREFIX = b'\xff\xff\xff\xff'
 
@@ -55,9 +57,19 @@ HUFFMAN_CODES = """
     1011000101 1111010 001001
 """.split()
 assert len(HUFFMAN_CODES) == 256
+HUFFMAN_SYMBOLS = {code: symbol for symbol, code in enumerate(HUFFMAN_CODES)}
 
+FRAGMENT_SIZE = 1300
+FRAGMENT_BIT = 1 << 31
+
+SVC_GAMESTATE = 1
+SVC_EOF = 7
+
+CLC_MOVE_NO_DELTA = 1
 CLC_CLIENT_COMMAND = 2
 CLC_EOF = 3
+
+KEY_MASK_MOVE_FORWARD = 1
 
 
 def huffman_compress(data):
@@ -71,6 +83,46 @@ def huffman_compress(data):
                 out[-1] |= 1 << (bit & 7)
             bit += 1
     return bytes(out)
+
+
+def huffman_decompress(data):
+    """Decodes until the input runs out; a symbol cut short by the end of the
+    input (the padding of the last byte) is dropped, as the server does."""
+    out = bytearray()
+    code = ''
+    for i in range(len(data) * 8):
+        code += '1' if (data[i >> 3] >> (i & 7)) & 1 else '0'
+        symbol = HUFFMAN_SYMBOLS.get(code)
+        if symbol is not None:
+            out.append(symbol)
+            code = ''
+    return bytes(out)
+
+
+def xor_codec(data, key, string):
+    """SV_Netchan_Encode / SV_Netchan_Decode: the key is changed by each byte
+    of a command string both sides know, cycling through it."""
+    # the server's buffers are zero filled, so an empty string reads as zeros
+    string = string.encode('latin-1') + b'\0\0'
+    out = bytearray(data)
+    index = 0
+    for i in range(len(out)):
+        if string[index] == 0:
+            index = 0
+        key = (key ^ (string[index] << (i & 1))) & 0xff
+        out[i] ^= key
+        index += 1
+    return bytes(out)
+
+
+def hash_key(string, maxlen=32):
+    """Com_HashKey, with the signed chars of the server."""
+    h = 0
+    for i, c in enumerate(string.encode('latin-1')[:maxlen]):
+        h += (c - 256 if c > 127 else c) * (119 + i)
+    h &= 0xffffffff
+    h = (h ^ (h >> 10) ^ (h >> 20)) & 0xffffffff
+    return h
 
 
 class MsgWriter:
@@ -90,6 +142,9 @@ class MsgWriter:
                 self.data[self.bit >> 3] |= 1 << (self.bit & 7)
             self.bit += 1
 
+    def byte(self, value):
+        self.data.append(value & 0xff)
+
     def long(self, value):
         self.data += (value & 0xffffffff).to_bytes(4, 'little')
 
@@ -103,12 +158,23 @@ class Client:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(timeout)
         self.qport = random.randint(1, 0xffff)
+        self.protocol = 0
         self.challenge = 0
-        self.sequence = 0
+        self.outgoing_sequence = 0
+        self.incoming_sequence = 0
         self.command_sequence = 0
+        self.last_command = ''
+        self.fragment_sequence = None
+        self.fragment_buffer = bytearray()
+        self.client_num = None
+        self.checksum_feed = None
+        self.server_time = 1000
+        self.messages_received = 0
 
     def close(self):
         self.sock.close()
+
+    # connectionless
 
     def _oob(self, text, reply):
         """Sends a connectionless packet and returns the reply line that starts
@@ -123,6 +189,7 @@ class Client:
 
     def connect(self, protocol, name):
         """Returns None once connected, otherwise the server's reply."""
+        self.protocol = protocol
         line = self._oob('getchallenge', 'challengeResponse')
         if not line.startswith('challengeResponse'):
             return line
@@ -132,28 +199,184 @@ class Client:
         line = self._oob('connect "%s"' % userinfo, 'connectResponse')
         return None if line.startswith('connectResponse') else line
 
-    def command(self, server_id, text):
-        """Sends one reliable client command, as a client on the current map would."""
-        self.command_sequence += 1
+    # netchan
+
+    def _fragment_start(self, value=None):
+        """1.3 sends fragment offsets as longs, older versions as shorts."""
+        size = 4 if self.protocol == 118 else 2
+        return size if value is None else (value & (1 << size * 8) - 1).to_bytes(size, 'little')
+
+    def _transmit(self, message):
+        """Netchan_Transmit: messages of FRAGMENT_SIZE or more go in fragments,
+        and one ending exactly on a fragment boundary gets an empty last one."""
+        self.outgoing_sequence += 1
+        header = self.outgoing_sequence.to_bytes(4, 'little') + self.qport.to_bytes(2, 'little')
+        if len(message) < FRAGMENT_SIZE:
+            self.sock.sendto(header + message, self.addr)
+            return 1
+        header = ((self.outgoing_sequence | FRAGMENT_BIT).to_bytes(4, 'little')
+                  + self.qport.to_bytes(2, 'little'))
+        start = 0
+        fragments = 0
+        while True:
+            chunk = message[start:start + FRAGMENT_SIZE]
+            self.sock.sendto(header + self._fragment_start(start)
+                             + len(chunk).to_bytes(2, 'little') + chunk, self.addr)
+            fragments += 1
+            start += len(chunk)
+            if len(chunk) < FRAGMENT_SIZE:
+                return fragments
+            time.sleep(0.01)
+
+    def _process(self, packet):
+        """Netchan_Process for server packets: returns (sequence, message) once a
+        message is complete, otherwise None."""
+        if len(packet) < 4:
+            return None
+        sequence = int.from_bytes(packet[:4], 'little')
+        body = packet[4:]
+        if sequence & FRAGMENT_BIT:
+            sequence &= ~FRAGMENT_BIT
+            size = self._fragment_start()
+            if len(body) < size + 2:
+                return None
+            start = int.from_bytes(body[:size], 'little')
+            length = int.from_bytes(body[size:size + 2], 'little')
+            chunk = body[size + 2:size + 2 + length]
+            if sequence != self.fragment_sequence:
+                self.fragment_sequence = sequence
+                self.fragment_buffer = bytearray()
+            if start != len(self.fragment_buffer) or len(chunk) != length:
+                return None
+            self.fragment_buffer += chunk
+            if length == FRAGMENT_SIZE:
+                return None
+            body = bytes(self.fragment_buffer)
+            self.fragment_buffer = bytearray()
+        if sequence <= self.incoming_sequence:
+            return None
+        self.incoming_sequence = sequence
+        self.messages_received += 1
+        return sequence, body
+
+    def receive(self, seconds):
+        """Reads server packets for up to seconds; returns the complete messages."""
+        messages = []
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            self.sock.settimeout(max(0.01, deadline - time.time()))
+            try:
+                packet, _ = self.sock.recvfrom(65535)
+            except socket.timeout:
+                break
+            if packet.startswith(PREFIX):
+                continue
+            message = self._process(packet)
+            if message:
+                messages.append(message)
+        return messages
+
+    # client messages
+
+    def _send(self, server_id, payload):
+        """Sends a client message. The server commands stay unacknowledged
+        (reliable acknowledge 0, whose slot is empty), which keeps the XOR and
+        usercmd keys independent of what the server sent; that is fine for the
+        few seconds a test lasts."""
+        message_ack = self.incoming_sequence
+        body = huffman_compress(payload.data)
+        body = xor_codec(body, (self.challenge ^ server_id ^ message_ack) & 0xff, '')
+        message = (bytes([server_id & 0xff]) + message_ack.to_bytes(4, 'little')
+                   + (0).to_bytes(4, 'little') + body)
+        return self._transmit(message)
+
+    def _write_commands(self, payload, texts):
+        for text in texts:
+            self.command_sequence += 1
+            payload.bits(CLC_CLIENT_COMMAND, 3)
+            payload.long(self.command_sequence)
+            payload.string(text)
+            self.last_command = text
+
+    def commands(self, server_id, texts):
+        """Sends reliable client commands in one message; returns the number of
+        packets it took."""
         payload = MsgWriter()
-        payload.bits(CLC_CLIENT_COMMAND, 3)
-        payload.long(self.command_sequence)
-        payload.string(text)
+        self._write_commands(payload, texts)
         payload.bits(CLC_EOF, 3)
-        body = bytearray(huffman_compress(payload.data))
+        return self._send(server_id, payload)
 
-        # SV_Netchan_Decode: with no server command acknowledged its key string
-        # is empty, so every byte is XORed with the same key
-        message_ack = 0
-        key = (self.challenge ^ server_id ^ message_ack) & 0xff
-        for i in range(len(body)):
-            body[i] ^= key
+    def command(self, server_id, text):
+        return self.commands(server_id, [text])
 
-        self.sequence += 1
-        packet = (self.sequence.to_bytes(4, 'little')
-                  + self.qport.to_bytes(2, 'little')
-                  + bytes([server_id & 0xff])
-                  + message_ack.to_bytes(4, 'little')
-                  + (0).to_bytes(4, 'little')  # reliable acknowledge
-                  + bytes(body))
-        self.sock.sendto(packet, self.addr)
+    def request_gamestate(self, server_id, seconds=5.0):
+        """Sends a message from an older map, which makes the server send the
+        gamestate, and reads the client number and checksum feed at its end.
+        Returns True once they are known."""
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            payload = MsgWriter()
+            payload.bits(CLC_EOF, 3)
+            self._send(server_id ^ 0xf0, payload)
+            for sequence, data in self.receive(1.0):
+                # the first 4 bytes are neither encoded nor compressed; nothing
+                # was sent yet, so the encoding string is still empty
+                out = huffman_decompress(
+                    xor_codec(data[4:], (self.challenge ^ sequence) & 0xff, self.last_command))
+                if self._read_gamestate_end(out):
+                    return True
+        return False
+
+    def _read_gamestate_end(self, out):
+        """The gamestate ends with svc_EOF, the client number, the checksum feed
+        and svc_EOF, all byte aligned; the baselines before them need not be
+        parsed. Padding bits can add a few symbols after the last svc_EOF."""
+        if SVC_GAMESTATE not in out[:64]:
+            return False
+        for k in range(len(out) - 10, max(-1, len(out) - 40), -1):
+            if out[k] == SVC_EOF and out[k + 9] == SVC_EOF:
+                client_num = int.from_bytes(out[k + 1:k + 5], 'little')
+                if client_num < 64:
+                    self.client_num = client_num
+                    self.checksum_feed = int.from_bytes(out[k + 5:k + 9], 'little')
+                    return True
+        return False
+
+    def _write_move(self, payload, forward):
+        """One usercmd as MSG_ReadDeltaUsercmdKey reads it against the default
+        command: absolute server time, then changed fields XORed with the key."""
+        message_ack = self.incoming_sequence
+        key = (self.checksum_feed ^ message_ack ^ hash_key('')) & 0xffffffff
+        self.server_time += 50
+
+        payload.bits(CLC_MOVE_NO_DELTA, 3)
+        payload.byte(1)                          # command count
+        payload.bits(0, 1)                       # absolute server time
+        payload.long(self.server_time)
+        payload.bits(1 ^ (key & 1), 1)           # something changed
+        payload.bits(0 ^ (key & 1), 1)           # only buttons, angles and move
+        key ^= self.server_time
+        payload.bits(0 ^ (key & 1), 1)           # not attacking
+        payload.bits(0, 1)                       # pitch unchanged
+        payload.bits(0, 1)                       # yaw unchanged
+        payload.bits(1, 1)                       # move keys changed
+        payload.bits((KEY_MASK_MOVE_FORWARD if forward else 0) ^ (key & 0xf), 4)
+
+    def enter_game(self, server_id, seconds=2.0):
+        """Validates the iwds the way a client that references none would, then
+        keeps moving forward. The first move makes the server put the client in
+        the world. Needs request_gamestate first."""
+        payload = MsgWriter()
+        # SV_VerifyIwds_f: no iwds, then the checksum feed XORed with their
+        # count, as the signed int atoi reads
+        feed = self.checksum_feed ^ 0
+        self._write_commands(payload, ['cp @ %d' % (feed - (1 << 32) if feed >= 1 << 31 else feed)])
+        self._write_move(payload, True)
+        self._send(server_id, payload)
+
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            self.receive(0.05)
+            payload = MsgWriter()
+            self._write_move(payload, True)
+            self._send(server_id, payload)

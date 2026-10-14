@@ -7,7 +7,7 @@ The game folder is only read: logs and configs go to a temporary home folder.
 The server runs in LAN mode (dedicated 1), so nothing is sent to the master
 servers. Exits with 0 when every check passes.
 """
-import argparse, os, re, secrets, socket, subprocess, sys, tempfile, time
+import argparse, os, random, re, secrets, socket, string, subprocess, sys, tempfile, time
 
 import cod2client
 
@@ -30,7 +30,7 @@ def query(port, command, timeout=2.0):
 
 
 def players(port):
-    """Names of the clients listed by getstatus, or None without a reply."""
+    """{name: ping} of the clients listed by getstatus, or None without a reply."""
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.settimeout(2.0)
         s.sendto(PREFIX + b'getstatus', ('127.0.0.1', port))
@@ -39,7 +39,8 @@ def players(port):
         except OSError:
             return None
     lines = data[len(PREFIX):].decode('latin-1').split('\n')[2:]
-    return [m.group(1) for m in (re.match(r'-?\d+ -?\d+ "(.*)"', l) for l in lines) if m]
+    return {m.group(2): int(m.group(1))
+            for m in (re.match(r'-?\d+ (-?\d+) "(.*)"', l) for l in lines) if m}
 
 
 def rcon(port, password, command):
@@ -63,13 +64,19 @@ def wait_for(condition, seconds=5.0):
 
 
 def check_client(port, protocol, password, check):
-    """Connects a minimal client and renames it with a client command, which
-    goes through netchan, decoding and Huffman decompression like a player's."""
+    """Connects a minimal client that receives the gamestate, enters the game
+    and sends commands, including one message split into fragments, so the
+    netchan, the XOR keys, Huffman decompression, SV_ClientCommand and
+    SV_UserMove are all used as a player uses them."""
     reply = rcon(port, password, 'sv_serverid')
     m = re.search(r'"sv_serverid" is: ?"(-?\d+)', reply)
     check('rcon reply', m is not None, reply.strip().replace('\n', ' ')[:60])
     if not m:
         return
+    server_id = int(m.group(1))
+
+    def listed(name):
+        return name in (players(port) or {})
 
     client = cod2client.Client(port)
     try:
@@ -80,11 +87,30 @@ def check_client(port, protocol, password, check):
         check('client connects', refused is None, refused or '')
         if refused is not None:
             return
-        check('client listed', wait_for(lambda: 'smokeclient' in (players(port) or [])))
+        check('client listed', wait_for(lambda: listed('smokeclient')))
 
-        client.command(int(m.group(1)), 'userinfo "\\name\\smokerenamed\\rate\\25000\\snaps\\20"')
-        check('client command runs', wait_for(lambda: 'smokerenamed' in (players(port) or [])),
-              ', '.join(players(port) or []))
+        got = client.request_gamestate(server_id)
+        check('client receives the gamestate', got,
+              f'client {client.client_num}, {client.messages_received} messages' if got else '')
+        if not got:
+            return
+
+        client.enter_game(server_id, 2.0)
+        ping = (players(port) or {}).get('smokeclient')
+        check('client enters the game', ping is not None and 0 <= ping < 999, f'ping {ping}')
+
+        client.command(server_id, 'userinfo "\\name\\smokerenamed\\rate\\25000\\snaps\\20"')
+        check('client command runs', wait_for(lambda: listed('smokerenamed')),
+              ', '.join(players(port) or {}))
+
+        # three userinfo commands of high-entropy text do not fit one packet
+        rng = random.Random(1)
+        texts = ['userinfo "\\name\\smokefragment%d\\rate\\25000\\snaps\\20\\pad\\%s"'
+                 % (i, ''.join(rng.choice(string.ascii_letters + string.digits) for _ in range(850)))
+                 for i in range(3)]
+        packets = client.commands(server_id, texts)
+        check('fragmented client message runs', packets > 1 and wait_for(lambda: listed('smokefragment2')),
+              f'{packets} packets')
     finally:
         client.close()
 
