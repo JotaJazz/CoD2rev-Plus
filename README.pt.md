@@ -1,0 +1,126 @@
+# CoD2rev_Server (fork do JotaJazz)
+
+[Español](README.md) · [English](README.en.md) · **Português** · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
+
+Código-fonte, obtido por engenharia reversa, do servidor dedicado de **Call of Duty 2** (versão 1.0, protocolo 115).
+Corrige vários erros dos binários originais e permite estender a funcionalidade do servidor.
+
+Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), onde foi feito todo o trabalho de engenharia reversa. Aqui só são acrescentadas as alterações descritas em [Alterações deste fork](#alterações-deste-fork).
+
+## Transparência
+
+- **Quem mantém isto:** sou o JotaJazz. Gosto de jogos antigos e este fork existe por isso: quero continuar a poder ter um servidor de CoD2 nas minhas próprias máquinas.
+- **Como se trabalha aqui:** trabalho com o [Claude Code](https://claude.com/claude-code), o assistente de programação da Anthropic. As alterações deste fork, incluindo este README e as suas traduções, são escritas com a sua ajuda. Os commits feitos assim têm a linha `Co-Authored-By: Claude` na mensagem, pelo que podem ser identificados no histórico com `git log`.
+- **Relação com o original:** este fork traz alterações do repositório original quando existem, mas não lhe envia as suas. É provável que com o tempo se afaste dele.
+- **O que não é:** não é um projeto oficial nem está associado à Activision, à Infinity Ward ou ao autor do repositório original. Não inclui nenhum ficheiro do jogo.
+
+## Alterações deste fork
+
+- **Compilação para Windows com MinGW** (32 bits), também cruzada a partir do Linux.
+- **Palavras-passe fora do log:** `rcon_password` e `sv_privatePassword` aparecem como `********` no registo da consola.
+- **Bloqueio de rcon por tentativas falhadas:** depois de várias palavras-passe erradas, o endereço IP é ignorado pelo rcon durante algum tempo. Uma palavra-passe correta reinicia o contador e os endereços `127.x.x.x` nunca são bloqueados.
+- **Master servers:**
+  - `sv_master2` vem configurado com `master.cod2x.me`, o master da comunidade CoD2x.
+  - O formato `host:porta` em `sv_master1`–`sv_master5` agora funciona.
+  - Uma falha de DNS é repetida em vez de apagar o master.
+- **Lançador para Windows:** `scripts/windows/iniciar_cod2rev.bat`.
+
+### Variáveis novas
+
+| Variável | Predefinição | Intervalo | Descrição |
+| --- | --- | --- | --- |
+| `sv_rconMaxAttempts` | `5` | 0–100 | Palavras-passe de rcon erradas permitidas por IP antes do bloqueio. `0` desativa o bloqueio. |
+| `sv_rconLockTime` | `600` | 0–86400 | Duração do bloqueio em segundos. É também a janela em que as tentativas são contadas. |
+
+## Versões do jogo
+
+- **O servidor identifica-se como 1.0** (protocolo 115). É o que anuncia aos master servers e nas suas respostas de informação.
+- **Aceita clientes de outras versões.** Com o libcod, que vem ativado por predefinição, admite ligações com protocolos de 115 a 119. Isso inclui a 1.3 (protocolo 118) e a versão do Game Pass (protocolo 119), com ajustes por cliente no código de rede.
+- **Não testado com clientes reais neste fork.** O que está acima resulta da leitura do código. Como o servidor se anuncia com o protocolo 115, é possível que um cliente de outra versão não o veja na sua lista de servidores e tenha de se ligar por IP.
+
+## Compilar
+
+O resultado fica em `bin/` e os objetos intermédios em `obj/`.
+
+### Windows (cruzado a partir do Linux com MinGW)
+
+Precisa do compilador MinGW-w64 de 32 bits (`i686-w64-mingw32`).
+
+```bash
+mkdir -p bin obj
+make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+```
+
+Gera `bin/cod2rev_win32.exe`.
+
+### Linux
+
+O servidor é um binário x86 de 32 bits. Num sistema de 64 bits é necessário o suporte de 32 bits do GCC (em Debian e Ubuntu, os pacotes `gcc-multilib` e `g++-multilib`):
+
+```bash
+make CC="gcc -m32"
+```
+
+Gera `bin/cod2rev_lnxded`.
+
+### Compilação automática
+
+Cada push para `master` compila as duas versões no GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Os binários resultantes podem ser descarregados como artefactos no separador [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) do repositório.
+
+### Opções do Makefile
+
+| Opção | Predefinição | Descrição |
+| --- | --- | --- |
+| `WITH_LIBCOD` | `true` | Inclui as extensões de script do libcod (bots, jogadores, entidades, armas, utilitários, etc.). |
+| `WITH_SQLITE` | `true` | Funções de script para SQLite. |
+| `WITH_MYSQL` | `false` | Funções de script para MySQL. Requer a biblioteca cliente do MySQL. |
+
+`make clean` apaga o binário e os objetos.
+
+## Executar
+
+O servidor precisa dos ficheiros do jogo original (a pasta `main` com os seus `.iwd`), que não estão neste repositório. É preciso ter uma cópia própria de Call of Duty 2.
+
+### Windows
+
+1. Copiar `cod2rev_win32.exe` e `scripts/windows/iniciar_cod2rev.bat` para a pasta do jogo, junto a `main`.
+2. Ter um `server.cfg` em `main`.
+3. Executar `iniciar_cod2rev.bat`.
+
+O lançador inicia o servidor na porta `28970`, para não colidir com o cliente do jogo que usa a `28960` no mesmo PC, e carrega o mapa `mp_toujane`. Usa `dedicated 1` (LAN ou IP direto); com `dedicated 2` o servidor é anunciado na lista pública.
+
+### Autorização de chaves
+
+O servidor consulta `cod2master.activision.com` para validar a chave de cada cliente que não esteja na rede local. Com `sv_cracked 1` continua a fazer a consulta, mas aceita o cliente seja qual for a resposta. O lançador de Windows ativa-o; retire-o da linha de comandos se quiser que seja exigida uma chave válida.
+
+### Linux
+
+`run_bin.sh` é o script de testes do projeto original: inicia `bin/cod2rev_lnxded` em modo de desenvolvimento com cheats ativados e bots de teste. Serve de exemplo de parâmetros, não de configuração para um servidor real.
+
+## Estrutura do repositório
+
+| Caminho | Conteúdo |
+| --- | --- |
+| `src/server` | Lógica do servidor: clientes, rede, rcon, master servers. |
+| `src/game`, `src/bgame` | Lógica de jogo. |
+| `src/script` | Máquina virtual de scripts GSC. |
+| `src/qcommon`, `src/universal` | Código comum: comandos, variáveis (dvars), sistema de ficheiros, rede. |
+| `src/xanim` | Modelos e animações. |
+| `src/stringed` | Textos localizados. |
+| `src/libcod` | Extensões de script do libcod, com SQLite e os cabeçalhos do MySQL. |
+| `src/win32`, `src/unix` | Código específico de cada plataforma. |
+| `src/zlib` | Cópia do zlib. |
+| `test` | Material da engenharia reversa: base de dados do IDA, tabelas de offsets e carregador de testes. |
+| `scripts/windows` | Lançador para Windows. |
+
+## Licença
+
+[GNU Affero General Public License v3.0](LICENSE), a mesma do projeto original.
+
+## Créditos
+
+- [voron00](https://github.com/voron00/CoD2rev_Server), autor do projeto original
+- id Software
+- Activision / Infinity Ward
+- [CoD4x Server](https://github.com/callofduty4x/CoD4x_Server)
+- [OpenBO2](https://github.com/builtbyxeno/OpenBO2)

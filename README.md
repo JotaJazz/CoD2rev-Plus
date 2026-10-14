@@ -1,5 +1,7 @@
 # CoD2rev_Server (fork de JotaJazz)
 
+**Español** · [English](README.en.md) · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
+
 Código fuente, obtenido por ingeniería inversa, del servidor dedicado de **Call of Duty 2** (versión 1.0, protocolo 115).
 Corrige varios errores de los binarios originales y permite extender la funcionalidad del servidor.
 
@@ -8,7 +10,7 @@ Este repositorio es un fork de [voron00/CoD2rev_Server](https://github.com/voron
 ## Transparencia
 
 - **Quién mantiene esto:** soy JotaJazz. Me gustan los juegos antiguos y este fork existe por eso: quiero seguir pudiendo levantar un servidor de CoD2 en mis propias máquinas.
-- **Cómo se trabaja aquí:** trabajo con [Claude Code](https://claude.com/claude-code), el asistente de programación de Anthropic. Los cambios de este fork, incluido este README, están escritos con su ayuda. Los commits hechos así llevan la línea `Co-Authored-By: Claude` en el mensaje, de modo que se pueden identificar en el historial con `git log`.
+- **Cómo se trabaja aquí:** trabajo con [Claude Code](https://claude.com/claude-code), el asistente de programación de Anthropic. Los cambios de este fork, incluidos este README y sus traducciones, están escritos con su ayuda. Los commits hechos así llevan la línea `Co-Authored-By: Claude` en el mensaje, de modo que se pueden identificar en el historial con `git log`.
 - **Relación con el original:** este fork trae cambios del repositorio original cuando los hay, pero no le envía los suyos. Es probable que con el tiempo se aleje de él.
 - **Qué no es:** no es un proyecto oficial ni está afiliado a Activision, Infinity Ward ni al autor del repositorio original. No incluye ningún archivo del juego.
 
@@ -29,6 +31,12 @@ Este repositorio es un fork de [voron00/CoD2rev_Server](https://github.com/voron
 | --- | --- | --- | --- |
 | `sv_rconMaxAttempts` | `5` | 0–100 | Contraseñas de rcon incorrectas permitidas por IP antes del bloqueo. `0` desactiva el bloqueo. |
 | `sv_rconLockTime` | `600` | 0–86400 | Segundos que dura el bloqueo. También es la ventana en la que se cuentan los intentos. |
+
+## Versiones del juego
+
+- **El servidor se identifica como 1.0** (protocolo 115). Es lo que anuncia a los master servers y en sus respuestas de información.
+- **Acepta clientes de otras versiones.** Con libcod, que viene activado por defecto, admite conexiones con protocolos del 115 al 119. Eso incluye la 1.3 (protocolo 118) y la versión de Game Pass (protocolo 119), con ajustes por cliente en el código de red.
+- **Sin probar con clientes reales en este fork.** Lo anterior sale de leer el código. Como el servidor se anuncia con el protocolo 115, es posible que un cliente de otra versión no lo vea en su lista de servidores y tenga que conectarse por IP.
 
 ## Compilar
 
@@ -80,6 +88,10 @@ El servidor necesita los archivos del juego original (la carpeta `main` con sus 
 3. Ejecutar `iniciar_cod2rev.bat`.
 
 El lanzador arranca el servidor en el puerto `28970`, para no chocar con el cliente del juego que usa el `28960` en el mismo PC, y carga el mapa `mp_toujane`. Usa `dedicated 1` (LAN o IP directa); con `dedicated 2` el servidor se anuncia en la lista pública.
+
+### Autorización de claves
+
+El servidor consulta `cod2master.activision.com` para validar la clave de cada cliente que no esté en la red local. Con `sv_cracked 1` sigue haciendo la consulta, pero acepta al cliente sea cual sea la respuesta. El lanzador de Windows lo activa; quítalo de la línea de comandos si quieres que se exija una clave válida.
 
 ### Linux
 
