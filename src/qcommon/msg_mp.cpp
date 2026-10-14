@@ -553,6 +553,11 @@ char *MSG_ReadBigString( msg_t *msg )
 		}
 	}
 
+	if ( l >= sizeof( string ) )
+	{
+		l = sizeof( string ) - 1;
+	}
+
 	string[l] = 0;
 
 	return string;
@@ -770,25 +775,40 @@ void MSG_WriteAngle16( msg_t *sb, float f )
 MSG_ReadBitsCompress
 ==============
 */
-int MSG_ReadBitsCompress( byte *from, byte *to, int toSizeBytes )
+int MSG_ReadBitsCompress( const byte *from, int fromSizeBytes, byte *to, int toSizeBytes )
 {
-	byte *data;
+	const node_t *node;
 	int bit;
 	int bits;
-	int get;
+	int count;
 
-	bits = toSizeBytes * 8;
-	data = to;
+	// a symbol can be a single bit, so the output must be bounded by the
+	// output buffer and not by the size of the input
+	bits = fromSizeBytes * 8;
 	bit = 0;
 
-	while ( bits > bit )
+	for ( count = 0; count < toSizeBytes && bit < bits; count++ )
 	{
-		Huff_offsetReceive(msgHuff.decompressor.tree, &get, from, &bit);
-		*data = get;
-		*data++;
+		node = msgHuff.decompressor.tree;
+
+		while ( node && node->symbol == INTERNAL_NODE )
+		{
+			// a symbol cut short by the end of the input is dropped
+			if ( bit >= bits )
+				return count;
+
+			if ( ( from[bit >> 3] >> ( bit & 7 ) ) & 1 )
+				node = node->right;
+			else
+				node = node->left;
+
+			bit++;
+		}
+
+		to[count] = node ? node->symbol : 0;
 	}
 
-	return data - to;
+	return count;
 }
 
 // Q3 TA freq. table.

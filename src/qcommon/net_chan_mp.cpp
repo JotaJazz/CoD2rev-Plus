@@ -1042,7 +1042,8 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 		return qfalse;
 	}
 
-	if ( chan->fragmentLength > msg->maxsize )
+	// the sequence number goes in front of the reassembled message
+	if ( chan->fragmentLength + 4 > msg->maxsize )
 	{
 		Com_Printf( "%s:fragmentLength %i > msg->maxsize\n"
 		            , NET_AdrToString( chan->remoteAddress ),

@@ -2296,7 +2296,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 
 	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
-	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount);
+	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msg->cursize - msg->readcount, msgBuf, sizeof(msgBuf));
 
 	// if this is a usercmd from a previous gamestate,
 	// ignore it or retransmit the current gamestate

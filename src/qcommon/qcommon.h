@@ -397,7 +397,7 @@ void MSG_WriteBit1(msg_t *msg);
 int MSG_ReadBits(msg_t *msg, int bits);
 int MSG_ReadBit(msg_t *msg);
 int MSG_WriteBitsCompress( byte *from, byte *to, int fromSizeBytes );
-int MSG_ReadBitsCompress( byte *from, byte *to, int toSizeBytes );
+int MSG_ReadBitsCompress( const byte *from, int fromSizeBytes, byte *to, int toSizeBytes );
 void MSG_WriteByte( msg_t *msg, int c );
 void MSG_WriteData(msg_t *buf, const void *data, int length);
 void MSG_WriteShort( msg_t *msg, int c );
