@@ -1028,6 +1028,20 @@ void SV_SpawnServer( char *server )
 	// to all clients
 	sv.state = SS_GAME;
 
+	// bots never send the packet that makes a real client ask for the new
+	// gamestate, so without this they stay connected but out of the game
+	for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
+	{
+		if ( cl->state == CS_CONNECTED && cl->bIsTestClient )
+		{
+			usercmd_t nullcmd;
+
+			memset(&nullcmd, 0, sizeof(nullcmd));
+			SV_SendClientGameState(cl);
+			SV_ClientEnterWorld(cl, &nullcmd);
+		}
+	}
+
 	// send a heartbeat now so the master will get up to date info
 	SV_Heartbeat_f();
 
