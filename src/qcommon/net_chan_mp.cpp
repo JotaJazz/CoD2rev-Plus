@@ -904,7 +904,19 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 	// read the fragment information
 	if ( fragmented )
 	{
+		// 1.3 widened the fragment offset to 32 bits, in both directions
+#ifdef LIBCOD
+		if (chan->protocol == 118)
+			fragmentStart = MSG_ReadLong( msg );
+		else
+			fragmentStart = MSG_ReadShort( msg );
+#else
+#if PROTOCOL_VERSION == 118
+		fragmentStart = MSG_ReadLong( msg );
+#else
 		fragmentStart = MSG_ReadShort( msg );
+#endif
+#endif
 		fragmentLength = MSG_ReadShort( msg );
 	}
 	else
