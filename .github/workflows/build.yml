@@ -27,7 +27,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p bin obj
-          make -j"$(nproc)" CC="gcc -m32" PROTOCOL=${{ matrix.protocol }} bin/cod2rev_lnxded
+          make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }} bin/cod2rev_lnxded
       - uses: actions/upload-artifact@v7
         with:
           name: cod2rev_lnxded-${{ matrix.version }}
@@ -54,7 +54,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p bin obj
-          make -j"$(nproc)" OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres PROTOCOL=${{ matrix.protocol }} bin/cod2rev_win32.exe
+          make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }} windows
       - uses: actions/upload-artifact@v7
         with:
           name: cod2rev_win32-${{ matrix.version }}

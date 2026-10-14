@@ -1,0 +1,50 @@
+// Example server configuration for CoD2rev_Server.
+// Copy it to the "main" folder of the game as server.cfg and edit it.
+// Do not commit your real server.cfg: it holds passwords.
+
+// --- Identity ---
+set sv_hostname "My CoD2 server"
+set sv_maxclients 20            // 1-64, takes effect on the next map load
+set sv_privateClients 0         // slots reserved for sv_privatePassword
+set sv_privatePassword ""
+set g_password ""               // password to join; empty = public
+
+// --- Remote console ---
+// Leave rcon_password empty to keep rcon unusable.
+set rcon_password ""
+set sv_rconMaxAttempts 5        // wrong passwords per IP before the lockout, 0 = no lockout
+set sv_rconLockTime 600         // lockout length in seconds
+
+// --- Master servers (only used with dedicated 2) ---
+// sv_master1 defaults to cod2master.activision.com and sv_master2 to master.cod2x.me.
+// sv_master3 to sv_master5 are free; host:port is accepted.
+set sv_master3 ""
+
+// --- Network ---
+set sv_fps 20
+set sv_maxRate 25000
+set sv_minPing 0
+set sv_maxPing 0                // 0 = no limit
+set sv_timeout 240
+set sv_floodProtect 1
+set g_antilag 1
+
+// --- Files and downloads ---
+set sv_pure 1                   // clients must use the same .iwd files as the server
+set sv_allowDownload 1
+set sv_wwwDownload 0            // 1 = send clients to sv_wwwBaseURL for downloads
+set sv_wwwBaseURL ""
+
+// --- Game ---
+set g_gametype "tdm"            // dm, tdm, sd, ctf, hq
+set g_allowVote 0
+set sv_kickBanTime 300          // seconds a kicked player stays banned
+set sv_disableClientConsole 0
+
+// --- Logging ---
+set g_log "games_mp.log"
+set g_logSync 0
+
+// --- Map rotation ---
+// The launcher starts the first map itself; the rotation is used from then on.
+set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gametype tdm map mp_dawnville"

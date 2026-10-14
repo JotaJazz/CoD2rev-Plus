@@ -48,8 +48,7 @@ Le résultat est placé dans `bin/` et les objets intermédiaires dans `obj/`.
 Nécessite le compilateur MinGW-w64 32 bits (`i686-w64-mingw32`).
 
 ```bash
-mkdir -p bin obj
-make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+make windows
 ```
 
 Produit `bin/cod2rev_win32.exe`.
@@ -59,7 +58,7 @@ Produit `bin/cod2rev_win32.exe`.
 Le serveur est un binaire x86 32 bits. Sur un système 64 bits, il faut la prise en charge 32 bits de GCC (sous Debian et Ubuntu, les paquets `gcc-multilib` et `g++-multilib`) :
 
 ```bash
-make CC="gcc -m32"
+make
 ```
 
 Produit `bin/cod2rev_lnxded`.
@@ -89,7 +88,7 @@ Le serveur a besoin des fichiers du jeu d'origine (le dossier `main` avec ses fi
 ### Windows
 
 1. Copier `cod2rev_win32.exe` et `scripts/windows/iniciar_cod2rev.bat` dans le dossier du jeu, à côté de `main`.
-2. Avoir un `server.cfg` dans `main`.
+2. Avoir un `server.cfg` dans `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) est un point de départ commenté (en anglais).
 3. Lancer `iniciar_cod2rev.bat`.
 
 Le lanceur démarre le serveur sur le port `28970`, pour ne pas entrer en conflit avec le client du jeu qui utilise le `28960` sur le même PC, et charge la carte `mp_toujane`. Il utilise `dedicated 1` (réseau local ou IP directe) ; avec `dedicated 2`, le serveur est annoncé dans la liste publique.

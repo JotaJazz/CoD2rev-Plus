@@ -48,8 +48,7 @@ The output goes to `bin/` and intermediate objects to `obj/`.
 Requires the 32-bit MinGW-w64 compiler (`i686-w64-mingw32`).
 
 ```bash
-mkdir -p bin obj
-make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+make windows
 ```
 
 Produces `bin/cod2rev_win32.exe`.
@@ -59,7 +58,7 @@ Produces `bin/cod2rev_win32.exe`.
 The server is a 32-bit x86 binary. On a 64-bit system you need GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
 
 ```bash
-make CC="gcc -m32"
+make
 ```
 
 Produces `bin/cod2rev_lnxded`.
@@ -89,7 +88,7 @@ The server needs the original game files (the `main` folder with its `.iwd` file
 ### Windows
 
 1. Copy `cod2rev_win32.exe` and `scripts/windows/iniciar_cod2rev.bat` into the game folder, next to `main`.
-2. Have a `server.cfg` in `main`.
+2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) is a commented starting point.
 3. Run `iniciar_cod2rev.bat`.
 
 The launcher starts the server on port `28970`, to avoid clashing with the game client that uses `28960` on the same PC, and loads the map `mp_toujane`. It uses `dedicated 1` (LAN or direct IP); with `dedicated 2` the server is announced on the public list.

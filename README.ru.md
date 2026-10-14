@@ -48,8 +48,7 @@
 Нужен 32-битный компилятор MinGW-w64 (`i686-w64-mingw32`).
 
 ```bash
-mkdir -p bin obj
-make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+make windows
 ```
 
 Создаёт `bin/cod2rev_win32.exe`.
@@ -59,7 +58,7 @@ make OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windre
 Сервер — это 32-битный бинарный файл x86. В 64-битной системе нужна поддержка 32 бит в GCC (в Debian и Ubuntu это пакеты `gcc-multilib` и `g++-multilib`):
 
 ```bash
-make CC="gcc -m32"
+make
 ```
 
 Создаёт `bin/cod2rev_lnxded`.
@@ -89,7 +88,7 @@ make CC="gcc -m32"
 ### Windows
 
 1. Скопируйте `cod2rev_win32.exe` и `scripts/windows/iniciar_cod2rev.bat` в папку игры, рядом с `main`.
-2. Положите `server.cfg` в `main`.
+2. Положите `server.cfg` в `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) — пример с комментариями (на английском).
 3. Запустите `iniciar_cod2rev.bat`.
 
 Скрипт запускает сервер на порту `28970`, чтобы не конфликтовать с клиентом игры, который на том же компьютере использует `28960`, и загружает карту `mp_toujane`. Используется `dedicated 1` (локальная сеть или прямой IP); с `dedicated 2` сервер объявляется в публичном списке.
