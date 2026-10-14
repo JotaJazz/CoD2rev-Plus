@@ -26,8 +26,8 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 - **Versão do jogo selecionável ao compilar:** o servidor pode ser compilado como 1.0 ou como 1.3.
 - **Correção de um overflow com clientes Game Pass:** enviar a informação do sistema a um cliente com o protocolo 119 podia exceder um buffer e fazer o servidor falhar.
 - **Compilação mais simples:** `make` gera diretamente o binário Linux de 32 bits, `make windows` faz a compilação cruzada para Windows e o GitHub Actions compila todas as variantes em cada push.
-- **`server.cfg` de exemplo:** `scripts/server.cfg.example` lista todas as variáveis que o servidor regista.
-- **Lançador para Windows:** `scripts/windows/iniciar_cod2rev.bat`.
+- **`server.cfg` de exemplo:** `scripts/server.cfg.example` lista todas as variáveis que o servidor regista; `scripts/gen_server_cfg.py` volta a gerá-lo a partir do código.
+- **Lançadores:** `scripts/windows/iniciar_cod2rev.bat` e `scripts/linux/iniciar_cod2rev.sh`, com um modo LAN e um modo internet.
 
 ### Variáveis novas
 
@@ -68,11 +68,11 @@ Gera `bin/cod2rev_lnxded`.
 
 ### Versão do jogo
 
-Acrescente `PROTOCOL=118` ao comando `make` para compilar o servidor como 1.3; sem ele, ou com `PROTOCOL=115`, é compilado como 1.0. Execute `make clean` antes de mudar de uma versão para a outra. A compilação automática publica as duas versões para cada plataforma.
+Acrescente `PROTOCOL=118` ao comando `make` para compilar o servidor como 1.3; sem ele, ou com `PROTOCOL=115`, é compilado como 1.0. Cada plataforma e versão guarda os seus próprios objetos em `obj/`, pelo que pode mudar de uma para a outra sem `make clean`. A compilação automática publica as duas versões para cada plataforma.
 
 ### Compilação automática
 
-Cada push para `master` compila as duas versões no GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Os binários resultantes podem ser descarregados como artefactos no separador [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) do repositório.
+Cada push para `master` que altere o código compila as duas versões no GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Os binários resultantes podem ser descarregados como artefactos no separador [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) do repositório.
 
 ### Opções do Makefile
 
@@ -94,13 +94,15 @@ O servidor precisa dos ficheiros do jogo original (a pasta `main` com os seus `.
 2. Ter um `server.cfg` em `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) configura as opções habituais e lista as restantes variáveis que o servidor regista com o seu valor predefinido (comentários em inglês).
 3. Executar `iniciar_cod2rev.bat`.
 
-O lançador inicia o servidor na porta `28970`, para não colidir com o cliente do jogo que usa a `28960` no mesmo PC, e carrega o mapa `mp_toujane`. Usa `dedicated 1` (LAN ou IP direto); com `dedicated 2` o servidor é anunciado na lista pública.
+O lançador inicia o servidor na porta `28970`, para não colidir com o cliente do jogo que usa a `28960` no mesmo PC, e carrega o mapa `mp_toujane`. Por predefinição inicia em modo LAN (`dedicated 1`, LAN ou IP direto); execute `iniciar_cod2rev.bat internet` para anunciar o servidor na lista pública (`dedicated 2`).
 
 ### Autorização de chaves
 
-O servidor consulta `cod2master.activision.com` para validar a chave de cada cliente que não esteja na rede local. Com `sv_cracked 1` continua a fazer a consulta, mas aceita o cliente seja qual for a resposta. O lançador de Windows ativa-o; retire-o da linha de comandos se quiser que seja exigida uma chave válida.
+O servidor consulta `cod2master.activision.com` para validar a chave de cada cliente que não esteja na rede local. Com `sv_cracked 1` continua a fazer a consulta, mas aceita o cliente seja qual for a resposta. Os lançadores ativam-no; retire-o da linha de comandos se quiser que seja exigida uma chave válida.
 
 ### Linux
+
+Copie `cod2rev_lnxded` e `scripts/linux/iniciar_cod2rev.sh` para a pasta do jogo, junto a `main`, com um `server.cfg` em `main`. Execute `./iniciar_cod2rev.sh` para o modo LAN ou `./iniciar_cod2rev.sh internet` para anunciar o servidor na lista pública. Usa a porta `28960` e carrega o mapa `mp_toujane`.
 
 `run_bin.sh` é o script de testes do projeto original: inicia `bin/cod2rev_lnxded` em modo de desenvolvimento com cheats ativados e bots de teste. Serve de exemplo de parâmetros, não de configuração para um servidor real.
 
@@ -118,7 +120,7 @@ O servidor consulta `cod2master.activision.com` para validar a chave de cada cli
 | `src/win32`, `src/unix` | Código específico de cada plataforma. |
 | `src/zlib` | Cópia do zlib. |
 | `test` | Material da engenharia reversa: base de dados do IDA, tabelas de offsets e carregador de testes. |
-| `scripts/windows` | Lançador para Windows. |
+| `scripts` | Lançadores para Windows e Linux, o `server.cfg` de exemplo e o seu gerador. |
 
 ## Licença
 

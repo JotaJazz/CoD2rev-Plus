@@ -26,8 +26,8 @@ Dieses Repository ist ein Fork von [voron00/CoD2rev_Server](https://github.com/v
 - **Spielversion beim Kompilieren wählbar:** Der Server lässt sich als 1.0 oder als 1.3 bauen.
 - **Überlauf bei Game-Pass-Clients behoben:** Das Senden der Systeminformationen an einen Client mit Protokoll 119 konnte einen Puffer überlaufen lassen und den Server zum Absturz bringen.
 - **Einfacheres Bauen:** `make` erzeugt direkt die 32-Bit-Linux-Binärdatei, `make windows` cross-kompiliert für Windows, und GitHub Actions baut bei jedem Push alle Varianten.
-- **Beispiel-`server.cfg`:** `scripts/server.cfg.example` listet alle Variablen auf, die der Server registriert.
-- **Windows-Starter:** `scripts/windows/iniciar_cod2rev.bat`.
+- **Beispiel-`server.cfg`:** `scripts/server.cfg.example` listet alle Variablen auf, die der Server registriert; `scripts/gen_server_cfg.py` erzeugt sie neu aus dem Quellcode.
+- **Startskripte:** `scripts/windows/iniciar_cod2rev.bat` und `scripts/linux/iniciar_cod2rev.sh`, mit einem LAN- und einem Internet-Modus.
 
 ### Neue Variablen
 
@@ -68,11 +68,11 @@ Erzeugt `bin/cod2rev_lnxded`.
 
 ### Spielversion
 
-Hängen Sie `PROTOCOL=118` an den `make`-Befehl an, um den Server als 1.3 zu bauen; ohne diese Angabe oder mit `PROTOCOL=115` wird er als 1.0 gebaut. Führen Sie `make clean` aus, bevor Sie von einer Version zur anderen wechseln. Die automatischen Builds veröffentlichen beide Versionen für jede Plattform.
+Hängen Sie `PROTOCOL=118` an den `make`-Befehl an, um den Server als 1.3 zu bauen; ohne diese Angabe oder mit `PROTOCOL=115` wird er als 1.0 gebaut. Jede Plattform und Version behält ihre eigenen Objekte unter `obj/`, Sie können also ohne `make clean` zwischen ihnen wechseln. Die automatischen Builds veröffentlichen beide Versionen für jede Plattform.
 
 ### Automatische Builds
 
-Jeder Push auf `master` baut beide Versionen in GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Die fertigen Binärdateien lassen sich als Artefakte im Tab [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) des Repositorys herunterladen.
+Jeder Push auf `master`, der den Code ändert, baut beide Versionen in GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Die fertigen Binärdateien lassen sich als Artefakte im Tab [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) des Repositorys herunterladen.
 
 ### Makefile-Optionen
 
@@ -94,13 +94,15 @@ Der Server braucht die Dateien des Originalspiels (den Ordner `main` mit seinen 
 2. Eine `server.cfg` in `main` bereithalten. [`scripts/server.cfg.example`](scripts/server.cfg.example) setzt die üblichen Optionen und listet alle übrigen Variablen, die der Server registriert, mit ihrem Standardwert auf (Kommentare auf Englisch).
 3. `iniciar_cod2rev.bat` ausführen.
 
-Der Starter startet den Server auf Port `28970`, damit er nicht mit dem Spielclient kollidiert, der auf demselben PC `28960` benutzt, und lädt die Karte `mp_toujane`. Er verwendet `dedicated 1` (LAN oder direkte IP); mit `dedicated 2` wird der Server in der öffentlichen Liste angekündigt.
+Der Starter startet den Server auf Port `28970`, damit er nicht mit dem Spielclient kollidiert, der auf demselben PC `28960` benutzt, und lädt die Karte `mp_toujane`. Standardmäßig startet er im LAN-Modus (`dedicated 1`, LAN oder direkte IP); mit `iniciar_cod2rev.bat internet` wird der Server in der öffentlichen Liste angekündigt (`dedicated 2`).
 
 ### Schlüsselautorisierung
 
-Der Server fragt bei `cod2master.activision.com` an, um den Schlüssel jedes Clients zu prüfen, der sich nicht im lokalen Netz befindet. Mit `sv_cracked 1` schickt er die Anfrage weiterhin, akzeptiert den Client aber unabhängig von der Antwort. Der Windows-Starter schaltet das ein; entfernen Sie es aus der Befehlszeile, wenn ein gültiger Schlüssel verlangt werden soll.
+Der Server fragt bei `cod2master.activision.com` an, um den Schlüssel jedes Clients zu prüfen, der sich nicht im lokalen Netz befindet. Mit `sv_cracked 1` schickt er die Anfrage weiterhin, akzeptiert den Client aber unabhängig von der Antwort. Die Startskripte schalten das ein; entfernen Sie es aus der Befehlszeile, wenn ein gültiger Schlüssel verlangt werden soll.
 
 ### Linux
+
+Kopieren Sie `cod2rev_lnxded` und `scripts/linux/iniciar_cod2rev.sh` in den Spielordner, neben `main`, mit einer `server.cfg` in `main`. Starten Sie `./iniciar_cod2rev.sh` für den LAN-Modus oder `./iniciar_cod2rev.sh internet`, um den Server in der öffentlichen Liste anzukündigen. Das Skript verwendet Port `28960` und lädt die Karte `mp_toujane`.
 
 `run_bin.sh` ist das Testskript des Originalprojekts: Es startet `bin/cod2rev_lnxded` im Entwicklermodus mit aktivierten Cheats und Test-Bots. Es dient als Beispiel für Parameter, nicht als Konfiguration für einen echten Server.
 
@@ -118,7 +120,7 @@ Der Server fragt bei `cod2master.activision.com` an, um den Schlüssel jedes Cli
 | `src/win32`, `src/unix` | Plattformspezifischer Code. |
 | `src/zlib` | Kopie von zlib. |
 | `test` | Material aus dem Reverse Engineering: IDA-Datenbank, Offset-Tabellen und Test-Loader. |
-| `scripts/windows` | Windows-Starter. |
+| `scripts` | Startskripte für Windows und Linux, die Beispiel-`server.cfg` und ihr Generator. |
 
 ## Lizenz
 

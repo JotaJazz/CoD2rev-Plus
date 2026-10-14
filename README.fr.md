@@ -26,8 +26,8 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 - **Version du jeu sélectionnable à la compilation :** le serveur peut être compilé en 1.0 ou en 1.3.
 - **Correction d'un débordement avec les clients Game Pass :** l'envoi des informations système à un client utilisant le protocole 119 pouvait faire déborder un tampon et planter le serveur.
 - **Compilation simplifiée :** `make` produit directement le binaire Linux 32 bits, `make windows` fait la compilation croisée pour Windows et GitHub Actions compile toutes les variantes à chaque push.
-- **`server.cfg` d'exemple :** `scripts/server.cfg.example` liste toutes les variables enregistrées par le serveur.
-- **Lanceur pour Windows :** `scripts/windows/iniciar_cod2rev.bat`.
+- **`server.cfg` d'exemple :** `scripts/server.cfg.example` liste toutes les variables enregistrées par le serveur ; `scripts/gen_server_cfg.py` le régénère à partir du code.
+- **Lanceurs :** `scripts/windows/iniciar_cod2rev.bat` et `scripts/linux/iniciar_cod2rev.sh`, avec un mode réseau local et un mode internet.
 
 ### Nouvelles variables
 
@@ -68,11 +68,11 @@ Produit `bin/cod2rev_lnxded`.
 
 ### Version du jeu
 
-Ajoutez `PROTOCOL=118` à la commande `make` pour compiler le serveur en 1.3 ; sans cela, ou avec `PROTOCOL=115`, il est compilé en 1.0. Lancez `make clean` avant de passer d'une version à l'autre. La compilation automatique publie les deux versions pour chaque plateforme.
+Ajoutez `PROTOCOL=118` à la commande `make` pour compiler le serveur en 1.3 ; sans cela, ou avec `PROTOCOL=115`, il est compilé en 1.0. Chaque plateforme et chaque version garde ses propres objets dans `obj/`, vous pouvez donc passer de l'une à l'autre sans `make clean`. La compilation automatique publie les deux versions pour chaque plateforme.
 
 ### Compilation automatique
 
-Chaque push sur `master` compile les deux versions dans GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Les binaires obtenus peuvent être téléchargés comme artefacts depuis l'onglet [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) du dépôt.
+Chaque push sur `master` qui modifie le code compile les deux versions dans GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Les binaires obtenus peuvent être téléchargés comme artefacts depuis l'onglet [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) du dépôt.
 
 ### Options du Makefile
 
@@ -94,13 +94,15 @@ Le serveur a besoin des fichiers du jeu d'origine (le dossier `main` avec ses fi
 2. Avoir un `server.cfg` dans `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) règle les options habituelles et liste toutes les autres variables enregistrées par le serveur avec leur valeur par défaut (commentaires en anglais).
 3. Lancer `iniciar_cod2rev.bat`.
 
-Le lanceur démarre le serveur sur le port `28970`, pour ne pas entrer en conflit avec le client du jeu qui utilise le `28960` sur le même PC, et charge la carte `mp_toujane`. Il utilise `dedicated 1` (réseau local ou IP directe) ; avec `dedicated 2`, le serveur est annoncé dans la liste publique.
+Le lanceur démarre le serveur sur le port `28970`, pour ne pas entrer en conflit avec le client du jeu qui utilise le `28960` sur le même PC, et charge la carte `mp_toujane`. Par défaut, il démarre en mode réseau local (`dedicated 1`, réseau local ou IP directe) ; lancez `iniciar_cod2rev.bat internet` pour annoncer le serveur dans la liste publique (`dedicated 2`).
 
 ### Autorisation des clés
 
-Le serveur interroge `cod2master.activision.com` pour valider la clé de chaque client qui n'est pas sur le réseau local. Avec `sv_cracked 1`, il envoie toujours la requête, mais accepte le client quelle que soit la réponse. Le lanceur Windows l'active ; retirez-le de la ligne de commande si vous voulez qu'une clé valide soit exigée.
+Le serveur interroge `cod2master.activision.com` pour valider la clé de chaque client qui n'est pas sur le réseau local. Avec `sv_cracked 1`, il envoie toujours la requête, mais accepte le client quelle que soit la réponse. Les lanceurs l'activent ; retirez-le de la ligne de commande si vous voulez qu'une clé valide soit exigée.
 
 ### Linux
+
+Copiez `cod2rev_lnxded` et `scripts/linux/iniciar_cod2rev.sh` dans le dossier du jeu, à côté de `main`, avec un `server.cfg` dans `main`. Lancez `./iniciar_cod2rev.sh` pour le mode réseau local ou `./iniciar_cod2rev.sh internet` pour annoncer le serveur dans la liste publique. Il utilise le port `28960` et charge la carte `mp_toujane`.
 
 `run_bin.sh` est le script de test du projet d'origine : il démarre `bin/cod2rev_lnxded` en mode développeur avec les triches activées et des bots de test. Il sert d'exemple de paramètres, pas de configuration pour un vrai serveur.
 
@@ -118,7 +120,7 @@ Le serveur interroge `cod2master.activision.com` pour valider la clé de chaque 
 | `src/win32`, `src/unix` | Code propre à chaque plateforme. |
 | `src/zlib` | Copie de zlib. |
 | `test` | Matériel de rétro-ingénierie : base de données IDA, tables d'offsets et chargeur de test. |
-| `scripts/windows` | Lanceur pour Windows. |
+| `scripts` | Lanceurs pour Windows et Linux, le `server.cfg` d'exemple et son générateur. |
 
 ## Licence
 

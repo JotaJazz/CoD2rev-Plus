@@ -26,8 +26,8 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Game version selectable at build time:** the server can be built as 1.0 or as 1.3.
 - **Overflow fix for Game Pass clients:** sending the system info to a client using protocol 119 could overflow a buffer and crash the server.
 - **Simpler builds:** `make` builds the 32-bit Linux binary directly, `make windows` cross-compiles for Windows, and GitHub Actions builds every variant on each push.
-- **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers.
-- **Windows launcher:** `scripts/windows/iniciar_cod2rev.bat`.
+- **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers; `scripts/gen_server_cfg.py` regenerates it from the source.
+- **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode.
 
 ### New variables
 
@@ -68,11 +68,11 @@ Produces `bin/cod2rev_lnxded`.
 
 ### Game version
 
-Add `PROTOCOL=118` to the `make` command to build the server as 1.3; without it, or with `PROTOCOL=115`, it is built as 1.0. Run `make clean` before switching from one version to the other. The automated builds publish both versions for each platform.
+Add `PROTOCOL=118` to the `make` command to build the server as 1.3; without it, or with `PROTOCOL=115`, it is built as 1.0. Each platform and version keeps its own objects under `obj/`, so you can switch between them without `make clean`. The automated builds publish both versions for each platform.
 
 ### Automated builds
 
-Every push to `master` builds both versions on GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). The resulting binaries can be downloaded as artifacts from the repository's [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) tab.
+Every push to `master` that changes the code builds both versions on GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). The resulting binaries can be downloaded as artifacts from the repository's [Actions](https://github.com/JotaJazz/CoD2rev_Server/actions) tab.
 
 ### Makefile options
 
@@ -94,13 +94,15 @@ The server needs the original game files (the `main` folder with its `.iwd` file
 2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) sets the usual options and lists every other variable the server registers with its default value.
 3. Run `iniciar_cod2rev.bat`.
 
-The launcher starts the server on port `28970`, to avoid clashing with the game client that uses `28960` on the same PC, and loads the map `mp_toujane`. It uses `dedicated 1` (LAN or direct IP); with `dedicated 2` the server is announced on the public list.
+The launcher starts the server on port `28970`, to avoid clashing with the game client that uses `28960` on the same PC, and loads the map `mp_toujane`. By default it starts in LAN mode (`dedicated 1`, LAN or direct IP); run `iniciar_cod2rev.bat internet` to announce the server on the public list (`dedicated 2`).
 
 ### Key authorization
 
-The server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The Windows launcher turns it on; remove it from the command line if you want a valid key to be required.
+The server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The launchers turn it on; remove it from the command line if you want a valid key to be required.
 
 ### Linux
+
+Copy `cod2rev_lnxded` and `scripts/linux/iniciar_cod2rev.sh` into the game folder, next to `main`, with a `server.cfg` in `main`. Run `./iniciar_cod2rev.sh` for LAN mode or `./iniciar_cod2rev.sh internet` to announce the server on the public list. It uses port `28960` and loads the map `mp_toujane`.
 
 `run_bin.sh` is the original project's test script: it starts `bin/cod2rev_lnxded` in developer mode with cheats enabled and test bots. It is useful as an example of parameters, not as a configuration for a real server.
 
@@ -118,7 +120,7 @@ The server queries `cod2master.activision.com` to validate the key of every clie
 | `src/win32`, `src/unix` | Platform-specific code. |
 | `src/zlib` | Copy of zlib. |
 | `test` | Reverse-engineering material: IDA database, offset tables and test loader. |
-| `scripts/windows` | Windows launcher. |
+| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator. |
 
 ## License
 
