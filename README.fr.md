@@ -37,7 +37,7 @@ Ce dépôt est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/Co
 
 - **La version se choisit à la compilation.** Par défaut, le serveur est compilé en 1.0 (protocole 115) ; avec `PROTOCOL=118`, il est compilé en 1.3. Le serveur annonce cette version aux serveurs maîtres, il apparaît donc dans la liste de serveurs des clients de cette même version.
 - **La compilation 1.0 accepte aussi d'autres versions par IP directe.** Avec libcod, activé par défaut, elle accepte les connexions utilisant les protocoles 115 à 119, ce qui inclut la 1.3 (protocole 118) et la version Game Pass (protocole 119). La connexion par IP directe à cette compilation a été testée, y compris avec un client CoD2x 1.4.x.
-- **La compilation 1.3 n'accepte que les clients au protocole 118.** Elle compile pour Linux et Windows, mais n'a pas encore été testée en jeu.
+- **La compilation 1.3 n'accepte que les clients au protocole 118.** Elle compile pour Linux et Windows, mais n'a pas encore été testée en jeu. Les clients [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 se connectent eux aussi avec le protocole 118, et leur liste de serveurs n'affiche que ceux qui annoncent le protocole 118 ou 120 ; c'est donc cette compilation qu'ils peuvent voir.
 
 ## Compilation
 
