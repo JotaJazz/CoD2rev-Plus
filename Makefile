@@ -150,7 +150,8 @@ ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL))
 .PHONY: $(TARGET)
 endif
 
-ifeq ($(OS),Windows_NT)
+# CROSS=1 means a Windows build made from Linux, where the shell is sh and not cmd.
+ifeq ($(OS)$(CROSS),Windows_NT)
 mkdir:
 	if not exist $(BIN_DIR) md $(BIN_DIR)
 	if not exist $(subst /,\,$(OBJ_DIR)) md $(subst /,\,$(OBJ_DIR))
@@ -260,8 +261,7 @@ endif
 # Cross-compile the Windows binary from Linux with MinGW-w64.
 MINGW_PREFIX=i686-w64-mingw32
 windows:
-	mkdir -p $(BIN_DIR) $(OBJ_ROOT)/cod2rev_win32_$(PROTOCOL)
-	$(MAKE) OS=Windows_NT CC=$(MINGW_PREFIX)-gcc-posix WINDRES=$(MINGW_PREFIX)-windres $(BIN_DIR)/cod2rev_win32.exe
+	$(MAKE) OS=Windows_NT CROSS=1 CC=$(MINGW_PREFIX)-gcc-posix WINDRES=$(MINGW_PREFIX)-windres $(BIN_DIR)/cod2rev_win32.exe
 
 .PHONY: cod2rev mkdir clean windows
 
