@@ -2,7 +2,10 @@
 CC = gcc
 WINDRES=windres
 
-CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG
+# Game version to build: 115 = 1.0, 118 = 1.3. Run "make clean" when changing it.
+PROTOCOL=115
+
+CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=$(PROTOCOL)
 LFLAGS=-no-pie
 
 ifeq ($(OS),Windows_NT)

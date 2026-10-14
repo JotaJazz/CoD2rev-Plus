@@ -8,8 +8,16 @@ on:
 
 jobs:
   linux:
-    name: Linux (32-bit)
+    name: Linux (32-bit), CoD2 ${{ matrix.version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "1.0"
+            protocol: 115
+          - version: "1.3"
+            protocol: 118
     steps:
       - uses: actions/checkout@v7
       - name: Install 32-bit toolchain
@@ -19,16 +27,24 @@ jobs:
       - name: Build
         run: |
           mkdir -p bin obj
-          make -j"$(nproc)" CC="gcc -m32" bin/cod2rev_lnxded
+          make -j"$(nproc)" CC="gcc -m32" PROTOCOL=${{ matrix.protocol }} bin/cod2rev_lnxded
       - uses: actions/upload-artifact@v7
         with:
-          name: cod2rev_lnxded
+          name: cod2rev_lnxded-${{ matrix.version }}
           path: bin/cod2rev_lnxded
           if-no-files-found: error
 
   windows:
-    name: Windows (MinGW cross-build)
+    name: Windows (MinGW cross-build), CoD2 ${{ matrix.version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "1.0"
+            protocol: 115
+          - version: "1.3"
+            protocol: 118
     steps:
       - uses: actions/checkout@v7
       - name: Install MinGW-w64
@@ -38,10 +54,10 @@ jobs:
       - name: Build
         run: |
           mkdir -p bin obj
-          make -j"$(nproc)" OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres bin/cod2rev_win32.exe
+          make -j"$(nproc)" OS=Windows_NT CC=i686-w64-mingw32-gcc-posix WINDRES=i686-w64-mingw32-windres PROTOCOL=${{ matrix.protocol }} bin/cod2rev_win32.exe
       - uses: actions/upload-artifact@v7
         with:
-          name: cod2rev_win32
+          name: cod2rev_win32-${{ matrix.version }}
           path: |
             bin/cod2rev_win32.exe
             scripts/windows/iniciar_cod2rev.bat

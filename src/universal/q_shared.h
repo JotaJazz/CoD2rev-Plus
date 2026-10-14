@@ -11,8 +11,18 @@
 
 #define GAME_STRING "CoD2 MP"
 
-#define PRODUCT_VERSION "1.0"
+// Game version to build, selected with "make PROTOCOL=..." (115 = 1.0, 118 = 1.3)
+#ifndef PROTOCOL_VERSION
 #define PROTOCOL_VERSION 115
+#endif
+
+#if PROTOCOL_VERSION == 115
+#define PRODUCT_VERSION "1.0"
+#elif PROTOCOL_VERSION == 118
+#define PRODUCT_VERSION "1.3"
+#else
+#error "Unsupported PROTOCOL_VERSION, use 115 (1.0) or 118 (1.3)"
+#endif
 
 // for windows fastcall option
 #define	QDECL
