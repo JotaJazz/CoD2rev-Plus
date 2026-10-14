@@ -2050,6 +2050,10 @@ Downloads are finished
 */
 static void SV_DoneDownload_f( client_t *cl )
 {
+	// a client in the game has nothing to download, and each reply is a full gamestate
+	if ( cl->state == CS_ACTIVE )
+		return;
+
 	Com_DPrintf( "clientDownload: %s Done\n", cl->name );
 	// resend the game state to update any clients that entered during the download
 	SV_SendClientGameState( cl );

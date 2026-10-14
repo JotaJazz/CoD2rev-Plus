@@ -343,6 +343,31 @@ void gsc_player_spectatorclient_get(scr_entref_t id)
 }
 
 char proxy_realip[MAX_CLIENTS][16] = {0};
+
+// The "ip" userinfo key is written by a proxy on the same machine. It is only
+// trusted from clients that connect through 127.0.0.1 and must be an IPv4
+// address, optionally followed by a port. The slot is cleared on every connect
+// so a player never inherits the address of the previous one.
+void proxy_setRealIP(int clientNum, const char *ip)
+{
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS)
+		return;
+
+	proxy_realip[clientNum][0] = 0;
+
+	const byte *adr = svs.clients[clientNum].netchan.remoteAddress.ip;
+	if (adr[0] != 127 || adr[1] != 0 || adr[2] != 0 || adr[3] != 1)
+		return;
+
+	unsigned int a, b, c, d;
+	char end;
+	int n = sscanf(ip, "%u.%u.%u.%u%c", &a, &b, &c, &d, &end);
+	if ((n != 4 && !(n == 5 && end == ':')) || a > 255 || b > 255 || c > 255 || d > 255)
+		return;
+
+	snprintf(proxy_realip[clientNum], sizeof(proxy_realip[clientNum]), "%u.%u.%u.%u", a, b, c, d);
+	Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
+}
 void gsc_player_getip(scr_entref_t id)
 {
 	if (id.entnum >= MAX_CLIENTS)

@@ -560,15 +560,8 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	}
 
 #if LIBCOD_COMPILE_PLAYER == 1 // proxy support
-	extern char proxy_realip[MAX_CLIENTS][16];
-	char realIP[16];
-	I_strncpyz(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(realIP));
-
-	if (strlen(realIP) != 0)
-	{
-		strncpy(proxy_realip[clientNum], realIP, sizeof(proxy_realip[clientNum]) - 1);
-		Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
-	}
+	extern void proxy_setRealIP(int clientNum, const char *ip);
+	proxy_setRealIP(clientNum, Info_ValueForKey(userinfo, "ip"));
 #endif
 
 	// don't do the "xxx connected" messages if they were caried over from previous level
