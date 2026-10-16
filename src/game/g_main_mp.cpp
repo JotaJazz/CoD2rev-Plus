@@ -1145,9 +1145,10 @@ void G_RunFrameForEntity( gentity_t *ent )
 	assert(ent->r.maxs[2] >= ent->r.mins[2]);
 
 	// clear events that are too old
-	if ( ent->s.eFlags == EF_UNKNOWN )
+	// these also carry EF_NODRAW, so comparing eFlags with == never freed them
+	if ( ent->s.eFlags & EF_UNKNOWN )
 	{
-		if ( level.time > ent->s.time2 )
+		if ( level.time > ent->s.time2 && level.time - ent->eventTime > 300 )
 		{
 			G_FreeEntity(ent);
 			return;

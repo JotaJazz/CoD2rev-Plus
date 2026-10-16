@@ -55,6 +55,34 @@ const char *Cmd_Argv( int arg )
 
 /*
 ============
+Cmd_ReplaceControlChars
+
+Clients can put any byte in a quoted argument, and a line break there would
+start a fake line in the game log. A leading chat marker on argument 1 is kept.
+============
+*/
+void Cmd_ReplaceControlChars( void )
+{
+	int i;
+	char *s;
+
+	for ( i = 0; i < cmd_argc; i++ )
+	{
+		s = cmd_argv[i];
+
+		if ( i == 1 && *s >= 0x14 && *s <= 0x16 )
+			s++;
+
+		for ( ; *s; s++ )
+		{
+			if ( (unsigned char)*s < ' ' )
+				*s = '.';
+		}
+	}
+}
+
+/*
+============
 Cmd_Args
 Returns a single string containing argv(1) to argv(argc()-1)
 ============

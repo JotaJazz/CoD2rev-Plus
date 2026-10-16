@@ -65,7 +65,7 @@ def wait_for(condition, seconds=5.0):
     return False
 
 
-def check_client(port, protocol, password, check):
+def check_client(port, protocol, password, game_log, check):
     """Connects a minimal client that receives the gamestate, enters the game
     and sends commands, including one message split into fragments, so the
     netchan, the XOR keys, Huffman decompression, SV_ClientCommand and
@@ -122,8 +122,44 @@ def check_client(port, protocol, password, check):
         packets = client.commands(server_id, texts)
         check('fragmented client message runs', packets > 1 and wait_for(lambda: listed('smokefragment2')),
               f'{packets} packets')
+
+        # line breaks in a name or a chat message must not start a fake log
+        # line, and a say right after a userinfo must not be flood protected
+        client.commands(server_id, ['userinfo "\\name\\smokelog\nfakename\\rate\\25000\\snaps\\20"',
+                                    'say "smokesay\nK;fakekill"'])
+        def game_log_lines():
+            if not os.path.exists(game_log):
+                return []
+            # each line starts with the time, as in " 1:23 say;..."
+            return [re.sub(r'^\s*\d+:\d+ ', '', l)
+                    for l in open(game_log, encoding='latin-1').read().splitlines()]
+        said = wait_for(lambda: any('smokesay' in l for l in game_log_lines()))
+        lines = game_log_lines()
+        check('say right after userinfo runs', said)
+        check('no line break in names', wait_for(lambda: listed('smokelogfakename')), ', '.join(players(port) or {}))
+        check('no fake lines in the game log', said and not any(
+            l.startswith(('fakename', 'K;fake')) for l in lines),
+            next((l for l in lines if 'smokesay' in l), ''))
     finally:
         client.close()
+
+    # a wrong rcon password must not hold up the right one
+    rcon(port, 'wrong' + password, 'sv_serverid')
+    check('rcon right after a wrong password', 'sv_serverid' in rcon(port, password, 'sv_serverid'))
+
+    # addip must keep the address out; an over-long filter must not crash
+    rcon(port, password, 'addip ' + '1' * 300)
+    rcon(port, password, 'addip 127.0.*.*')
+    banned = cod2client.Client(port)
+    try:
+        refused = banned.connect(protocol, 'smokebanned')
+    except OSError as e:
+        refused = f'no reply ({e})'
+    finally:
+        banned.close()
+    check('addip refuses the address', refused is not None and 'banned' in refused,
+          (refused or '').replace('\n', ' ').strip())
+    rcon(port, password, 'removeip 127.0.*.*')
 
 
 def free_port():
@@ -169,6 +205,7 @@ def main():
                  '+set', 'sv_hostname', hostname,
                  '+set', 'rcon_password', password,
                  '+set', 'g_gametype', 'tdm',
+                 '+set', 'g_logSync', '1',
                  '+map', args.map],
                 stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
         try:
@@ -204,7 +241,7 @@ def main():
                       f'version {status[1].get("shortversion", "?")}' if status else '')
 
                 if protocol.isdigit():
-                    check_client(port, int(protocol), password, check)
+                    check_client(port, int(protocol), password, os.path.join(home, 'main', 'games_mp.log'), check)
 
                 time.sleep(2)
                 check('server still running', server.poll() is None)

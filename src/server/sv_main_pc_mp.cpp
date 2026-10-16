@@ -218,41 +218,45 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 		Com_DPrintf( "SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
 		return;
 	}
-
-	// Make DoS via rcon impractical
-	if ( SVC_RateLimit( &bucket, 10, 1000 ) )
-	{
-		Com_DPrintf( "SVC_RemoteCommand: rate limit exceeded, dropping request\n" );
-		return;
-	}
 #endif
 
-	// Ignore locked addresses before they can use up the global rcon slot below
+	// Ignore locked addresses before they can use up the global limits below
 	if ( SV_RconIsLocked( from ) )
 	{
 		Com_DPrintf( "SVC_RemoteCommand: %s is locked out, dropping request\n", NET_AdrToString( from ) );
 		return;
 	}
 
-	// TTimo - show_bug.cgi?id=534
-	time = Com_Milliseconds();
-	if ( lasttime && time < ( lasttime + 500 ) )
-	{
-		return;
-	}
-	lasttime = time;
-
 	const char *password = Cmd_Argv( 1 );
 
-	if ( !strlen( rcon_password->current.string ) ||
-	        I_strcmpConstantTime( password, rcon_password->current.string ) )
+	valid = strlen( rcon_password->current.string ) &&
+	        !I_strcmpConstantTime( password, rcon_password->current.string );
+
+	// The global limits only apply to wrong passwords, so that bad requests
+	// sent from many addresses can't keep the admin from using rcon
+	if ( !valid )
 	{
-		valid = qfalse;
+#if LIBCOD_COMPILE_RATELIMITER == 1
+		// Make DoS via rcon impractical
+		if ( SVC_RateLimit( &bucket, 10, 1000 ) )
+		{
+			Com_DPrintf( "SVC_RemoteCommand: rate limit exceeded, dropping request\n" );
+			return;
+		}
+#endif
+
+		// TTimo - show_bug.cgi?id=534
+		time = Com_Milliseconds();
+		if ( lasttime && time < ( lasttime + 500 ) )
+		{
+			return;
+		}
+		lasttime = time;
+
 		Com_Printf( "Bad rcon from %s:\n%s\n", NET_AdrToString( from ), Cmd_Argv( 2 ) );
 	}
 	else
 	{
-		valid = qtrue;
 		Com_Printf( "Rcon from %s:\n%s\n", NET_AdrToString( from ), Cmd_Argv( 2 ) );
 	}
 

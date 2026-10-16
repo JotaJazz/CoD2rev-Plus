@@ -405,6 +405,7 @@ void SV_EnableArchivedSnapshot(qboolean enabled);
 void SV_ResetEntityParsePoint();
 
 qboolean SV_IsLocalClient(int clientNum);
+qboolean SV_GetClientIP( int clientNum, byte *ip );
 qboolean SV_MapExists(const char *name);
 bool hook_SV_MapExists(const char *mapname);
 const char *SV_GetMapBaseName(const char *mapname);

@@ -110,9 +110,19 @@ qboolean StringToFilter( const char *s, ipFilter_t *f )
 		j = 0;
 		while ( *s >= '0' && *s <= '9' )
 		{
+			if ( j == 3 )
+			{
+				Com_Printf( "Bad filter address: %s\n", s );
+				return qfalse;
+			}
 			num[j++] = *s++;
 		}
 		num[j] = 0;
+		if ( atoi( num ) > 255 )
+		{
+			Com_Printf( "Bad filter address: %s\n", num );
+			return qfalse;
+		}
 		b[i] = atoi( num );
 		m[i] = 255;
 
@@ -127,6 +137,29 @@ qboolean StringToFilter( const char *s, ipFilter_t *f )
 	f->compare = *(unsigned *)b;
 
 	return qtrue;
+}
+
+/*
+=================
+G_FilterPacket
+=================
+*/
+qboolean G_FilterPacket( const byte *ip )
+{
+	unsigned in;
+	int i;
+
+	in = *(const unsigned *)ip;
+
+	for ( i = 0 ; i < ipFilters.numIPFilters ; i++ )
+	{
+		if ( ( in & ipFilters.ipFilters[i].mask ) == ipFilters.ipFilters[i].compare )
+		{
+			return qtrue;
+		}
+	}
+
+	return qfalse;
 }
 
 /*
@@ -281,13 +314,15 @@ void G_ProcessIPBans( void )
 
 	ipFilters.numIPFilters = 0;
 
+	// AddIP sets g_banIPs again, so walk a copy of it
 	Q_strncpyz( str, g_banIPs->current.string, sizeof( str ) );
 
-	for ( t = s = (char *)g_banIPs->current.string; *t; /* */ )
+	for ( t = s = str; *t; /* */ )
 	{
 		s = strchr( s, ' ' );
 		if ( !s )
 		{
+			AddIP( t );
 			break;
 		}
 		while ( *s == ' ' )

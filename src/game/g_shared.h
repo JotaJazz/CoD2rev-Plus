@@ -1543,6 +1543,7 @@ void G_SpawnEntitiesFromString();
 
 void G_InitObjectives();
 void G_ProcessIPBans( void );
+qboolean G_FilterPacket( const byte *ip );
 void G_SetupWeaponDef();
 
 void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars);

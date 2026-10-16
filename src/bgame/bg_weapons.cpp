@@ -2457,7 +2457,20 @@ PM_SendEmtpyOffhandEvent
 */
 void PM_SendEmtpyOffhandEvent( playerState_t *ps )
 {
+	int i;
+
 	assert(ps);
+
+	// holding the grenade button without grenades sent this every frame,
+	// pushing the player's shots and footsteps out of the event queue
+	for ( i = 0; i < MAX_EVENTS; i++ )
+	{
+		if ( ps->events[i] == EV_EMPTY_OFFHAND )
+		{
+			return;
+		}
+	}
+
 	PM_AddEvent(ps, EV_EMPTY_OFFHAND);
 }
 

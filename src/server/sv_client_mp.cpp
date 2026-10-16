@@ -275,9 +275,20 @@ void SV_UserinfoChanged( client_t *cl )
 {
 	const char	*val;
 	int		i;
+	char	*in, *out;
 
 	// name for C code
 	Q_strncpyz( cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name) );
+
+	// a line break would split the name's line in getstatus and in logs
+	for ( in = out = cl->name; *in; in++ )
+	{
+		if ( (unsigned char)*in >= ' ' )
+		{
+			*out++ = *in;
+		}
+	}
+	*out = 0;
 
 	// rate command
 
@@ -2221,6 +2232,8 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 		// pass unknown strings to the game
 		if ( !u->name && SV_Loaded() )
 		{
+			Cmd_ReplaceControlChars();
+
 #ifdef LIBCOD
 			hook_ClientCommand( cl - svs.clients );
 #else
@@ -2267,7 +2280,8 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 
 	// Gordon: AHA! Need to steal this for some other stuff BOOKMARK
 	// NERVE - SMF - some server game-only commands we cannot have flood protect
-	if ( !Q_strncmp( "team ", s, 5 ) || !Q_strncmp( "score ", s, 6 ) || !Q_strncmp( "mr ", s, 3 ) )
+	// userinfo runs even when flood protected, but it used to delay the next command
+	if ( !Q_strncmp( "team ", s, 5 ) || !Q_strncmp( "score ", s, 6 ) || !Q_strncmp( "mr ", s, 3 ) || !Q_strncmp( "userinfo ", s, 9 ) )
 	{
 //		Com_DPrintf( "Skipping flood protection for: %s\n", s );
 		floodprotect = qfalse;

@@ -184,6 +184,12 @@ static void ClientCleanName( const char *in, char *out, int outSize )
 			break;
 		}
 
+		// a line break in a name would start a fake line in the game log
+		if( (unsigned char)ch < ' ' )
+		{
+			continue;
+		}
+
 		// don't allow leading spaces
 		if( !*p && ch == ' ' )
 		{
@@ -502,6 +508,7 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	char userinfo[MAX_INFO_STRING];
 	gclient_t *client;
 	const char *value;
+	byte ip[4];
 
 	assert(scriptPersId);
 	assert(clientNum >= 0 && clientNum < level.maxclients);
@@ -564,6 +571,12 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	proxy_setRealIP(clientNum, Info_ValueForKey(userinfo, "ip"));
 #endif
 
+	if ( SV_GetClientIP(clientNum, ip) && G_FilterPacket(ip) )
+	{
+		G_FreeEntity(ent);
+		return "\x15You are banned from this server";
+	}
+
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	//		TAT 12/10/2002 - Don't display connected messages in single player
 	Scr_PlayerConnect(ent);
@@ -592,14 +605,16 @@ void G_GetPlayerViewOrigin( gentity_t *ent, vec3_t origin )
 	client = ent->client;
 	assert(client);
 
+	// a script can delete the turret while the player is on it; that used to
+	// be an ERR_DROP that ended the map, now the view is placed as if on foot
 	if ( client->ps.eFlags & EF_TURRET_ACTIVE )
 	{
-		if ( !G_DObjGetWorldTagPos(&g_entities[client->ps.viewlocked_entNum], scr_const.tag_player, origin) )
+		if ( G_DObjGetWorldTagPos(&g_entities[client->ps.viewlocked_entNum], scr_const.tag_player, origin) )
 		{
-			Com_Error(ERR_DROP, "G_GetPlayerViewOrigin: Couldn't find [tag_player] on turret");
+			return;
 		}
 
-		return;
+		Com_DPrintf("G_GetPlayerViewOrigin: Couldn't find [tag_player] on turret\n");
 	}
 
 	VectorCopy(client->ps.origin, origin);

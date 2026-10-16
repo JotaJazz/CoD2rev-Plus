@@ -16,6 +16,7 @@ void Cmd_Init( void );
 void Cmd_Shutdown();
 int Cmd_Argc( void );
 const char *Cmd_Argv( int arg );
+void Cmd_ReplaceControlChars( void );
 char *Cmd_Args( int start );
 void Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength );
 void Cmd_ForEach( void(*callback)(const char *s) );

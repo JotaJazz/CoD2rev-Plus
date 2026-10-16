@@ -41,6 +41,13 @@ SV_MapExists
 */
 qboolean SV_MapExists( const char *name )
 {
+	// a longer name can exceed the os path length, which is a fatal error
+	if ( strlen(name) > MAX_QPATH )
+	{
+		Com_Printf("SV_MapExists: map name is too long\n");
+		return qfalse;
+	}
+
 	return FS_ReadFile(va("maps/mp/%s.%s", SV_GetMapBaseName(name), GetBspExtension()), 0) >= 0;
 }
 
@@ -147,6 +154,45 @@ qboolean SV_IsLocalClient( int clientNum )
 {
 	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
 	return NET_IsLocalAddress(svs.clients[clientNum].netchan.remoteAddress);
+}
+
+/*
+===============
+SV_GetClientIP
+
+The IPv4 address of a client, or the one a proxy on this machine reported for
+it. Bots and other address types have none.
+===============
+*/
+qboolean SV_GetClientIP( int clientNum, byte *ip )
+{
+	const netadr_t *adr;
+
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
+#if LIBCOD_COMPILE_PLAYER == 1
+	extern char proxy_realip[MAX_CLIENTS][16];
+	unsigned int a, b, c, d;
+
+	if ( sscanf(proxy_realip[clientNum], "%u.%u.%u.%u", &a, &b, &c, &d) == 4 )
+	{
+		ip[0] = a;
+		ip[1] = b;
+		ip[2] = c;
+		ip[3] = d;
+		return qtrue;
+	}
+#endif
+
+	adr = &svs.clients[clientNum].netchan.remoteAddress;
+
+	if ( adr->type != NA_IP )
+	{
+		return qfalse;
+	}
+
+	memcpy(ip, adr->ip, 4);
+	return qtrue;
 }
 
 /*
