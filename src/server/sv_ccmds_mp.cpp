@@ -72,6 +72,12 @@ static void SV_MapRestart( qboolean fast_restart )
 	sv.state = SS_LOADING;
 	sv.restarting = qtrue;
 
+#if LIBCOD_COMPILE_GRAPH == 1
+	// a fast restart skips SV_SpawnServer, but the scripts run again
+	extern void gsc_graph_cleanup_on_spawn_server(void);
+	gsc_graph_cleanup_on_spawn_server();
+#endif
+
 	SV_RestartGameProgs(savepersist);
 
 	// run a few frames to allow everything to settle

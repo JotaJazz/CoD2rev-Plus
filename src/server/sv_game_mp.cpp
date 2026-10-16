@@ -158,6 +158,17 @@ qboolean SV_IsLocalClient( int clientNum )
 
 /*
 ===============
+SV_IsTestClient
+===============
+*/
+qboolean SV_IsTestClient( int clientNum )
+{
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+	return svs.clients[clientNum].bIsTestClient;
+}
+
+/*
+===============
 SV_GetClientIP
 
 The IPv4 address of a client, or the one a proxy on this machine reported for

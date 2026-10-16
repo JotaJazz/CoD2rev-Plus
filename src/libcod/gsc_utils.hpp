@@ -46,4 +46,18 @@ void gsc_utils_remove_file();
 void gsc_utils_putchar();
 void gsc_utils_remotecommand();
 
+void gsc_utils_abs();
+void gsc_utils_floor();
+void gsc_utils_ceil();
+void gsc_utils_pow();
+void gsc_utils_atan2();
+void gsc_utils_roundto();
+void gsc_utils_getmilliseconds();
+void gsc_utils_getmicroseconds();
+void gsc_utils_tohex();
+void gsc_utils_fromhex();
+void gsc_utils_ord();
+void gsc_utils_chr();
+void gsc_utils_logprintconsole();
+
 #endif

@@ -896,6 +896,12 @@ typedef struct
 	unsigned short neck;
 	unsigned short head;
 	unsigned short pelvis;
+#ifdef LIBCOD
+	unsigned short flags;
+	unsigned short contents;
+	unsigned short material;
+	unsigned short bot_trigger;
+#endif
 } scr_const_t;
 
 extern scr_const_t scr_const;

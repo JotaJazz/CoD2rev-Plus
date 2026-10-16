@@ -848,6 +848,12 @@ void SV_SpawnServer( char *server )
 	Scr_ParseGameTypeList();
 	SV_SetGametype();
 
+#if LIBCOD_COMPILE_GRAPH == 1
+	// graphs hold map coordinates, so they don't survive a map change
+	extern void gsc_graph_cleanup_on_spawn_server(void);
+	gsc_graph_cleanup_on_spawn_server();
+#endif
+
 	// ydnar: broadcast a level change to all connected clients
 	qboolean savepersist = qfalse;
 

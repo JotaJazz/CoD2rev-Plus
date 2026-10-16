@@ -1298,4 +1298,26 @@ void gsc_player_processsuicide(scr_entref_t id)
 	player_die(ent, ent, ent, 100000, MOD_SUICIDE, WP_NONE, NULL, HITLOC_NONE, 0);
 }
 
+// As get_userinfo, but "" for a missing key, like zk_libcod's getUserinfo
+void gsc_player_getuserinfo(scr_entref_t id)
+{
+	const char *key;
+
+	if (!stackGetParams("s", &key))
+	{
+		stackError("gsc_player_getuserinfo() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (id.entnum >= MAX_CLIENTS)
+	{
+		stackError("gsc_player_getuserinfo() entity %i is not a player", id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushString(Info_ValueForKey(svs.clients[id.entnum].userinfo, key));
+}
+
 #endif

@@ -5715,6 +5715,14 @@ void Scr_BulletTracePassed()
 		iIgnoreEntNum = Scr_GetEntity(3)->s.number;
 	}
 
+#ifdef LIBCOD
+	// optional content mask, as in zk_libcod
+	if ( Scr_GetNumParam() > 4 )
+	{
+		iClipMask = Scr_GetInt(4);
+	}
+#endif
+
 	Scr_AddBool(G_LocationalTracePassed(vStart, vEnd, iIgnoreEntNum, iClipMask));
 }
 
@@ -5749,6 +5757,14 @@ void Scr_BulletTrace()
 		iIgnoreEntNum = pIgnoreEnt->s.number;
 	}
 
+#ifdef LIBCOD
+	// optional content mask, as in zk_libcod
+	if ( Scr_GetNumParam() > 4 )
+	{
+		iClipMask = Scr_GetInt(4);
+	}
+#endif
+
 	G_LocationalTrace(&trace, vStart, vEnd, iIgnoreEntNum, iClipMask, NULL);
 
 	Scr_MakeArray();
@@ -5773,6 +5789,18 @@ void Scr_BulletTrace()
 		Scr_AddArrayStringIndexed(scr_const.normal);
 		Scr_AddString(Com_SurfaceTypeToName(SURF_TYPEINDEX(trace.surfaceFlags)));
 		Scr_AddArrayStringIndexed(scr_const.surfacetype);
+#ifdef LIBCOD
+		// surface flags, contents and material of what was hit, as in zk_libcod
+		Scr_AddInt(trace.surfaceFlags);
+		Scr_AddArrayStringIndexed(scr_const.flags);
+		Scr_AddInt(trace.contents);
+		Scr_AddArrayStringIndexed(scr_const.contents);
+		if ( trace.material )
+			Scr_AddString(trace.material->material);
+		else
+			Scr_AddUndefined();
+		Scr_AddArrayStringIndexed(scr_const.material);
+#endif
 		return;
 	}
 
@@ -5783,6 +5811,14 @@ void Scr_BulletTrace()
 	Scr_AddArrayStringIndexed(scr_const.normal);
 	Scr_AddConstString(scr_const.none);
 	Scr_AddArrayStringIndexed(scr_const.surfacetype);
+#ifdef LIBCOD
+	Scr_AddInt(0);
+	Scr_AddArrayStringIndexed(scr_const.flags);
+	Scr_AddInt(0);
+	Scr_AddArrayStringIndexed(scr_const.contents);
+	Scr_AddUndefined();
+	Scr_AddArrayStringIndexed(scr_const.material);
+#endif
 }
 
 /*

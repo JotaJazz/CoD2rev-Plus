@@ -15,6 +15,14 @@ dvar_t *jump_bounceEnable;
 dvar_t *g_mantleBlockEnable;
 dvar_t *g_fixedWeaponSpreads;
 dvar_t *g_dropGrenadeOnDeath;
+dvar_t *sv_botUseTriggerUse;
+#if LIBCOD_COMPILE_GRAPH == 1
+dvar_t *g_debugGraph;
+dvar_t *sv_graphAstarMaxIterations;
+dvar_t *sv_graphAstarWeight;
+dvar_t *sv_graphMaxGraphs;
+dvar_t *sv_graphMaxNodes;
+#endif
 
 int codecallback_playercommand = 0;
 int codecallback_userinfochanged = 0;
@@ -89,6 +97,15 @@ void RegisterLibcodDvars()
 
 	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", false, DVAR_CHANGEABLE_RESET);
 	g_dropGrenadeOnDeath = Dvar_RegisterBool("g_dropGrenadeOnDeath", true, DVAR_CHANGEABLE_RESET);
+	sv_botUseTriggerUse = Dvar_RegisterBool("sv_botUseTriggerUse", false, DVAR_CHANGEABLE_RESET);
+
+#if LIBCOD_COMPILE_GRAPH == 1
+	g_debugGraph = Dvar_RegisterBool("g_debugGraph", false, DVAR_CHANGEABLE_RESET);
+	sv_graphAstarMaxIterations = Dvar_RegisterInt("sv_graphAstarMaxIterations", 0, 0, 100000, DVAR_CHANGEABLE_RESET);
+	sv_graphAstarWeight = Dvar_RegisterFloat("sv_graphAstarWeight", 1.0, 1.0, 2.0, DVAR_CHANGEABLE_RESET);
+	sv_graphMaxGraphs = Dvar_RegisterInt("sv_graphMaxGraphs", 8, 1, 64, DVAR_CHANGEABLE_RESET);
+	sv_graphMaxNodes = Dvar_RegisterInt("sv_graphMaxNodes", 8192, 64, 65535, DVAR_CHANGEABLE_RESET);
+#endif
 }
 
 void InitLibcodCallbacks()

@@ -971,4 +971,185 @@ void gsc_utils_remotecommand()
 	SVC_RemoteCommand(from, msg);
 }
 
+// Functions below are named and behave as in zk_libcod
+
+void gsc_utils_abs()
+{
+	float val;
+
+	if (!stackGetParams("f", &val))
+	{
+		stackError("gsc_utils_abs() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(fabsf(val));
+}
+
+void gsc_utils_floor()
+{
+	float val;
+
+	if (!stackGetParams("f", &val))
+	{
+		stackError("gsc_utils_floor() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(floorf(val));
+}
+
+void gsc_utils_ceil()
+{
+	float val;
+
+	if (!stackGetParams("f", &val))
+	{
+		stackError("gsc_utils_ceil() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(ceilf(val));
+}
+
+void gsc_utils_pow()
+{
+	float base, exponent;
+
+	if (!stackGetParams("ff", &base, &exponent))
+	{
+		stackError("gsc_utils_pow() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(powf(base, exponent));
+}
+
+void gsc_utils_atan2()
+{
+	float y, x;
+
+	if (!stackGetParams("ff", &y, &x))
+	{
+		stackError("gsc_utils_atan2() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(atan2f(y, x));
+}
+
+// roundTo(value, precision): roundTo(1.234, 100) is 1.23
+void gsc_utils_roundto()
+{
+	float val, precision;
+
+	if (!stackGetParams("ff", &val, &precision) || precision == 0)
+	{
+		stackError("gsc_utils_roundto() arguments are undefined, of a wrong type or the precision is 0");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushFloat(roundf(val * precision) / precision);
+}
+
+void gsc_utils_getmilliseconds()
+{
+	stackPushInt(Sys_Milliseconds() & 0x7FFFFFFF);
+}
+
+// Wraps around every 35 minutes, so only differences are meaningful
+void gsc_utils_getmicroseconds()
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	stackPushInt((int)((uint64_t)tv.tv_sec * 1000000 + tv.tv_usec) & 0x7FFFFFFF);
+}
+
+void gsc_utils_tohex()
+{
+	int input;
+	char output[16];
+
+	if (!stackGetParams("i", &input))
+	{
+		stackError("gsc_utils_tohex() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	Com_sprintf(output, sizeof(output), "0x%X", input);
+	stackPushString(output);
+}
+
+void gsc_utils_fromhex()
+{
+	const char *input;
+	unsigned int output;
+
+	if (!stackGetParams("s", &input) || sscanf(input, "%X", &output) != 1)
+	{
+		stackError("gsc_utils_fromhex() argument is undefined, of a wrong type or not a hex number");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushInt((int)output);
+}
+
+// ord("A") is 65
+void gsc_utils_ord()
+{
+	const char *input;
+
+	if (!stackGetParams("s", &input) || strlen(input) != 1)
+	{
+		stackError("gsc_utils_ord() argument must be a string of one character");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushInt((unsigned char)input[0]);
+}
+
+// chr(65) is "A"; "%" becomes "." so the result is safe in format strings
+void gsc_utils_chr()
+{
+	int input;
+	char output[2];
+
+	if (!stackGetParams("i", &input))
+	{
+		stackError("gsc_utils_chr() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	output[0] = (input & 0xFF) == '%' ? '.' : (char)(input & 0xFF);
+	output[1] = '\0';
+	stackPushString(output);
+}
+
+// Prints to the server console and console log, not to games_mp.log
+void gsc_utils_logprintconsole()
+{
+	const char *str;
+
+	if (!stackGetParams("s", &str))
+	{
+		stackError("gsc_utils_logprintconsole() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	Com_Printf("%s", str);
+	stackPushBool(qtrue);
+}
+
 #endif

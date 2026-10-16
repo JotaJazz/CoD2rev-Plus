@@ -49,4 +49,32 @@ void gsc_level_getstaticmodelorigin()
 	stackPushVector(cm.staticModelList[index].origin);
 }
 
+// getEntityCount([inUseOnly]): entity slots used so far, or only those in use
+void gsc_level_getentitycount()
+{
+	int inUseOnly = 0;
+	int count = 0;
+
+	if (Scr_GetNumParam() && !stackGetParams("i", &inUseOnly))
+	{
+		stackError("gsc_level_getentitycount() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!inUseOnly)
+	{
+		stackPushInt(level.num_entities);
+		return;
+	}
+
+	for (int i = 0; i < level.num_entities; i++)
+	{
+		if (g_entities[i].r.inuse)
+			count++;
+	}
+
+	stackPushInt(count);
+}
+
 #endif

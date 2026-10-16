@@ -33,6 +33,10 @@
 #include "gsc_exec.hpp"
 #endif
 
+#if LIBCOD_COMPILE_GRAPH == 1
+#include "gsc_graph.hpp"
+#endif
+
 #if LIBCOD_COMPILE_LEVEL == 1
 #include "gsc_level.hpp"
 #endif

@@ -105,6 +105,7 @@ scr_function_t scriptFunctions[] =
 	{"getnumberofstaticmodels", gsc_level_getnumberofstaticmodels, 0},
 	{"getstaticmodelname", gsc_level_getstaticmodelname, 0},
 	{"getstaticmodelorigin", gsc_level_getstaticmodelorigin, 0},
+	{"getentitycount", gsc_level_getentitycount, 0},
 #endif
 
 #if LIBCOD_COMPILE_MEMORY == 1
@@ -194,6 +195,19 @@ scr_function_t scriptFunctions[] =
 	{"setconfigstring", gsc_set_configstring, 0},
 	{"makelocalizedstring", gsc_make_localized_string, 0},
 	{"sqrt", gsc_utils_sqrt, 0},
+	{"abs", gsc_utils_abs, 0},
+	{"floor", gsc_utils_floor, 0},
+	{"ceil", gsc_utils_ceil, 0},
+	{"pow", gsc_utils_pow, 0},
+	{"atan2", gsc_utils_atan2, 0},
+	{"roundto", gsc_utils_roundto, 0},
+	{"getmilliseconds", gsc_utils_getmilliseconds, 0},
+	{"getmicroseconds", gsc_utils_getmicroseconds, 0},
+	{"tohex", gsc_utils_tohex, 0},
+	{"fromhex", gsc_utils_fromhex, 0},
+	{"ord", gsc_utils_ord, 0},
+	{"chr", gsc_utils_chr, 0},
+	{"logprintconsole", gsc_utils_logprintconsole, 0},
 	{"sqrtinv", gsc_utils_sqrtInv, 0},
 	{"getlasttestclientnumber", gsc_utils_getlasttestclientnumber, 0},
 	{"getmaxmsglen", gsc_utils_getmaxmsglen, 0},
@@ -226,6 +240,38 @@ scr_function_t scriptFunctions[] =
 	{"getweaponhitlocmultiplier", gsc_weapons_getweaponhitlocmultiplier, 0},
 	{"setweaponhitlocmultiplier", gsc_weapons_setweaponhitlocmultiplier, 0},
 	{"getloadedweapons", gsc_weapons_getloadedweapons, 0},
+#endif
+
+#if LIBCOD_COMPILE_GRAPH == 1
+	{"graphcreate", gsc_graph_create, 0},
+	{"graphfindpath", gsc_graph_find_path, 0},
+	{"graphfindclosestnode", gsc_graph_find_closest_node, 0},
+	{"graphremove", gsc_graph_remove, 0},
+	{"graphremoveall", gsc_graph_removeall, 0},
+	{"graphaddnode", gsc_graph_add_node, 0},
+	{"graphaddedge", gsc_graph_add_edge, 0},
+	{"graphgetnodeorigin", gsc_graph_get_node_origin, 0},
+	{"graphgetnodecount", gsc_graph_get_node_count, 0},
+	{"graphgetedgecount", gsc_graph_get_edge_count, 0},
+	{"graphgetstats", gsc_graph_get_stats, 0},
+	{"graphfindclosestedge", gsc_graph_find_closest_edge, 0},
+	{"graphgetallnodes", gsc_graph_get_all_nodes, 0},
+	{"graphgetalledges", gsc_graph_get_all_edges, 0},
+	{"graphgetedgeproperties", gsc_graph_get_edge_properties, 0},
+	{"graphsetedgecost", gsc_graph_set_edge_cost, 0},
+	{"graphsetedgetype", gsc_graph_set_edge_type, 0},
+	{"graphremoveedge", gsc_graph_remove_edge, 0},
+	{"graphgetnodeproperties", gsc_graph_get_node_properties, 0},
+	{"graphsetnodetype", gsc_graph_set_node_type, 0},
+	{"graphsetnodeorigin", gsc_graph_set_node_origin, 0},
+	{"graphgetnodeidsaccessiblefrom", gsc_graph_get_node_ids_accessible_from, 0},
+	{"graphgetnodeidsaccessibleto", gsc_graph_get_node_ids_accessible_to, 0},
+	{"graphremovenode", gsc_graph_remove_node, 0},
+	{"graphprecomputepathstonode", gsc_graph_precompute_paths_to_node, 0},
+	{"graphsave", gsc_graph_save, 0},
+	{"graphload", gsc_graph_load, 0},
+	{"graphautodiscover", gsc_graph_autodiscover, 0},
+	{"graphautodiscoverex", gsc_graph_autodiscover_ex, 0},
 #endif
 
 #ifdef EXTRA_FUNCTIONS_INC
@@ -351,6 +397,8 @@ scr_method_t scriptMethods[] =
 	{"getinactivitytime", gsc_player_getinactivitytime, 0},
 	{"getentertime", gsc_player_getentertime, 0},
 	{"processsuicide", gsc_player_processsuicide, 0},
+	{"getuserinfo", gsc_player_getuserinfo, 0},
+	{"setuserinfo", gsc_player_set_userinfo, 0},
 #endif
 
 #if LIBCOD_COMPILE_SQLITE == 1

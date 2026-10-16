@@ -232,6 +232,17 @@ void Player_UpdateCursorHints( gentity_t *ent )
 				{
 					hintString = traceEnt->s.hintString;
 				}
+
+#ifdef LIBCOD
+				// bots can't see hint strings, so they get the trigger as a notify:
+				// self waittill("bot_trigger", trigger)
+				extern dvar_t *sv_botUseTriggerUse;
+				if ( sv_botUseTriggerUse->current.boolean && SV_IsTestClient(ent->s.number) && Scr_IsSystemActive() )
+				{
+					Scr_AddEntity(traceEnt);
+					Scr_Notify(ent, scr_const.bot_trigger, 1);
+				}
+#endif
 			}
 
 			ps->cursorHintEntIndex = traceEnt->s.number;

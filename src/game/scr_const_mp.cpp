@@ -100,4 +100,10 @@ void GScr_LoadConsts()
 	scr_const.neck = GScr_AllocString("neck");
 	scr_const.head = GScr_AllocString("head");
 	scr_const.pelvis = GScr_AllocString("pelvis");
+#ifdef LIBCOD
+	scr_const.flags = GScr_AllocString("flags");
+	scr_const.contents = GScr_AllocString("contents");
+	scr_const.material = GScr_AllocString("material");
+	scr_const.bot_trigger = GScr_AllocString("bot_trigger");
+#endif
 }

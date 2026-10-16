@@ -77,6 +77,7 @@ void gsc_player_getplayerstateflags(scr_entref_t id);
 void gsc_player_getinactivitytime(scr_entref_t id);
 void gsc_player_getentertime(scr_entref_t id);
 void gsc_player_processsuicide(scr_entref_t id);
+void gsc_player_getuserinfo(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();
