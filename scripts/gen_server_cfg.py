@@ -280,7 +280,7 @@ def entry(n):
     return left.ljust(46) + ' // ' + note
 
 out = []
-out.append('''// Example server configuration for CoD2rev_Server.
+out.append('''// Example server configuration for CoD2rev-Plus.
 // Copy it to the "main" folder of the game as server.cfg and edit it.
 // Do not commit your real server.cfg: it holds passwords.
 //

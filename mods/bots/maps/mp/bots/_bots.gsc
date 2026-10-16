@@ -1,4 +1,4 @@
-// Simple bots for CoD2rev_Server dedicated servers.
+// Simple bots for CoD2rev-Plus dedicated servers.
 //
 // They have no waypoints: a bot walks towards the nearest enemy, steers around
 // what blocks it and shoots what it can see. Movement and firing use the libcod
