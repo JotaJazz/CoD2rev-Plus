@@ -2871,6 +2871,21 @@ void PlayerCmd_Suicide( scr_entref_t entref )
 		return;
 	}
 
+#ifdef LIBCOD
+	// the script decides; processSuicide() kills the player as below, and so
+	// does a suicide() called from inside the callback
+	extern int codecallback_suicide;
+	static bool inSuicideCallback;
+	if ( codecallback_suicide && !inSuicideCallback )
+	{
+		inSuicideCallback = true;
+		short ret = Scr_ExecEntThread(pSelf, codecallback_suicide, 0);
+		Scr_FreeThread(ret);
+		inSuicideCallback = false;
+		return;
+	}
+#endif
+
 	pSelf->flags &= ~( FL_GODMODE | FL_DEMI_GODMODE );
 	pSelf->health = 0;
 	pSelf->client->ps.stats[STAT_HEALTH] = 0;

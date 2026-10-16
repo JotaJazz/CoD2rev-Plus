@@ -744,6 +744,11 @@ void G_RunFrame( int levelTime )
 
 	assert(level.frameTime >= 0);
 
+#ifdef LIBCOD
+	extern void Scr_RunFrameCallbacks();
+	Scr_RunFrameCallbacks();
+#endif
+
 	for ( ent = g_entities, i = 0; i < level.num_entities; i++, ent++ )
 	{
 		if ( !ent->r.inuse )

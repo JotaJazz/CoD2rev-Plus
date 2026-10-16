@@ -3885,6 +3885,13 @@ void PM_BeginWeaponChange( playerState_t *ps, int newweapon )
 		return;
 	}
 
+#ifdef LIBCOD
+	// CodeCallback_WeaponChange runs after this usercmd, outside of pmove
+	extern int libcod_weaponChange[];
+	if ( newweapon != ps->weapon )
+		libcod_weaponChange[ps->clientNum] = newweapon + 1;
+#endif
+
 	ps->weaponDelay = 0;
 	oldweapon = ps->weapon;
 

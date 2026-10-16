@@ -1594,6 +1594,10 @@ int Com_ModifyMsec( int msec )
 		if ( msec > 500 && msec < 500000 )
 		{
 			Com_Printf("Hitch warning: %i msec frame time\n", msec);
+#ifdef LIBCOD
+			extern int hitchFrameTime;
+			hitchFrameTime = msec;
+#endif
 		}
 		clampTime = 5000;
 	}

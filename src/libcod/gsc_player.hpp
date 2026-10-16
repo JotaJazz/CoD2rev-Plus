@@ -55,6 +55,28 @@ void gsc_player_enableitempickup(scr_entref_t id);
 void gsc_player_getcurrentoffhandslotammo(scr_entref_t id);
 void gsc_player_getprotocol(scr_entref_t id);
 void gsc_player_islocalclient(scr_entref_t id);
+void gsc_player_isfiring(scr_entref_t id);
+void gsc_player_ismeleeing(scr_entref_t id);
+void gsc_player_isreloading(scr_entref_t id);
+void gsc_player_isthrowinggrenade(scr_entref_t id);
+void gsc_player_isusingbinoculars(scr_entref_t id);
+void gsc_player_isrechambering(scr_entref_t id);
+void gsc_player_isshellshocked(scr_entref_t id);
+void gsc_player_ischatting(scr_entref_t id);
+void gsc_player_button_holdbreath(scr_entref_t id);
+void gsc_player_getcurrentweaponammo(scr_entref_t id);
+void gsc_player_getcurrentweaponclipammo(scr_entref_t id);
+void gsc_player_setcurrentweaponammo(scr_entref_t id);
+void gsc_player_setcurrentweaponclipammo(scr_entref_t id);
+void gsc_player_getcurrentweaponslot(scr_entref_t id);
+void gsc_player_getspeed(scr_entref_t id);
+void gsc_player_getgravity(scr_entref_t id);
+void gsc_player_getgroundentity(scr_entref_t id);
+void gsc_player_getvieworigin(scr_entref_t id);
+void gsc_player_getplayerstateflags(scr_entref_t id);
+void gsc_player_getinactivitytime(scr_entref_t id);
+void gsc_player_getentertime(scr_entref_t id);
+void gsc_player_processsuicide(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

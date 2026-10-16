@@ -1076,6 +1076,49 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 		G_LogPrintf("Item;%d;%d;%s;%s\n", SV_GetGuid(other->s.number), other->s.number, cleanname, item->classname);
 	}
 
+#ifdef LIBCOD
+	// CodeCallback_Pickup(type, weapon, name, quantity, clip, origin, angles)
+	// replaces the pickup: the script gives what it wants, the item goes away
+	extern int codecallback_pickup;
+	if ( codecallback_pickup && ( item->giType == IT_WEAPON || item->giType == IT_HEALTH || item->giType == IT_AMMO ) )
+	{
+		short ret;
+
+		if ( item->giType == IT_WEAPON )
+		{
+			Scr_AddVector(ent->r.currentAngles);
+			Scr_AddVector(ent->r.currentOrigin);
+			Scr_AddInt(ent->item.clipAmmoCount);
+			Scr_AddInt(ent->count);
+			Scr_AddString(item->pickup_name);
+			Scr_AddString(BG_GetWeaponDef(item->giTag)->szInternalName);
+			Scr_AddString("weapon");
+			ret = Scr_ExecEntThread(other, codecallback_pickup, 7);
+		}
+		else
+		{
+			Scr_AddInt(item->quantity);
+			Scr_AddString(item->pickup_name);
+			if ( item->giType == IT_AMMO )
+				Scr_AddString(BG_GetWeaponDef(item->giTag)->szInternalName);
+			else
+				Scr_AddUndefined();
+			Scr_AddString(item->giType == IT_AMMO ? "ammo" : "health");
+			ret = Scr_ExecEntThread(other, codecallback_pickup, 4);
+		}
+
+		Scr_FreeThread(ret);
+
+		// the script may have removed the item itself
+		if ( !ent->r.inuse )
+		{
+			return;
+		}
+
+		respawn = qtrue;
+	}
+	else
+#endif
 	// call the item-specific pickup function
 	switch ( item->giType )
 	{

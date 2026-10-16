@@ -981,4 +981,321 @@ void gsc_player_islocalclient(scr_entref_t id)
 	stackPushInt(Sys_IsLANAddress(client->netchan.remoteAddress));
 }
 
+// The player entity for a method, or NULL after reporting the error
+static gentity_t *gsc_player_entity(scr_entref_t id, const char *function)
+{
+	if (id.entnum >= MAX_CLIENTS || g_entities[id.entnum].client == NULL)
+	{
+		stackError("%s() entity %i is not a player", function, id.entnum);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	return &g_entities[id.entnum];
+}
+
+static weapSlot_t gsc_player_currentslot(const playerState_t *ps)
+{
+	if (ps->weapon && ps->weapon == ps->weaponslots[SLOT_PRIMARY])
+		return SLOT_PRIMARY;
+
+	if (ps->weapon && ps->weapon == ps->weaponslots[SLOT_PRIMARYB])
+		return SLOT_PRIMARYB;
+
+	return SLOT_NONE;
+}
+
+void gsc_player_isfiring(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushBool(ent->client->ps.weaponstate == WEAPON_FIRING);
+}
+
+void gsc_player_ismeleeing(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushBool(ent->client->ps.weaponstate == WEAPON_MELEE_FIRE);
+}
+
+void gsc_player_isreloading(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	int state = ent->client->ps.weaponstate;
+	stackPushBool(state >= WEAPON_RELOADING && state <= WEAPON_RELOAD_END);
+}
+
+void gsc_player_isthrowinggrenade(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	int state = ent->client->ps.weaponstate;
+	stackPushBool(state >= WEAPON_OFFHAND_INIT && state <= WEAPON_OFFHAND_END);
+}
+
+void gsc_player_isusingbinoculars(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	int state = ent->client->ps.weaponstate;
+	stackPushBool(state >= WEAPON_BINOCULARS_INIT && state <= WEAPON_BINOCULARS_END);
+}
+
+// isRechambering([slot]): the current weapon, or the one in "primary"/"primaryb"
+void gsc_player_isrechambering(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+	int slot = Scr_GetNumParam() ? BG_GetWeaponSlotForName(Scr_GetString(0)) : gsc_player_currentslot(ps);
+
+	if (slot <= SLOT_NONE || slot >= SLOT_COUNT)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	stackPushBool(Com_BitCheck(ps->weaponrechamber, ps->weaponslots[slot]) ? qtrue : qfalse);
+}
+
+void gsc_player_isshellshocked(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+	stackPushBool(ps->shellshockIndex != 0 && level.time <= ps->shellshockTime + ps->shellshockDuration);
+}
+
+void gsc_player_ischatting(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushBool(ent->client->buttons & BUTTON_TALK ? qtrue : qfalse);
+}
+
+void gsc_player_button_holdbreath(scr_entref_t id)
+{
+	if (!gsc_player_entity(id, __func__))
+		return;
+
+	stackPushBool(svs.clients[id.entnum].lastUsercmd.buttons & BUTTON_HOLDBREATH ? qtrue : qfalse);
+}
+
+// Reserve ammo of the current weapon, or its clip for clip-only weapons
+void gsc_player_getcurrentweaponammo(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+
+	if (!G_IsPlaying(ent) || !ps->weapon)
+		stackPushInt(0);
+	else if (BG_WeaponIsClipOnly(ps->weapon))
+		stackPushInt(ps->ammoclip[BG_ClipForWeapon(ps->weapon)]);
+	else
+		stackPushInt(ps->ammo[BG_AmmoForWeapon(ps->weapon)]);
+}
+
+void gsc_player_getcurrentweaponclipammo(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+
+	if (!G_IsPlaying(ent) || !ps->weapon)
+		stackPushInt(0);
+	else
+		stackPushInt(ps->ammoclip[BG_ClipForWeapon(ps->weapon)]);
+}
+
+// Returns false when the player holds no weapon
+void gsc_player_setcurrentweaponammo(scr_entref_t id)
+{
+	int ammo;
+
+	if (!stackGetParams("i", &ammo))
+	{
+		stackError("gsc_player_setcurrentweaponammo() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+
+	if (!G_IsPlaying(ent) || !ps->weapon)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	if (ammo < 0)
+		ammo = 0;
+
+	if (BG_WeaponIsClipOnly(ps->weapon))
+	{
+		int clip = BG_ClipForWeapon(ps->weapon);
+		ps->ammoclip[clip] = ammo > BG_GetAmmoClipSize(clip) ? BG_GetAmmoClipSize(clip) : ammo;
+	}
+	else
+	{
+		int type = BG_AmmoForWeapon(ps->weapon);
+		ps->ammo[type] = ammo > BG_GetAmmoTypeMax(type) ? BG_GetAmmoTypeMax(type) : ammo;
+	}
+
+	stackPushBool(qtrue);
+}
+
+void gsc_player_setcurrentweaponclipammo(scr_entref_t id)
+{
+	int ammo;
+
+	if (!stackGetParams("i", &ammo))
+	{
+		stackError("gsc_player_setcurrentweaponclipammo() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	playerState_t *ps = &ent->client->ps;
+
+	if (!G_IsPlaying(ent) || !ps->weapon)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	int clip = BG_ClipForWeapon(ps->weapon);
+
+	if (ammo < 0)
+		ammo = 0;
+
+	ps->ammoclip[clip] = ammo > BG_GetAmmoClipSize(clip) ? BG_GetAmmoClipSize(clip) : ammo;
+	stackPushBool(qtrue);
+}
+
+// "primary", "primaryb" or "none" (offhand, binoculars or no weapon)
+void gsc_player_getcurrentweaponslot(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushString(BG_GetWeaponSlotNameForIndex(gsc_player_currentslot(&ent->client->ps)));
+}
+
+void gsc_player_getspeed(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushInt(ent->client->ps.speed);
+}
+
+void gsc_player_getgravity(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushInt(ent->client->ps.gravity);
+}
+
+void gsc_player_getgroundentity(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	int ground = ent->client->ps.groundEntityNum;
+
+	// undefined in the air; standing on the map gives the world entity
+	if (ground == ENTITYNUM_NONE)
+		stackPushUndefined();
+	else
+		stackPushEntity(&g_entities[ground]);
+}
+
+void gsc_player_getvieworigin(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	vec3_t origin;
+	G_GetPlayerViewOrigin(ent, origin);
+	stackPushVector(origin);
+}
+
+void gsc_player_getplayerstateflags(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushInt(ent->client->ps.pm_flags);
+}
+
+void gsc_player_getinactivitytime(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushInt(ent->client->inactivityTime);
+}
+
+void gsc_player_getentertime(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	stackPushInt(ent->client->sess.enterTime);
+}
+
+// Kills the player as suicide() did before CodeCallback_Suicide replaced it
+void gsc_player_processsuicide(scr_entref_t id)
+{
+	gentity_t *ent = gsc_player_entity(id, __func__);
+	if (!ent)
+		return;
+
+	ent->flags &= ~(FL_GODMODE | FL_DEMI_GODMODE);
+	ent->health = 0;
+	ent->client->ps.stats[STAT_HEALTH] = 0;
+
+	player_die(ent, ent, ent, 100000, MOD_SUICIDE, WP_NONE, NULL, HITLOC_NONE, 0);
+}
+
 #endif

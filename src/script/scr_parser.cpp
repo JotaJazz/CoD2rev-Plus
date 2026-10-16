@@ -700,6 +700,13 @@ void RuntimeError( const char *codePos, unsigned int index, const char *msg, con
 {
 	bool abort_on_error;
 
+#ifdef LIBCOD
+	// errors that stop the map can't be handed to a script
+	extern void Scr_QueueErrorCallback(const char *message);
+	if ( !scrVmPub.terminal_error )
+		Scr_QueueErrorCallback(msg);
+#endif
+
 	if ( !scrVarPub.developer )
 	{
 		assert( Scr_IsInScriptMemory( codePos ) );

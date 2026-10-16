@@ -20,6 +20,48 @@ int codecallback_playercommand = 0;
 int codecallback_userinfochanged = 0;
 int codecallback_fire_grenade = 0;
 int codecallback_vid_restart = 0;
+int codecallback_error = 0;
+int codecallback_hitchwarning = 0;
+int codecallback_pickup = 0;
+int codecallback_suicide = 0;
+int codecallback_weapon_change = 0;
+
+// CodeCallback_<name>Button runs when the button goes down; names and order
+// are the same as in zk_libcod
+static struct
+{
+	const char *name;
+	int buttons;
+	int handle;
+} buttonCallbacks[] =
+{
+	{ "CodeCallback_AttackButton", BUTTON_ATTACK, 0 },
+	{ "CodeCallback_MeleeButton", BUTTON_MELEE, 0 },
+	{ "CodeCallback_UseButton", BUTTON_USE, 0 },
+	{ "CodeCallback_ReloadButton", BUTTON_RELOAD, 0 },
+	{ "CodeCallback_LeanLeftButton", BUTTON_LEANLEFT, 0 },
+	{ "CodeCallback_LeanRightButton", BUTTON_LEANRIGHT, 0 },
+	{ "CodeCallback_ProneButton", BUTTON_PRONE, 0 },
+	{ "CodeCallback_CrouchButton", BUTTON_CROUCH, 0 },
+	{ "CodeCallback_StandButton", BUTTON_JUMP, 0 },
+	{ "CodeCallback_AdsButton", BUTTON_ADS, 0 },
+	{ "CodeCallback_MeleeBreathButton", BUTTON_MELEE | BUTTON_HOLDBREATH, 0 },
+	{ "CodeCallback_HoldBreathButton", BUTTON_HOLDBREATH, 0 },
+	{ "CodeCallback_FragButton", BUTTON_FRAG, 0 },
+	{ "CodeCallback_SmokeButton", BUTTON_SMOKE, 0 },
+};
+
+// Script errors are kept until the next frame: running script from inside the
+// VM's error handling is not safe
+#define MAX_QUEUED_SCRIPT_ERRORS 32
+static char queuedScriptErrors[MAX_QUEUED_SCRIPT_ERRORS][256];
+static int numQueuedScriptErrors;
+static bool runningErrorCallback;
+
+int hitchFrameTime;
+
+// weapon + 1 that PM_BeginWeaponChange started to switch to, 0 when none
+int libcod_weaponChange[MAX_CLIENTS];
 
 int client_challenge_ping[MAX_CLIENTS] = {0};
 
@@ -55,6 +97,93 @@ void InitLibcodCallbacks()
 	codecallback_userinfochanged = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_UserInfoChanged", 0);
 	codecallback_fire_grenade = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_FireGrenade", 0);
 	codecallback_vid_restart = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_VidRestart", 0);
+	codecallback_error = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_Error", 0);
+	codecallback_hitchwarning = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_HitchWarning", 0);
+	codecallback_pickup = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_Pickup", 0);
+	codecallback_suicide = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_Suicide", 0);
+	codecallback_weapon_change = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_WeaponChange", 0);
+
+	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
+		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
+
+	// errors of the previous map are not reported to the new one
+	numQueuedScriptErrors = 0;
+	hitchFrameTime = 0;
+}
+
+void Scr_QueueErrorCallback(const char *message)
+{
+	if (!codecallback_error || runningErrorCallback || numQueuedScriptErrors == MAX_QUEUED_SCRIPT_ERRORS)
+		return;
+
+	I_strncpyz(queuedScriptErrors[numQueuedScriptErrors++], message, sizeof(queuedScriptErrors[0]));
+}
+
+// Called at the start of every game frame
+void Scr_RunFrameCallbacks()
+{
+	if (!Scr_IsSystemActive())
+		return;
+
+	if (codecallback_hitchwarning && hitchFrameTime)
+	{
+		stackPushInt(hitchFrameTime);
+		short ret = Scr_ExecThread(codecallback_hitchwarning, 1);
+		Scr_FreeThread(ret);
+	}
+	hitchFrameTime = 0;
+
+	// CodeCallback_Error(critical, internal_function, message); errors that
+	// stop the map never get here, so critical is always 0
+	runningErrorCallback = true;
+	for (int i = 0; i < numQueuedScriptErrors; i++)
+	{
+		stackPushString(queuedScriptErrors[i]);
+		stackPushString("RuntimeError");
+		stackPushInt(0);
+		short ret = Scr_ExecThread(codecallback_error, 3);
+		Scr_FreeThread(ret);
+	}
+	runningErrorCallback = false;
+	numQueuedScriptErrors = 0;
+}
+
+// Called after each usercmd of an active client. The callbacks can drop the
+// client, so the state is checked before each one.
+void Scr_ClientThinkCallbacks(client_t *cl, int oldButtons)
+{
+	int num = cl - svs.clients;
+	int weapon = libcod_weaponChange[num] - 1;
+
+	libcod_weaponChange[num] = 0;
+
+	if (!Scr_IsSystemActive() || !cl->gentity)
+		return;
+
+	gentity_t *ent = cl->gentity;
+
+	// CodeCallback_WeaponChange(index, name), when the switch starts
+	if (codecallback_weapon_change && weapon >= 0)
+	{
+		stackPushString(BG_GetWeaponDef(weapon)->szInternalName);
+		stackPushInt(weapon);
+		short ret = Scr_ExecEntThread(ent, codecallback_weapon_change, 2);
+		Scr_FreeThread(ret);
+	}
+
+	int pressed = cl->lastUsercmd.buttons;
+
+	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
+	{
+		if (cl->state != CS_ACTIVE)
+			return;
+
+		if (!buttonCallbacks[i].handle || !(pressed & buttonCallbacks[i].buttons) || (oldButtons & buttonCallbacks[i].buttons))
+			continue;
+
+		short ret = Scr_ExecEntThread(ent, buttonCallbacks[i].handle, 0);
+		Scr_FreeThread(ret);
+	}
 }
 
 static void Com_Assert_f( void )
@@ -419,6 +548,7 @@ int clientframes[MAX_CLIENTS] = {0};
 uint64_t clientframetime[MAX_CLIENTS] = {0};
 void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd)
 {
+	int oldButtons = cl->lastUsercmd.buttons;
 	cl->lastUsercmd = *cmd;
 
 	if ( cl->state != CS_ACTIVE )
@@ -441,6 +571,8 @@ void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd)
 
 	G_SetLastServerTime(cl - svs.clients, cmd->serverTime);
 	ClientThink(cl - svs.clients);
+
+	Scr_ClientThinkCallbacks(cl, oldButtons);
 }
 
 int bot_buttons[MAX_CLIENTS] = {0};

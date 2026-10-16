@@ -1405,6 +1405,9 @@ Also called by bot code
 void SV_ClientThink( client_t *cl, usercmd_t *cmd )
 {
 	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
+#ifdef LIBCOD
+	int oldButtons = cl->lastUsercmd.buttons;
+#endif
 	cl->lastUsercmd = *cmd;
 
 	if ( cl->state != CS_ACTIVE )
@@ -1414,6 +1417,11 @@ void SV_ClientThink( client_t *cl, usercmd_t *cmd )
 
 	G_SetLastServerTime(cl - svs.clients, cmd->serverTime);
 	ClientThink(cl - svs.clients);
+
+#ifdef LIBCOD
+	extern void Scr_ClientThinkCallbacks(client_t *cl, int oldButtons);
+	Scr_ClientThinkCallbacks(cl, oldButtons);
+#endif
 }
 
 /*
