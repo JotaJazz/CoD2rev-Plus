@@ -38,6 +38,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Downloads and passwords:** the check meant to stop clients from downloading the stock `iw_*.iwd` files never matched, so any client could fetch them (hundreds of MB each); they and the server-only `_svr_` iwds are now refused, also before an HTTP redirect. Downloads no longer get stuck when the map changes during one, a client message too large to decompress drops the client instead of being cut short, and rcon, `g_password` and `sv_privatePassword` are compared in constant time.
 - **Bans, game log and other fixes found in zk_libcod:** `addip` and `g_banIPs` kept a list of banned addresses that nothing checked; it is now enforced on connect, also for players behind a local proxy. The last address in `g_banIPs` is no longer skipped, and a long `addip` no longer overflows the stack. Line breaks in chat messages and player names could write fake lines into `games_mp.log` and split `getstatus` replies; they are now removed. A wrong rcon password no longer holds up the right one, a `userinfo` no longer swallows the next chat message, and holding the grenade button without grenades no longer hides the player's shots and footsteps from the others. The effect entities of grenade explosions are now freed instead of piling up until the map ends, a script that deletes a turret in use no longer ends the map, and a long map name passed to a script function no longer stops the server.
 - **Crash reports:** when the server crashes, it writes the signal or exception, the faulting address and the call addresses to the console and to `crash.log` in `fs_homepath`. `addr2line -f -e <binary> <address>` turns them into source locations. On Linux the process then dies with the same signal as before, so core dumps still work.
+- **Logging and admin settings:** the console log can be renamed (`logfileName`), keep the logs of previous runs (`logfileRotate`) and start each line with the date and time (`logTimestamps`). Accepted rcon commands can be left out of the log (`sv_logRcon`), the CD key authorization server can be changed (`sv_authorizeServer`, `sv_authorizePort`), the server can impose a rate and snapshot rate on every client (`g_forceRate`, `g_forceSnaps`), and the messages announcing a kick or a timeout can be turned off (`sv_kickMessages`, `sv_timeoutMessages`). The names are the same as in zk_libcod, so its configs keep working.
 - **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages.
 - **Simple bots:** `mods/bots` is a small script mod whose bots walk towards the nearest enemy and shoot what they see, using the libcod bot functions. They have no waypoints. `scripts/install_bots.py` installs it; `bots_count` and `bots_skill` control them.
 - **More bot buttons in libcod:** the script methods `useButton`, `throwSmoke` and `holdBreath` make a bot press use (to plant or defuse the bomb), throw a smoke grenade or hold its breath, like the existing `fireWeapon` and `throwNade`. Each takes `1` to press and `0` to release.
@@ -50,6 +51,16 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 | --- | --- | --- | --- |
 | `sv_rconMaxAttempts` | `5` | 0–100 | Wrong rcon passwords allowed per IP before the lockout. `0` disables the lockout. |
 | `sv_rconLockTime` | `600` | 0–86400 | Lockout duration in seconds. It is also the window in which attempts are counted. |
+| `logfileName` | `""` | — | Console log file, in `fs_homepath/<mod>`. Empty uses `console_mp_server.log`; names with `..` or a full path are ignored. |
+| `logfileRotate` | `0` | 0–1000 | Logs of previous runs kept when the server starts, as `<name>.1` (newest) to `<name>.N`. |
+| `logTimestamps` | `0` | 0–1 | `1` starts each console log line with the date and time. |
+| `sv_logRcon` | `1` | 0–1 | `0` leaves accepted rcon commands out of the log. Wrong passwords are always logged. |
+| `sv_authorizeServer` | `cod2master.activision.com` | — | CD key authorization server. A new value is used from the next connection. |
+| `sv_authorizePort` | `20700` | 1–65535 | Port of the authorization server. |
+| `g_forceRate` | `0` | 0–25000 | Rate given to every client instead of its own (minimum 1000). `0` keeps the client's. |
+| `g_forceSnaps` | `0` | 0–30 | Snapshots per second given to every client. `0` keeps the client's. |
+| `sv_kickMessages` | `1` | 0–1 | `0` hides the message that tells everyone a player was kicked. |
+| `sv_timeoutMessages` | `1` | 0–1 | `0` hides the message that tells everyone a player timed out. |
 
 ## Game versions
 

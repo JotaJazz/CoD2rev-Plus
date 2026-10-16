@@ -87,6 +87,13 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // sv_iwdNames                                 // string, read-only: names of the loaded .iwd files
 // sv_referencedIwds                           // string, read-only: checksums of the .iwd files the map uses
 // sv_referencedIwdNames                       // string, read-only: names of the .iwd files the map uses
+// set sv_logRcon 1                            // bool: log the address and command of every accepted rcon command
+// set sv_authorizeServer "cod2master.activision.com" // string: server that checks CD keys and gives players their GUID
+// set sv_authorizePort 20700                  // int, 1 to 65535: port of sv_authorizeServer
+// set g_forceRate 0                           // int, 0 to 25000: rate given to every client, overriding theirs; 0 = their own
+// set g_forceSnaps 0                          // int, 0 to 30: snapshots per second given to every client; 0 = their own
+// set sv_kickMessages 1                       // bool: tell everyone when a player is kicked
+// set sv_timeoutMessages 1                    // bool: tell everyone when a player times out
 // set sv_zombietime 2                         // int, 0 to 1800: seconds a disconnected client slot is kept before it is freed
 // set sv_reconnectlimit 3                     // int, 0 to 1800: minimum seconds between reconnects from the same address
 // set sv_padPackets 0                         // int, 0 or more: add padding bytes to outgoing packets (debugging)
@@ -261,7 +268,10 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set com_maxfps 85                           // int, 0 to 1000: frame rate cap
 // set developer 0                             // int, 0 to 2: developer mode: extra console output
 // set developer_script 0                      // bool: enable script debugging features
-// set logfile 0                               // int, 0 to 2: write the console to console_mp.log: 0 = off, 1 = buffered, 2 = flushed on every line
+// set logfile 0                               // int, 0 to 2: write the console to logfileName: 0 = off, 1 = buffered, 2 = flushed on every line
+// set logfileName ""                          // string: console log file in fs_homepath/<mod>; empty = console_mp_server.log
+// set logfileRotate 0                         // int, 0 to 1000: older console logs kept as <name>.1 to <name>.N when the server starts
+// set logTimestamps 0                         // bool: start each console log line with the date and time
 // set timescale 1.0                           // float, 0.001 to 1000.0, needs sv_cheats 1: game speed multiplier
 // set fixedtime 0                             // int, 0 to 1000, needs sv_cheats 1
 // set viewlog 0                               // int, 0 to 2, needs sv_cheats 1: show the console window

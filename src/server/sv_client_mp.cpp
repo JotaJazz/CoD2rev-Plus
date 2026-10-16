@@ -340,6 +340,17 @@ void SV_UserinfoChanged( client_t *cl )
 		cl->snapshotMsec = 50;
 	}
 
+	// the server can impose its own rate and snapshot rate on every client
+	if ( g_forceRate->current.integer )
+	{
+		cl->rate = g_forceRate->current.integer < 1000 ? 1000 : g_forceRate->current.integer;
+	}
+
+	if ( g_forceSnaps->current.integer )
+	{
+		cl->snapshotMsec = 1000 / g_forceSnaps->current.integer;
+	}
+
 	// voice command
 	val = Info_ValueForKey (cl->userinfo, "cl_voice");
 	cl->sendVoice = atoi(val) > 0;
@@ -431,17 +442,25 @@ void SV_GetChallenge( netadr_t from )
 		return;
 	}
 
+	// a changed authorize server is resolved again
+	if ( sv_authorizeServer->modified || sv_authorizePort->modified )
+	{
+		memset( &svs.authorizeAddress, 0, sizeof( svs.authorizeAddress ) );
+		sv_authorizeServer->modified = false;
+		sv_authorizePort->modified = false;
+	}
+
 	// look up the authorize server's IP
 	if ( !svs.authorizeAddress.ip[0] && svs.authorizeAddress.type != NA_BAD )
 	{
-		Com_Printf( "Resolving %s\n", AUTHORIZE_SERVER_NAME );
-		if ( !NET_StringToAdr( AUTHORIZE_SERVER_NAME, &svs.authorizeAddress ) )
+		Com_Printf( "Resolving %s\n", sv_authorizeServer->current.string );
+		if ( !NET_StringToAdr( sv_authorizeServer->current.string, &svs.authorizeAddress ) )
 		{
 			Com_Printf( "Couldn't resolve address\n" );
 			return;
 		}
-		svs.authorizeAddress.port = BigShort( PORT_AUTHORIZE );
-		Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", AUTHORIZE_SERVER_NAME,
+		svs.authorizeAddress.port = BigShort( sv_authorizePort->current.integer );
+		Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", sv_authorizeServer->current.string,
 		            svs.authorizeAddress.ip[0], svs.authorizeAddress.ip[1],
 		            svs.authorizeAddress.ip[2], svs.authorizeAddress.ip[3],
 		            BigShort( svs.authorizeAddress.port ) );
@@ -569,7 +588,9 @@ void SV_DropClient( client_t *drop, const char *reason )
 	}
 
 	// tell everyone why they got dropped
-	if ( I_stricmp(reason, "EXE_DISCONNECTED") )
+	if ( I_stricmp(reason, "EXE_DISCONNECTED")
+	        && ( sv_kickMessages->current.boolean || I_stricmp(reason, "EXE_PLAYERKICKED") )
+	        && ( sv_timeoutMessages->current.boolean || I_stricmp(reason, "EXE_TIMEDOUT") ) )
 	{
 		// VoroN: another stock bug fix for broken disconnect msg due to absence of localizedstrings
 		if ( !I_strnicmp(reason, "EXE", 3) || !I_strnicmp(reason, "GAME", 4) || !I_strnicmp(reason, "PC", 2) )

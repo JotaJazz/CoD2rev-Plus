@@ -1493,6 +1493,36 @@ fileHandle_t FS_FOpenFileWrite(const char *filename)
 	return FS_GetHandleAndOpenFile(filename, ospath, "wb", FS_THREAD_MAIN);
 }
 
+/*
+===========
+FS_RotateHomeFile
+
+Keeps up to count older copies of a file in the home game folder before it is
+written again: filename.1 is the newest, filename.<count> the oldest.
+===========
+*/
+void FS_RotateHomeFile(const char *filename, int count)
+{
+	char from[MAX_OSPATH];
+	char to[MAX_OSPATH];
+	int i;
+
+	if (count <= 0)
+	{
+		return;
+	}
+
+	FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, va("%s.%i", filename, count), from);
+	remove(from);
+
+	for (i = count - 1; i >= 0; i--)
+	{
+		FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, i ? va("%s.%i", filename, i) : filename, from);
+		FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, va("%s.%i", filename, i + 1), to);
+		rename(from, to);
+	}
+}
+
 fileHandle_t FS_FOpenTextFileWrite(const char* filename)
 {
 	char ospath[MAX_OSPATH];

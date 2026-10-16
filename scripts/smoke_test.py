@@ -140,12 +140,25 @@ def check_client(port, protocol, password, game_log, check):
         check('no fake lines in the game log', said and not any(
             l.startswith(('fakename', 'K;fake')) for l in lines),
             next((l for l in lines if 'smokesay' in l), ''))
+
+        # g_forceRate replaces the rate the client asks for
+        rcon(port, password, 'g_forceRate 12345')
+        client.command(server_id, 'userinfo "\\name\\smokerate\\rate\\25000\\snaps\\20"')
+        def forced():
+            return any('smokerate' in l and l.rstrip().endswith('12345')
+                       for l in rcon(port, password, 'status').splitlines())
+        check('g_forceRate applies', wait_for(forced))
+        rcon(port, password, 'g_forceRate 0')
     finally:
         client.close()
 
     # a wrong rcon password must not hold up the right one
     rcon(port, 'wrong' + password, 'sv_serverid')
     check('rcon right after a wrong password', 'sv_serverid' in rcon(port, password, 'sv_serverid'))
+
+    rcon(port, password, 'sv_logRcon 0')
+    rcon(port, password, 'set smokehidden 1')
+    rcon(port, password, 'sv_logRcon 1')
 
     # addip must keep the address out; an over-long filter must not crash
     rcon(port, password, 'addip ' + '1' * 300)
@@ -160,6 +173,19 @@ def check_client(port, protocol, password, game_log, check):
     check('addip refuses the address', refused is not None and 'banned' in refused,
           (refused or '').replace('\n', ' ').strip())
     rcon(port, password, 'removeip 127.0.*.*')
+
+
+def check_console_log(path, check):
+    """logfileName, logfileRotate and logTimestamps: the previous log is kept
+    as .1, and every line of the new one starts with the date and time."""
+    rotated = path + '.1'
+    check('console log rotated', os.path.exists(rotated) and 'previous run' in open(rotated).read())
+    text = open(path, encoding='latin-1').read() if os.path.exists(path) else ''
+    lines = [l for l in text.split('\n') if l]
+    stamped = [l for l in lines if re.match(r'\d{4}-\d\d-\d\d \d\d:\d\d:\d\d ', l)]
+    check('console log lines have timestamps', lines and len(stamped) == len(lines),
+          f'{len(stamped)} of {len(lines)}' + next((f': {l[:60]}' for l in lines if l not in stamped), ''))
+    check('sv_logRcon 0 hides rcon commands', 'Rcon from' in text and 'smokehidden' not in text)
 
 
 def free_port():
@@ -193,6 +219,10 @@ def main():
         for name in ('zz_svr_smoke.iwd', 'zz_smoke_download.iwd'):
             with zipfile.ZipFile(os.path.join(home, 'main', name), 'w') as z:
                 z.writestr('smoke/%s.txt' % name, 'cod2rev smoke test\n')
+        # an older console log, which logfileRotate must keep as .1
+        console_log = os.path.join(home, 'main', 'smoke_console.log')
+        with open(console_log, 'w') as f:
+            f.write('previous run\n')
         log_path = os.path.join(home, 'server.log')
         with open(log_path, 'wb') as log:
             server = subprocess.Popen(
@@ -206,6 +236,10 @@ def main():
                  '+set', 'rcon_password', password,
                  '+set', 'g_gametype', 'tdm',
                  '+set', 'g_logSync', '1',
+                 '+set', 'logfile', '2',
+                 '+set', 'logfileName', 'smoke_console.log',
+                 '+set', 'logfileRotate', '2',
+                 '+set', 'logTimestamps', '1',
                  '+map', args.map],
                 stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
         try:
@@ -245,6 +279,9 @@ def main():
 
                 time.sleep(2)
                 check('server still running', server.poll() is None)
+
+            if info:
+                check_console_log(console_log, check)
 
             # a crash must leave its report in crash.log
             if server.poll() is None:

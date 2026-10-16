@@ -13,6 +13,9 @@ dvar_t *com_maxfps;
 dvar_t *com_developer;
 dvar_t *com_developer_script;
 dvar_t *com_logfile;
+dvar_t *com_logfileName;
+dvar_t *com_logfileRotate;
+dvar_t *com_logTimestamps;
 dvar_t *com_timescale;
 dvar_t *com_fixedtime;
 dvar_t *com_viewlog;
@@ -26,6 +29,7 @@ dvar_t *ui_errorMessage;
 dvar_t *ui_errorTitle;
 
 static fileHandle_t logfile;
+static char logfileOpenName[MAX_QPATH];
 
 int com_frameTime;
 int com_lastFrameTime;
@@ -655,6 +659,70 @@ void Com_ReadCDKey()
 
 /*
 ===================
+Com_LogfileName
+
+The name in logfileName, or the default when it is empty or tries to leave
+the home game folder.
+===================
+*/
+static const char *Com_LogfileName( void )
+{
+#ifdef DEDICATED
+	const char *defaultName = "console_mp_server.log";
+#else
+	const char *defaultName = "console_mp.log";
+#endif
+	const char *name = com_logfileName ? com_logfileName->current.string : "";
+
+	if ( !name[0] || strstr( name, ".." ) || strchr( name, ':' ) || name[0] == '/' || name[0] == '\\' || strlen( name ) >= MAX_QPATH - 8 )
+	{
+		return defaultName;
+	}
+
+	return name;
+}
+
+/*
+===================
+Com_LogWrite
+
+Writes to the console log, starting each line with the date and time when
+logTimestamps is set. Messages often hold part of a line or several lines,
+so the stamp goes where a line starts, not at every message.
+===================
+*/
+static void Com_LogWrite( const char *msg )
+{
+	static qboolean lineStart = qtrue;
+	const char *end;
+	char stamp[32];
+	struct tm *tm;
+	time_t now;
+	int len;
+
+	while ( *msg )
+	{
+		end = strchr( msg, '\n' );
+		len = end ? end - msg + 1 : strlen( msg );
+
+		if ( lineStart && com_logTimestamps && com_logTimestamps->current.boolean )
+		{
+			time( &now );
+			tm = localtime( &now );
+			if ( tm && strftime( stamp, sizeof( stamp ), "%Y-%m-%d %H:%M:%S ", tm ) )
+			{
+				FS_Write( stamp, strlen( stamp ), logfile );
+			}
+		}
+
+		FS_Write( msg, len, logfile );
+		lineStart = msg[len - 1] == '\n';
+		msg += len;
+	}
+}
+
+/*
+===================
 Com_PrintMessage
 ===================
 */
@@ -702,6 +770,13 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 	{
 		// TTimo: only open the qconsole.log if the filesystem is in an initialized state
 		//   also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
+		// logfileName changed: continue in the new file
+		if ( logfile && !opening_qconsole && strcmp( logfileOpenName, Com_LogfileName() ) )
+		{
+			FS_FCloseFile( logfile );
+			logfile = 0;
+		}
+
 		if ( !logfile && !opening_qconsole)
 		{
 			struct tm *newtime;
@@ -712,19 +787,17 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 			time( &aclock );
 			newtime = localtime( &aclock );
 
-#ifdef DEDICATED
-			logfile = FS_FOpenTextFileWrite( "console_mp_server.log" );
-#else
-			logfile = FS_FOpenTextFileWrite( "console_mp.log" );
-#endif
-			Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
+			I_strncpyz( logfileOpenName, Com_LogfileName(), sizeof( logfileOpenName ) );
+			FS_RotateHomeFile( logfileOpenName, com_logfileRotate->current.integer );
+			logfile = FS_FOpenTextFileWrite( logfileOpenName );
+			Com_Printf( "logfile %s opened on %s\n", logfileOpenName, asctime( newtime ) );
 
 			opening_qconsole = qfalse;
 		}
 
 		if ( logfile )
 		{
-			FS_Write(msg, strlen(msg), logfile);
+			Com_LogWrite( msg );
 
 			if ( com_logfile->current.integer > 1 )
 				FS_Flush(logfile);
@@ -1459,6 +1532,9 @@ void Com_InitDvars()
 	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, DVAR_CHANGEABLE_RESET);
 	com_developer_script = Dvar_RegisterBool("developer_script", false, DVAR_CHANGEABLE_RESET);
 	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	com_logfileName = Dvar_RegisterString("logfileName", "", DVAR_CHANGEABLE_RESET);
+	com_logfileRotate = Dvar_RegisterInt("logfileRotate", 0, 0, 1000, DVAR_CHANGEABLE_RESET);
+	com_logTimestamps = Dvar_RegisterBool("logTimestamps", false, DVAR_CHANGEABLE_RESET);
 	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.001, 1000.0, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);

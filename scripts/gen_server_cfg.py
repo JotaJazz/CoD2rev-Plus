@@ -49,7 +49,7 @@ def read_dvars():
 d = read_dvars()
 MAC = {'PROTOCOL_VERSION':'115','MAX_CLIENTS':'64','DEFAULT_GRAVITY':'800','PORT_SERVER':'28960','ENTITYNUM_NONE':'1023',
        'MAX_LANGUAGES - 1':'13','UINT16_MAX':'65535','0x7FFFFFFF':'2147483647',
-       'MASTER_SERVER_NAME':'"cod2master.activision.com"','COMMUNITY_MASTER_SERVER_NAME':'"master.cod2x.me"',
+       'MASTER_SERVER_NAME':'"cod2master.activision.com"','AUTHORIZE_SERVER_NAME':'"cod2master.activision.com"','PORT_AUTHORIZE':'20700','COMMUNITY_MASTER_SERVER_NAME':'"master.cod2x.me"',
        'GAMEVERSION':'"Call of Duty 2"'}
 UNB = {'INT_MAX','INT_MIN','FLT_MAX','-FLT_MAX'}
 
@@ -177,7 +177,17 @@ DESC = {
  'fs_ignoreLocalized':'ignore localized .iwd files',
  'developer':'developer mode: extra console output',
  'developer_script':'enable script debugging features',
- 'logfile':'write the console to console_mp.log: 0 = off, 1 = buffered, 2 = flushed on every line',
+ 'logfile':'write the console to logfileName: 0 = off, 1 = buffered, 2 = flushed on every line',
+ 'logfileName':'console log file in fs_homepath/<mod>; empty = console_mp_server.log',
+ 'logfileRotate':'older console logs kept as <name>.1 to <name>.N when the server starts',
+ 'logTimestamps':'start each console log line with the date and time',
+ 'sv_logRcon':'log the address and command of every accepted rcon command',
+ 'sv_authorizeServer':'server that checks CD keys and gives players their GUID',
+ 'sv_authorizePort':'port of sv_authorizeServer',
+ 'g_forceRate':'rate given to every client, overriding theirs; 0 = their own',
+ 'g_forceSnaps':'snapshots per second given to every client; 0 = their own',
+ 'sv_kickMessages':'tell everyone when a player is kicked',
+ 'sv_timeoutMessages':'tell everyone when a player times out',
  'com_maxfps':'frame rate cap',
  'com_hunkMegs':'megabytes of memory reserved for game data',
  'timescale':'game speed multiplier',
