@@ -37,6 +37,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <execinfo.h>
+#include <time.h>
+#include <ucontext.h>
 #ifdef __linux__ // rb010123
   #include <mntent.h>
 #endif
@@ -467,6 +470,134 @@ int Sys_FileTime (char *path)
 void floating_point_exception_handler(int whatever)
 {
   signal(SIGFPE, floating_point_exception_handler);
+}
+
+static char sys_crashLogPath[MAX_OSPATH] = "crash.log";
+
+static void Sys_CrashWrite( int fd, const char *text )
+{
+  if ( fd >= 0 && write( fd, text, strlen( text ) ) < 0 )
+    return;
+}
+
+/*
+==================
+Sys_CrashHandler
+
+Writes the signal, the faulting address and a backtrace to stderr and to
+crash.log, then raises the signal again so the process still dies with it
+(and leaves a core dump if enabled). The addresses can be resolved with
+"addr2line -f -e cod2rev_lnxded <address>".
+==================
+*/
+static void Sys_CrashHandler( int sig, siginfo_t *info, void *context )
+{
+  void *frames[32];
+  char text[256];
+  char date[32];
+  const char *name;
+  time_t now;
+  struct tm tm;
+  int fds[2];
+  int count, i, j;
+
+  count = backtrace( frames, ARRAY_COUNT( frames ) );
+
+  switch ( sig )
+  {
+    case SIGSEGV: name = "SIGSEGV"; break;
+    case SIGBUS:  name = "SIGBUS";  break;
+    case SIGILL:  name = "SIGILL";  break;
+    case SIGABRT: name = "SIGABRT"; break;
+    default:      name = "signal";  break;
+  }
+
+  now = time( NULL );
+  date[0] = 0;
+  if ( localtime_r( &now, &tm ) )
+    strftime( date, sizeof( date ), "%Y-%m-%d %H:%M:%S", &tm );
+
+  fds[0] = STDERR_FILENO;
+  fds[1] = open( sys_crashLogPath, O_WRONLY | O_CREAT | O_APPEND, 0644 );
+
+  for ( i = 0; i < 2; i++ )
+  {
+    snprintf( text, sizeof( text ), "\n----- Server crash: %s (%d) at %s -----\n%s %s build %s\n",
+              name, sig, date, PRODUCT_VERSION, CPUSTRING, __DATE__ );
+    Sys_CrashWrite( fds[i], text );
+
+#if defined __i386__
+    snprintf( text, sizeof( text ), "eip %p, fault address %p\n",
+              (void *)( (const ucontext_t *)context )->uc_mcontext.gregs[REG_EIP], info->si_addr );
+#else
+    snprintf( text, sizeof( text ), "fault address %p\n", info->si_addr );
+#endif
+    Sys_CrashWrite( fds[i], text );
+
+    if ( fds[i] >= 0 )
+      backtrace_symbols_fd( frames, count, fds[i] );
+
+    Sys_CrashWrite( fds[i], "addresses:" );
+    for ( j = 0; j < count; j++ )
+    {
+      snprintf( text, sizeof( text ), " %p", frames[j] );
+      Sys_CrashWrite( fds[i], text );
+    }
+    Sys_CrashWrite( fds[i], "\n" );
+  }
+
+  if ( fds[1] >= 0 )
+    close( fds[1] );
+
+  // SA_RESETHAND has restored the default action
+  raise( sig );
+}
+
+/*
+==================
+Sys_InstallCrashHandler
+==================
+*/
+void Sys_InstallCrashHandler( void )
+{
+  static char altStack[64 * 1024];
+  const int signals[] = { SIGSEGV, SIGBUS, SIGILL, SIGABRT };
+  struct sigaction sa;
+  stack_t stack;
+  void *frame;
+  int i;
+
+  // the first backtrace loads libgcc, which must not happen inside the handler
+  backtrace( &frame, 1 );
+
+  // a stack overflow leaves no room for the handler on the normal stack
+  stack.ss_sp = altStack;
+  stack.ss_size = sizeof( altStack );
+  stack.ss_flags = 0;
+  sigaltstack( &stack, NULL );
+
+  memset( &sa, 0, sizeof( sa ) );
+  sa.sa_sigaction = Sys_CrashHandler;
+  sa.sa_flags = SA_SIGINFO | SA_ONSTACK | SA_RESETHAND;
+  sigemptyset( &sa.sa_mask );
+
+  for ( i = 0; i < ARRAY_COUNT( signals ); i++ )
+    sigaction( signals[i], &sa, NULL );
+}
+
+/*
+==================
+Sys_SetCrashLogPath
+
+Once the file system is up, crash.log goes next to the other logs.
+==================
+*/
+void Sys_SetCrashLogPath( void )
+{
+  extern dvar_t *fs_homepath;
+
+  if ( fs_homepath && fs_homepath->current.string[0] )
+    Com_sprintf( sys_crashLogPath, sizeof( sys_crashLogPath ), "%s/crash.log", fs_homepath->current.string );
 }
 
 /*
@@ -1254,6 +1385,7 @@ int main ( int argc, char* argv[] )
   saved_euid = geteuid();
   seteuid(getuid());
 
+  Sys_InstallCrashHandler();
   Sys_InitMainThread();
   Dvar_Init();
   Sys_ParseArgs( argc, argv );  // bk010104 - added this for support
@@ -1278,6 +1410,7 @@ int main ( int argc, char* argv[] )
 
   Sys_Milliseconds();
   Com_Init(cmdline);
+  Sys_SetCrashLogPath();
 
   Sys_ConsoleInputInit();
 

@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <direct.h>
 #include <io.h>
 #include <conio.h>
+#include <time.h>
 
 #include "../qcommon/qcommon.h"
 #include "../qcommon/cmd.h"
@@ -1060,6 +1061,113 @@ void Sys_Init( void ) {
 
 //=======================================================================
 
+static char sys_crashLogPath[MAX_OSPATH] = "crash.log";
+
+/*
+==================
+Sys_CrashAddress
+
+Prints an address as if the exe were loaded at its preferred base, so that
+"addr2line -f -e cod2rev_win32.exe <address>" resolves it.
+==================
+*/
+static void Sys_CrashAddress( FILE *f, DWORD address )
+{
+	DWORD base = (DWORD)GetModuleHandle( NULL );
+	const IMAGE_NT_HEADERS *nt = (const IMAGE_NT_HEADERS *)( base + ( (const IMAGE_DOS_HEADER *)base )->e_lfanew );
+
+	if ( address >= base && address - base < nt->OptionalHeader.SizeOfImage )
+		fprintf( f, " 0x%08lx", address - base + nt->OptionalHeader.ImageBase );
+	else
+		fprintf( f, " (0x%08lx)", address );
+}
+
+/*
+==================
+Sys_CrashHandler
+
+Writes the exception, the faulting address and the frame pointer chain to
+stderr and crash.log, then lets Windows handle the crash as before.
+==================
+*/
+static LONG WINAPI Sys_CrashHandler( EXCEPTION_POINTERS *info )
+{
+	const EXCEPTION_RECORD *rec = info->ExceptionRecord;
+	FILE *files[2];
+	char date[32];
+	time_t now;
+	int i;
+
+	now = time( NULL );
+	date[0] = 0;
+	if ( localtime( &now ) )
+		strftime( date, sizeof( date ), "%Y-%m-%d %H:%M:%S", localtime( &now ) );
+
+	files[0] = stderr;
+	files[1] = fopen( sys_crashLogPath, "a" );
+
+	for ( i = 0; i < 2; i++ )
+	{
+		FILE *f = files[i];
+
+		if ( !f )
+			continue;
+
+		fprintf( f, "\n----- Server crash: exception 0x%08lx at %s -----\n%s %s build %s\n",
+		         rec->ExceptionCode, date, PRODUCT_VERSION, CPUSTRING, __DATE__ );
+
+		if ( rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2 )
+		{
+			fprintf( f, "%s of address 0x%08lx\n", rec->ExceptionInformation[0] == 8 ? "execute" :
+			         rec->ExceptionInformation[0] ? "write" : "read", rec->ExceptionInformation[1] );
+		}
+
+		fprintf( f, "addresses:" );
+#if defined __i386__ || defined _M_IX86
+		const CONTEXT *ctx = info->ContextRecord;
+		DWORD frame = ctx->Ebp;
+		int j;
+
+		Sys_CrashAddress( f, ctx->Eip );
+
+		// the build keeps frame pointers, so ebp links the callers
+		for ( j = 0; j < 32 && frame && !IsBadReadPtr( (void *)frame, 8 ); j++ )
+		{
+			Sys_CrashAddress( f, ( (DWORD *)frame )[1] );
+
+			if ( ( (DWORD *)frame )[0] <= frame )
+				break;
+
+			frame = ( (DWORD *)frame )[0];
+		}
+#else
+		Sys_CrashAddress( f, (DWORD)rec->ExceptionAddress );
+#endif
+		fprintf( f, "\n" );
+		fflush( f );
+	}
+
+	if ( files[1] )
+		fclose( files[1] );
+
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+/*
+==================
+Sys_SetCrashLogPath
+
+Once the file system is up, crash.log goes next to the other logs.
+==================
+*/
+static void Sys_SetCrashLogPath( void )
+{
+	extern dvar_t *fs_homepath;
+
+	if ( fs_homepath && fs_homepath->current.string[0] )
+		Com_sprintf( sys_crashLogPath, sizeof( sys_crashLogPath ), "%s\\crash.log", fs_homepath->current.string );
+}
+
 int	totalMsec, countMsec;
 
 /*
@@ -1082,6 +1190,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	// no abort/retry/fail errors
 	SetErrorMode( SEM_FAILCRITICALERRORS );
+	SetUnhandledExceptionFilter( Sys_CrashHandler );
 
 	Sys_InitMainThread();
 	Dvar_Init();
@@ -1094,6 +1203,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Sys_InitStreamThread();
 
 	Com_Init(sys_cmdline);
+	Sys_SetCrashLogPath();
 
 	_getcwd (cwd, sizeof(cwd));
 	Com_Printf("Working directory: %s\n", cwd);

@@ -9,7 +9,7 @@ message. The game folder is only read: logs and configs go to a temporary home
 folder. The server runs in LAN mode (dedicated 1), so nothing is sent to the
 master servers. Exits with 0 when every check passes.
 """
-import argparse, os, random, re, secrets, socket, string, subprocess, sys, tempfile, time, zipfile
+import argparse, os, random, re, secrets, signal, socket, string, subprocess, sys, tempfile, time, zipfile
 
 import cod2client
 
@@ -245,6 +245,17 @@ def main():
 
                 time.sleep(2)
                 check('server still running', server.poll() is None)
+
+            # a crash must leave its report in crash.log
+            if server.poll() is None:
+                server.send_signal(signal.SIGSEGV)
+                try:
+                    server.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    pass
+                crash_log = os.path.join(home, 'crash.log')
+                report = open(crash_log, encoding='latin-1').read() if os.path.exists(crash_log) else ''
+                check('crash report written', 'Server crash: SIGSEGV' in report and 'addresses:' in report)
 
             log_text = open(log_path, encoding='latin-1').read()
             check('no heartbeat sent in LAN mode', 'Sending heartbeat' not in log_text)
