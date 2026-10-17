@@ -73,11 +73,14 @@ def main():
     ap.add_argument('--binary', default=os.path.join(ROOT, 'bin', 'cod2rev_lnxded'))
     ap.add_argument('--map', default='mp_toujane')
     ap.add_argument('--gametype', default='tdm')
-    ap.add_argument('--seconds', type=int, default=180, help='play time on the first load')
+    ap.add_argument('--seconds', type=int, help='play time on the first load (default: 180, SD 240, CTF 300)')
     ap.add_argument('--keep', help='copy games_mp.log and the server log to this folder')
     ap.add_argument('--corrupt-cache', action='store_true',
                     help='start with a garbage waypoint file, which must be rebuilt')
     args = ap.parse_args()
+    if args.seconds is None:
+        args.seconds = {'sd': 240, 'ctf': 300}.get(args.gametype, 180)
+    fights = args.gametype in ('tdm', 'dm')
 
     failures = []
 
@@ -91,7 +94,10 @@ def main():
                         '--dest', home, '--name', MOD], check=True, stdout=subprocess.DEVNULL)
         callbacks = os.path.join(home, MOD, 'maps', 'mp', 'gametypes', '_callbacksetup.gsc')
         text = open(callbacks, encoding='latin-1').read()
-        text = text.replace(HOOK, HOOK + ' thread botsTestMelee();') + ERROR_CALLBACK
+        # the staged knife duel would teleport bots off their objectives
+        if fights:
+            text = text.replace(HOOK, HOOK + ' thread botsTestMelee();')
+        text += ERROR_CALLBACK
         with open(callbacks, 'w', encoding='latin-1', newline='') as f:
             f.write(text)
 
@@ -163,7 +169,24 @@ def main():
 
         combat = {l.split()[2] for l in lines if re.match(r'BOTCOMBAT \d+ ', l)}
         for action in ('ads', 'nade', 'melee'):
-            check(f'bots use {action}', action in combat)
+            if fights:
+                check(f'bots use {action}', action in combat)
+            else:
+                print(f'     {action}: {"used" if action in combat else "not used"}')
+
+        roles = {l.split()[3] for l in lines if re.match(r'BOTOBJ \d+ role ', l)}
+        events = [' '.join(l.split()[2:]) for l in lines if re.match(r'BOTOBJ \d+ ', l)]
+        if args.gametype == 'sd':
+            check('bots take plant and guard roles', {'plant', 'guard'} <= roles, ', '.join(sorted(roles)))
+            check('bots start planting', 'plant start' in events)
+            plants = [l for l in lines if l.startswith('A;') and l.endswith(';bomb_plant')]
+            check('bots plant the bomb', len(plants) >= 1, f'{len(plants)} plants')
+            defuses = [l for l in lines if l.startswith('A;') and l.endswith(';bomb_defuse')]
+            print(f'     {events.count("defuse start")} defuse starts, {len(defuses)} defuses')
+        if args.gametype == 'ctf':
+            check('bots take steal and defend roles', {'steal', 'defend'} <= roles, ', '.join(sorted(roles)))
+            check('bots pick up the enemy flag', 'pickup' in events, f'{events.count("pickup")} pickups')
+            print(f'     {events.count("capture")} captures, {events.count("return")} returns')
         kills = [l for l in lines if l.startswith('K;')]
         check('bots kill each other', len(kills) >= 5, f'{len(kills)} kills')
         nade_kills = sum(1 for l in kills if 'MOD_GRENADE_SPLASH' in l)
