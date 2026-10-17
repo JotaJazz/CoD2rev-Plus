@@ -13,7 +13,8 @@
 // Server variables:
 //   bots_count  how many bots to keep connected (default 0)
 //   bots_skill  0 to 10: aim error and reaction time (default 5)
-//   bots_debug  1 writes BOTNAV and BOTCOMBAT lines to games_mp.log (default 0)
+//   bots_debug  1 writes BOTNAV, BOTCOMBAT and BOTOBJ lines to games_mp.log
+//               (default 0; can be changed in the middle of a map)
 //
 // Waypoints: the first time a map is played the bots build a navigation graph
 // from its spawn points and save it as waypoints/<map>_v1.graph in the mod

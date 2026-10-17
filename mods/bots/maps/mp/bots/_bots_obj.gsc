@@ -78,6 +78,8 @@ resetObjective()
 	self.botCrouched = false;
 	self.botObjAction = undefined;
 	self.botObjStart = 0;
+	self.botObjGoal = undefined;
+	self.botObjGoalAt = -1;
 	self.botHadFlag = false;
 	self.botReturnPos = undefined;
 
@@ -134,6 +136,17 @@ teamHasRole(role)
 // The goal of this bot's objective role, or undefined to let _bots_nav pick
 // hints, patrols and enemies.
 objectiveGoal()
+{
+	// objectiveAction may already have asked this tick
+	now = getTime();
+	if(self.botObjGoalAt == now)
+		return self.botObjGoal;
+	self.botObjGoalAt = now;
+	self.botObjGoal = self computeGoal();
+	return self.botObjGoal;
+}
+
+computeGoal()
 {
 	self.botGuarding = false;
 

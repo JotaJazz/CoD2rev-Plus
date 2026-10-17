@@ -4,7 +4,6 @@
 
 init()
 {
-	level.botsDebug = getCvarInt("bots_debug");
 	level.botGraph = undefined;
 
 	file = "waypoints/" + getCvar("mapname") + "_v1.graph";
@@ -356,6 +355,7 @@ allSpawns()
 
 debugLog(text)
 {
-	if(level.botsDebug)
+	// read each time, so it can be turned on in the middle of a map
+	if(getCvarInt("bots_debug"))
 		logprint(text + "\n");
 }

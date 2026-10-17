@@ -178,6 +178,7 @@ throwGrenadeAt(pitch, yaw)
 	self endon("death");
 
 	self.botThrowing = true;
+	self setWalkDir("none");
 	self fireWeapon(0);
 	self adsAim(0);
 
