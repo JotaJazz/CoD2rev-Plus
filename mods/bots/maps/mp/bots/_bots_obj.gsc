@@ -319,8 +319,81 @@ roundEnded()
 	return isDefined(level.roundended) && level.roundended;
 }
 
-// Filled in by Task 4.
 ctfGoal()
 {
+	team = self.pers["team"];
+	own = level.botFlags[team];
+	theirs = level.botFlags[otherTeam(team)];
+	if(!isDefined(own) || !isDefined(theirs))
+		return undefined;
+
+	num = self getEntityNumber();
+
+	// carrying the enemy flag: home, or wait near it until ours is back
+	if(isDefined(self.flag))
+	{
+		if(!self.botHadFlag)
+		{
+			maps\mp\bots\_bots_nav::debugLog("BOTOBJ " + num + " pickup");
+			self.botHadFlag = true;
+		}
+		self setRole("capture");
+		if(own.atbase)
+			return own.home_origin;
+		return self guardSpot(own.home_origin);
+	}
+
+	// still alive and no longer carrying it: captured
+	if(self.botHadFlag)
+	{
+		maps\mp\bots\_bots_nav::debugLog("BOTOBJ " + num + " capture");
+		self.botHadFlag = false;
+		self setRole("steal");
+	}
+
+	if(self.botRole == "steal")
+	{
+		carrier = flagCarrier(theirs);
+		if(isDefined(carrier))
+			return carrier.origin; // escort the teammate who has it
+		return theirs.origin;
+	}
+
+	// defend
+	if(own.atbase)
+	{
+		if(isDefined(self.botReturnPos) && distanceSquared(self.origin, self.botReturnPos) < 150 * 150)
+			maps\mp\bots\_bots_nav::debugLog("BOTOBJ " + num + " return");
+		self.botReturnPos = undefined;
+		return self guardSpot(own.home_origin);
+	}
+
+	carrier = flagCarrier(own);
+	if(isDefined(carrier))
+	{
+		self.botReturnPos = undefined;
+		return carrier.origin;
+	}
+
+	// ours lies on the ground: touching it sends it home
+	self.botReturnPos = own.origin;
+	return own.origin;
+}
+
+flagCarrier(flag)
+{
+	players = getentarray("player", "classname");
+	for(i = 0; i < players.size; i++)
+	{
+		if(isAlive(players[i]) && isDefined(players[i].flag) && players[i].flag == flag)
+			return players[i];
+	}
 	return undefined;
+}
+
+otherTeam(team)
+{
+	if(team == "axis")
+		return "allies";
+	return "axis";
 }

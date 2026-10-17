@@ -153,7 +153,11 @@ def main():
         bots = {l.split()[1] for l in nodes}
         check('bots follow paths', len(nodes) >= 60 and len(bots) >= 3, f'{len(nodes)} nodes by {len(bots)} bots')
         goals = {l.split()[3] for l in lines if re.match(r'BOTNAV \d+ goal ', l)}
-        check('bots choose patrol and hint goals', {'patrol', 'hint'} <= goals, ', '.join(sorted(goals)))
+        # in SD and CTF most bots play the objective instead of patrolling
+        if fights:
+            check('bots choose patrol and hint goals', {'patrol', 'hint'} <= goals, ', '.join(sorted(goals)))
+        else:
+            print(f'     goals: {", ".join(sorted(goals))}')
         # a node a bot got stuck on is avoided for 10 s, so the same bot
         # should rarely get stuck on the same node again; the game time
         # prefix gives the seconds
