@@ -278,6 +278,17 @@ scr_function_t scriptFunctions[] =
 	{"json_async_result", gsc_json_async_result, 0},
 #endif
 
+#if LIBCOD_COMPILE_HTTP == 1
+	{"httpfetch", gsc_http_fetch, 0},
+	{"http_fetch", gsc_http_fetch, 0},
+	{"websocketconnect", gsc_websocket_connect, 0},
+	{"websocket_connect", gsc_websocket_connect, 0},
+	{"websocketsendtext", gsc_websocket_sendtext, 0},
+	{"websocket_sendtext", gsc_websocket_sendtext, 0},
+	{"websocketclose", gsc_websocket_close, 0},
+	{"websocket_close", gsc_websocket_close, 0},
+#endif
+
 #if LIBCOD_COMPILE_GRAPH == 1
 	{"graphcreate", gsc_graph_create, 0},
 	{"graphfindpath", gsc_graph_find_path, 0},
