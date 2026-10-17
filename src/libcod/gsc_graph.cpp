@@ -54,7 +54,7 @@ static void graphError(const char *format, ...)
 	va_end(va);
 
 	Com_Printf("^1%s\n", message);
-	Scr_QueueErrorCallback(message);
+	Scr_QueueErrorCallback(message, NULL);
 }
 #define stackError graphError
 

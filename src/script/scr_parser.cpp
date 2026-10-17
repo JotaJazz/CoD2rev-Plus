@@ -696,15 +696,46 @@ char* Scr_AddSourceBuffer( const char *filename, const char *extFilename, const 
 RuntimeError
 ==============
 */
+#ifdef LIBCOD
+/*
+==============
+Scr_GetErrorPosition
+
+"file:line" of codePos, as Scr_PrintPrevCodePos would print it. The
+positions are only there in developer mode, so without it this returns false.
+==============
+*/
+static bool Scr_GetErrorPosition( const char *codePos, unsigned int index, char *out, int size )
+{
+	unsigned int bufferIndex;
+	int col;
+	char line[MAX_STRING_CHARS];
+
+	if ( !scrVarPub.developer || !scrVarPub.programBuffer || !codePos || codePos == &g_EndPos
+	        || !Scr_IsInScriptMemory( codePos ) )
+	{
+		return false;
+	}
+
+	bufferIndex = Scr_GetSourceBuffer( codePos - 1 );
+	Com_sprintf( out, size, "%s:%d", scrParserPub.sourceBufferLookup[bufferIndex].buf,
+	             Scr_GetLineInfo( scrParserPub.sourceBufferLookup[bufferIndex].sourceBuf, Scr_GetPrevSourcePos( codePos - 1, index ), &col, line ) + 1 );
+	return true;
+}
+#endif
+
 void RuntimeError( const char *codePos, unsigned int index, const char *msg, const char *dialogMessage )
 {
 	bool abort_on_error;
 
 #ifdef LIBCOD
 	// errors that stop the map can't be handed to a script
-	extern void Scr_QueueErrorCallback(const char *message);
+	extern void Scr_QueueErrorCallback(const char *message, const char *position);
 	if ( !scrVmPub.terminal_error )
-		Scr_QueueErrorCallback(msg);
+	{
+		char position[MAX_QPATH + 16];
+		Scr_QueueErrorCallback(msg, Scr_GetErrorPosition(codePos, index, position, sizeof(position)) ? position : NULL);
+	}
 #endif
 
 	if ( !scrVarPub.developer )

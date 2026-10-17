@@ -67,6 +67,7 @@ static struct
 // VM's error handling is not safe
 #define MAX_QUEUED_SCRIPT_ERRORS 32
 static char queuedScriptErrors[MAX_QUEUED_SCRIPT_ERRORS][256];
+static char queuedScriptErrorPositions[MAX_QUEUED_SCRIPT_ERRORS][MAX_QPATH + 16];
 static int numQueuedScriptErrors;
 static bool runningErrorCallback;
 
@@ -136,12 +137,16 @@ void InitLibcodCallbacks()
 	hitchFrameTime = 0;
 }
 
-void Scr_QueueErrorCallback(const char *message)
+// position is "file:line", or NULL outside developer mode, where the
+// engine has no positions
+void Scr_QueueErrorCallback(const char *message, const char *position)
 {
 	if (!codecallback_error || runningErrorCallback || numQueuedScriptErrors == MAX_QUEUED_SCRIPT_ERRORS)
 		return;
 
-	I_strncpyz(queuedScriptErrors[numQueuedScriptErrors++], message, sizeof(queuedScriptErrors[0]));
+	I_strncpyz(queuedScriptErrors[numQueuedScriptErrors], message, sizeof(queuedScriptErrors[0]));
+	I_strncpyz(queuedScriptErrorPositions[numQueuedScriptErrors], position ? position : "", sizeof(queuedScriptErrorPositions[0]));
+	numQueuedScriptErrors++;
 }
 
 // Called at the start of every game frame
@@ -158,15 +163,22 @@ void Scr_RunFrameCallbacks()
 	}
 	hitchFrameTime = 0;
 
-	// CodeCallback_Error(critical, internal_function, message); errors that
-	// stop the map never get here, so critical is always 0
+	// CodeCallback_Error(critical, internal_function, message, position);
+	// errors that stop the map never get here, so critical is always 0.
+	// position ("file:line") is undefined outside developer mode (developer 2
+	// reports errors without stopping the map), and
+	// callbacks written for zk_libcod's three parameters just don't see it.
 	runningErrorCallback = true;
 	for (int i = 0; i < numQueuedScriptErrors; i++)
 	{
+		if (queuedScriptErrorPositions[i][0])
+			stackPushString(queuedScriptErrorPositions[i]);
+		else
+			stackPushUndefined();
 		stackPushString(queuedScriptErrors[i]);
 		stackPushString("RuntimeError");
 		stackPushInt(0);
-		short ret = Scr_ExecThread(codecallback_error, 3);
+		short ret = Scr_ExecThread(codecallback_error, 4);
 		Scr_FreeThread(ret);
 	}
 	runningErrorCallback = false;
