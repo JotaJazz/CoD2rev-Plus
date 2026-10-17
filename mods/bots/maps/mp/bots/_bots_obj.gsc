@@ -77,10 +77,13 @@ resetObjective()
 		else
 			self.botZone = level.botZones[randomInt(level.botZones.size)];
 	}
-	else if(randomInt(2) == 0)
-		role = "steal";
 	else
-		role = "defend";
+	{
+		// as in SD, somebody always goes for the enemy flag
+		role = "steal";
+		if(randomInt(2) == 0 && self teamHasRole("steal"))
+			role = "defend";
+	}
 
 	self setRole(role);
 }
@@ -150,6 +153,20 @@ sdGoal()
 		}
 
 		return undefined;
+	}
+
+	// SD has no respawn within a round: a hunter takes over when the last
+	// planter or guard of its team is gone
+	if(self.botRole == "hunter")
+	{
+		role = "guard";
+		if(self.pers["team"] == game["attackers"])
+			role = "plant";
+		if(!self teamHasRole(role))
+		{
+			self setRole(role);
+			self.botZone = level.botZones[randomInt(level.botZones.size)];
+		}
 	}
 
 	if(!isDefined(self.botZone))
@@ -278,6 +295,13 @@ keepUsing()
 {
 	if(!isDefined(self.botObjAction) || roundEnded())
 		return false;
+
+	// planted: let go and fight
+	if(self.botObjAction == "plant" && level.bombplanted)
+	{
+		self stopUse();
+		return false;
+	}
 
 	if(self.botObjAction == "plant")
 		half = level.planttime * 500;
