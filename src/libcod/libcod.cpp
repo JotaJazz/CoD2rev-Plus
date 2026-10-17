@@ -79,6 +79,9 @@ int client_challenge_ping[MAX_CLIENTS] = {0};
 
 void RegisterLibcodDvars()
 {
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		Libcod_ResetClient(i);
+
 	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_master[1] = Dvar_RegisterString("sv_master2", COMMUNITY_MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
@@ -610,7 +613,15 @@ void Libcod_ResetClient(int clientNum)
 {
 	extern int custom_animation[];
 
-	memset(&libcodClients[clientNum], 0, sizeof(libcodClients[clientNum]));
+	libcodClient_t *client = &libcodClients[clientNum];
+
+	memset(client, 0, sizeof(*client));
+	client->weaponSpreadScale = 1.0f;
+	client->turretSpreadScale = 1.0f;
+	client->meleeRangeScale = 1.0f;
+	client->meleeWidthScale = 1.0f;
+	client->meleeHeightScale = 1.0f;
+	client->fireRangeScale = 1.0f;
 
 	custom_animation[clientNum] = 0;
 	libcod_weaponChange[clientNum] = 0;

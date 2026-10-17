@@ -1161,10 +1161,16 @@ void Fire_Lead( gentity_t *ent, gentity_t *activator )
 	assert(ent->pTurretInfo);
 	wp.weapDef = BG_GetWeaponDef(ent->s.weapon);
 
+	float spread = ent->pTurretInfo->playerSpread;
+#ifdef LIBCOD
+	if ( activator->client )
+		spread *= libcodClients[activator->s.number].turretSpreadScale;
+#endif
+
 	if ( wp.weapDef->weaponType )
 		Weapon_RocketLauncher_Fire(ent, 0, &wp);
 	else
-		Bullet_Fire(activator, ent->pTurretInfo->playerSpread, &wp, ent, level.time);
+		Bullet_Fire(activator, spread, &wp, ent, level.time);
 
 	G_AddEvent(ent, EV_FIRE_WEAPON_MG42, activator->s.number);
 }

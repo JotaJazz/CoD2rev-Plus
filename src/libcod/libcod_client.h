@@ -9,6 +9,18 @@ typedef struct
 	bool hiddenFromScoreboard;
 	bool hiddenFromServerStatus;
 	bool notAllowingSpectators;
+
+	// weapons; the scales start at 1
+	float weaponSpreadScale;
+	float turretSpreadScale;
+	float meleeRangeScale;
+	float meleeWidthScale;
+	float meleeHeightScale;
+	float fireRangeScale;
+	bool overrideBulletMask;
+	int bulletMask;
+	bool fireThroughWalls;
+	bool noBulletImpacts;
 } libcodClient_t;
 
 extern libcodClient_t libcodClients[];

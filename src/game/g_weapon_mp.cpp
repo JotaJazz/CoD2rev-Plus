@@ -462,7 +462,13 @@ void FireWeaponMelee( gentity_t *ent )
 	assert(player_meleeWidth);
 	assert(player_meleeHeight);
 
+#ifdef LIBCOD
+	libcodClient_t *lc = &libcodClients[ent->s.number];
+	Weapon_Melee( ent, &wp, player_meleeRange->current.decimal * lc->meleeRangeScale,
+	              player_meleeWidth->current.decimal * lc->meleeWidthScale, player_meleeHeight->current.decimal * lc->meleeHeightScale );
+#else
 	Weapon_Melee( ent, &wp, player_meleeRange->current.decimal, player_meleeWidth->current.decimal, player_meleeHeight->current.decimal );
+#endif
 }
 
 /*
@@ -488,7 +494,12 @@ void Bullet_Fire( gentity_t *attacker, float spread, weaponParms *wp, gentity_t 
 	}
 	else
 	{
-		Bullet_Endpos(spread, endpos, wp, 8192, -1);
+		float range = 8192;
+#ifdef LIBCOD
+		if ( attacker->client )
+			range *= libcodClients[attacker->s.number].fireRangeScale;
+#endif
+		Bullet_Endpos(spread, endpos, wp, range, -1);
 		Bullet_Fire_Extended(weaponEnt, attacker, wp->muzzleTrace, endpos, 1.0, 0, wp, weaponEnt, gametime);
 	}
 
@@ -520,6 +531,10 @@ void FireWeaponAntiLag( gentity_t *ent, int gametime )
 		fAimSpreadAmount = (maxSpread - wp.weapDef->adsSpread) * aimSpreadScale + wp.weapDef->adsSpread;
 	else
 		fAimSpreadAmount = (maxSpread - minSpread) * aimSpreadScale + minSpread;
+
+#ifdef LIBCOD
+	fAimSpreadAmount *= libcodClients[ent->s.number].weaponSpreadScale;
+#endif
 
 	if ( wp.weapDef->weaponType == WEAPTYPE_BULLET )
 	{
@@ -718,10 +733,27 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 		dflags |= DAMAGE_NO_ARMOR;
 	}
 
+	int contentMask = MASK_SHOT;
+	bool impacts = true;
+
+#ifdef LIBCOD
+	if ( attacker->client )
+	{
+		libcodClient_t *lc = &libcodClients[attacker->s.number];
+
+		if ( lc->overrideBulletMask )
+			contentMask = lc->bulletMask;
+		else if ( lc->fireThroughWalls )
+			contentMask = CONTENTS_BODY;
+
+		impacts = !lc->noBulletImpacts;
+	}
+#endif
+
 	if ( wp->weapDef->rifleBullet )
-		G_LocationalTrace(&tr, start, end, source->s.number, MASK_SHOT, riflePriorityMap);
+		G_LocationalTrace(&tr, start, end, source->s.number, contentMask, riflePriorityMap);
 	else
-		G_LocationalTrace(&tr, start, end, source->s.number, MASK_SHOT, bulletPriorityMap);
+		G_LocationalTrace(&tr, start, end, source->s.number, contentMask, bulletPriorityMap);
 
 	Vec3Lerp(start, end, tr.fraction, hitPos);
 	G_CheckHitTriggerDamage(attacker, start, hitPos, wp->weapDef->damage, mod);
@@ -734,7 +766,7 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	VectorMA(reflect, DotProduct(reflect, tr.normal) * -2.0, tr.normal, reflect);
 
 	// send bullet impact
-	if ( !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0 )
+	if ( impacts && !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0 )
 	{
 		// legacy?
 		if ( wp->weapDef->weaponClass == WEAPCLASS_SPREAD )
@@ -893,9 +925,15 @@ void G_BulletFireSpread( const gentity_t *weaponEnt, gentity_t *attacker, const 
 		shotCount++; // Extra bullet for a center shot.
 #endif
 
+	float range = wp->weapDef->minDamageRange;
+#ifdef LIBCOD
+	if ( attacker->client )
+		range *= libcodClients[attacker->s.number].fireRangeScale;
+#endif
+
 	for ( int i = 0; i < shotCount; i++ )
 	{
-		Bullet_Endpos(spread, end, wp, wp->weapDef->minDamageRange, i);
+		Bullet_Endpos(spread, end, wp, range, i);
 		Bullet_Fire_Extended(weaponEnt, attacker, start, end, 1.0, 0, wp, weaponEnt, gameTime);
 	}
 }

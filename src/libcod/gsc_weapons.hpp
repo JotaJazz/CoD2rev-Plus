@@ -25,5 +25,12 @@ void gsc_weapons_setweaponcookable();
 void gsc_weapons_getweaponhitlocmultiplier();
 void gsc_weapons_setweaponhitlocmultiplier();
 void gsc_weapons_getloadedweapons();
+void gsc_weapons_getweaponfusetime();
+void gsc_weapons_getweaponraisetime();
+void gsc_weapons_getweaponmovespeedscale();
+void gsc_weapons_getweapondisplayname();
+void gsc_weapons_issemiautoweapon();
+void gsc_weapons_ignoreweapon();
+void gsc_weapons_resetignoredweapons();
 
 #endif

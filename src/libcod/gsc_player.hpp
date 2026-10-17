@@ -90,6 +90,24 @@ void gsc_player_setconfigstringforplayer(scr_entref_t id);
 void gsc_player_getservercommandqueuesize(scr_entref_t id);
 void gsc_player_getcdkeyhash(scr_entref_t id);
 void gsc_player_getclienthudelemcount(scr_entref_t id);
+void gsc_player_setweaponspreadscale(scr_entref_t id);
+void gsc_player_setturretspreadscale(scr_entref_t id);
+void gsc_player_setmeleerangescale(scr_entref_t id);
+void gsc_player_setmeleewidthscale(scr_entref_t id);
+void gsc_player_setmeleeheightscale(scr_entref_t id);
+void gsc_player_setfirerangescale(scr_entref_t id);
+void gsc_player_setbulletmask(scr_entref_t id);
+void gsc_player_getbulletmask(scr_entref_t id);
+void gsc_player_setfirethroughwalls(scr_entref_t id);
+void gsc_player_enablebulletimpacts(scr_entref_t id);
+void gsc_player_disablebulletimpacts(scr_entref_t id);
+void gsc_player_canuseturret(scr_entref_t id);
+void gsc_player_useturret(scr_entref_t id);
+void gsc_player_stopuseturret(scr_entref_t id);
+void gsc_player_canmantle(scr_entref_t id);
+void gsc_player_getweaponanimation(scr_entref_t id);
+void gsc_player_forceshot(scr_entref_t id);
+void gsc_player_noclip(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

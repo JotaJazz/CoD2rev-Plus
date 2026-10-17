@@ -1543,4 +1543,310 @@ void gsc_player_getclienthudelemcount(scr_entref_t id)
 	stackPushInt(count);
 }
 
+// Combat settings for one player, as in zk_libcod; each setter returns the
+// previous value
+static void gsc_player_setscale(scr_entref_t id, const char *function, size_t offset)
+{
+	float scale;
+
+	if (!stackGetParams("f", &scale))
+	{
+		stackError("%s() argument is undefined or has a wrong type", function);
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, function))
+		return;
+
+	float *field = (float *)((char *)&libcodClients[id.entnum] + offset);
+	float old = *field;
+	*field = scale < 0 ? 0 : scale;
+	stackPushFloat(old);
+}
+
+void gsc_player_setweaponspreadscale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setweaponspreadscale", offsetof(libcodClient_t, weaponSpreadScale));
+}
+
+void gsc_player_setturretspreadscale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setturretspreadscale", offsetof(libcodClient_t, turretSpreadScale));
+}
+
+void gsc_player_setmeleerangescale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setmeleerangescale", offsetof(libcodClient_t, meleeRangeScale));
+}
+
+void gsc_player_setmeleewidthscale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setmeleewidthscale", offsetof(libcodClient_t, meleeWidthScale));
+}
+
+void gsc_player_setmeleeheightscale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setmeleeheightscale", offsetof(libcodClient_t, meleeHeightScale));
+}
+
+void gsc_player_setfirerangescale(scr_entref_t id)
+{
+	gsc_player_setscale(id, "gsc_player_setfirerangescale", offsetof(libcodClient_t, fireRangeScale));
+}
+
+static int gsc_player_bulletmask(int clientNum)
+{
+	libcodClient_t *lc = &libcodClients[clientNum];
+
+	if (lc->overrideBulletMask)
+		return lc->bulletMask;
+	if (lc->fireThroughWalls)
+		return CONTENTS_BODY;
+	return MASK_SHOT;
+}
+
+// setBulletMask(mask) traces this player's bullets against mask;
+// setBulletMask(undefined) goes back to the default
+void gsc_player_setbulletmask(scr_entref_t id)
+{
+	if (Scr_GetNumParam() != 1)
+	{
+		stackError("gsc_player_setbulletmask() needs exactly one argument");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setbulletmask"))
+		return;
+
+	libcodClient_t *lc = &libcodClients[id.entnum];
+	int old = gsc_player_bulletmask(id.entnum);
+
+	if (Scr_GetType(0) == VAR_UNDEFINED)
+	{
+		lc->overrideBulletMask = false;
+		lc->bulletMask = 0;
+	}
+	else if (Scr_GetType(0) == VAR_INTEGER)
+	{
+		lc->overrideBulletMask = true;
+		lc->bulletMask = Scr_GetInt(0);
+	}
+	else
+	{
+		stackError("gsc_player_setbulletmask() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushInt(old);
+}
+
+void gsc_player_getbulletmask(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getbulletmask"))
+		return;
+
+	stackPushInt(gsc_player_bulletmask(id.entnum));
+}
+
+// Bullets that only hit players (a bullet mask set with setBulletMask wins)
+void gsc_player_setfirethroughwalls(scr_entref_t id)
+{
+	int enabled;
+
+	if (!stackGetParams("i", &enabled))
+	{
+		stackError("gsc_player_setfirethroughwalls() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setfirethroughwalls"))
+		return;
+
+	int old = libcodClients[id.entnum].fireThroughWalls;
+	libcodClients[id.entnum].fireThroughWalls = enabled != 0;
+	stackPushInt(old);
+}
+
+void gsc_player_enablebulletimpacts(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_enablebulletimpacts"))
+		return;
+
+	libcodClients[id.entnum].noBulletImpacts = false;
+	stackPushBool(qtrue);
+}
+
+void gsc_player_disablebulletimpacts(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_disablebulletimpacts"))
+		return;
+
+	libcodClients[id.entnum].noBulletImpacts = true;
+	stackPushBool(qtrue);
+}
+
+static gentity_t *gsc_player_getturretparam(const char *function)
+{
+	if (Scr_GetNumParam() < 1 || Scr_GetType(0) != VAR_POINTER)
+	{
+		stackError("%s() argument is undefined or has a wrong type", function);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	gentity_t *turret = Scr_GetEntity(0);
+	if (!turret || turret->s.eType != ET_TURRET || !turret->pTurretInfo)
+	{
+		stackError("%s() entity is not a turret", function);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	return turret;
+}
+
+void gsc_player_canuseturret(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_canuseturret"))
+		return;
+
+	gentity_t *turret = gsc_player_getturretparam("gsc_player_canuseturret");
+	if (!turret)
+		return;
+
+	stackPushBool(G_IsTurretUsable(turret, &g_entities[id.entnum]));
+}
+
+// Puts the player on the turret, as pressing use on it would
+void gsc_player_useturret(scr_entref_t id)
+{
+	extern void Player_UseEntity(gentity_t *playerEnt, gentity_t *useEnt);
+
+	if (!gsc_player_isclient(id, "gsc_player_useturret"))
+		return;
+
+	gentity_t *turret = gsc_player_getturretparam("gsc_player_useturret");
+	if (!turret)
+		return;
+
+	gentity_t *player = &g_entities[id.entnum];
+	if (!G_IsPlaying(player) || !G_IsTurretUsable(turret, player))
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	Player_UseEntity(player, turret);
+	stackPushBool(qtrue);
+}
+
+void gsc_player_stopuseturret(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_stopuseturret"))
+		return;
+
+	gentity_t *player = &g_entities[id.entnum];
+	if (!player->client || !(player->client->ps.eFlags & EF_TURRET_ACTIVE))
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	G_ClientStopUsingTurret(&g_entities[player->client->ps.viewlocked_entNum]);
+	stackPushBool(qtrue);
+}
+
+void gsc_player_canmantle(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_canmantle"))
+		return;
+
+	stackPushBool((SV_GameClientNum(id.entnum)->mantleState.flags & 8) != 0);
+}
+
+// The weapon animation playing now (WEAP_* numbers, toggle bit removed)
+void gsc_player_getweaponanimation(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getweaponanimation"))
+		return;
+
+	playerState_t *ps = SV_GameClientNum(id.entnum);
+	int anim = ps->weapAnim & ~ANIM_TOGGLEBIT;
+
+	if ((anim == WEAP_RECHAMBER || anim == WEAP_ADS_RECHAMBER) && ps->weaponTime == 0)
+		anim = WEAP_IDLE;
+
+	stackPushInt(anim);
+}
+
+// Fires the current weapon once from the server, without using ammo;
+// forceShot(0) leaves out the firing effect on the player's own screen
+void gsc_player_forceshot(scr_entref_t id)
+{
+	int onClientToo = 1;
+
+	if (Scr_GetNumParam() > 0 && !stackGetParams("i", &onClientToo))
+	{
+		stackError("gsc_player_forceshot() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_forceshot"))
+		return;
+
+	gentity_t *player = &g_entities[id.entnum];
+	if (!G_IsPlaying(player) || player->client->ps.weapon < 1)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	if (g_antilag->current.boolean)
+		FireWeaponAntiLag(player, player->client->lastServerTime);
+	else
+		FireWeaponAntiLag(player, level.time);
+
+	if (onClientToo)
+		PM_AddEvent(&player->client->ps, EV_FIRE_WEAPON);
+
+	stackPushBool(qtrue);
+}
+
+// noClip("on"), noClip("off"), or noClip() / noClip("toggle")
+void gsc_player_noclip(scr_entref_t id)
+{
+	const char *mode = "toggle";
+
+	if (Scr_GetNumParam() > 0 && !stackGetParams("s", &mode))
+	{
+		stackError("gsc_player_noclip() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_noclip"))
+		return;
+
+	gclient_t *client = g_entities[id.entnum].client;
+	if (!client)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	if (!I_stricmp(mode, "on") || !I_stricmp(mode, "1"))
+		client->noclip = qtrue;
+	else if (!I_stricmp(mode, "off") || !I_stricmp(mode, "0"))
+		client->noclip = qfalse;
+	else
+		client->noclip = !client->noclip;
+
+	stackPushBool(qtrue);
+}
+
 #endif

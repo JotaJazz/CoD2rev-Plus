@@ -1699,6 +1699,15 @@ int BG_GetWeaponIndexForName( const char *name, int (*regWeap)(int) )
 		return WP_NONE;
 	}
 
+#if defined(LIBCOD) && LIBCOD_COMPILE_WEAPONS == 1
+	// weapons a mod asked not to load (ignoreWeapon)
+	extern bool BG_IsWeaponIgnored(const char *name);
+	if ( BG_IsWeaponIgnored(name) && strcasecmp(name, "defaultweapon_mp") )
+	{
+		name = "defaultweapon_mp";
+	}
+#endif
+
 	weapIndex = BG_FindWeaponIndexForName(name);
 
 	if ( weapIndex )

@@ -619,4 +619,121 @@ void gsc_weapons_getloadedweapons()
 	}
 }
 
+// Functions below are named and behave as in zk_libcod
+
+// The weapon named or numbered by the first argument, or NULL after a
+// script error
+static WeaponDef *gsc_weapons_getdef(const char *function)
+{
+	int id;
+	const char *name;
+
+	if (stackGetParams("s", &name))
+	{
+		id = BG_FindWeaponIndexForName(name);
+	}
+	else if (!stackGetParams("i", &id))
+	{
+		stackError("%s() argument is undefined or has a wrong type", function);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	if (!isValidWeaponId(id))
+	{
+		stackError("%s() weapon index is out of bounds", function);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	return BG_GetWeaponDef(id);
+}
+
+void gsc_weapons_getweaponfusetime()
+{
+	WeaponDef *weapon = gsc_weapons_getdef("gsc_weapons_getweaponfusetime");
+	if (weapon)
+		stackPushInt(weapon->fuseTime);
+}
+
+void gsc_weapons_getweaponraisetime()
+{
+	WeaponDef *weapon = gsc_weapons_getdef("gsc_weapons_getweaponraisetime");
+	if (weapon)
+		stackPushInt(weapon->raiseTime);
+}
+
+void gsc_weapons_getweaponmovespeedscale()
+{
+	WeaponDef *weapon = gsc_weapons_getdef("gsc_weapons_getweaponmovespeedscale");
+	if (weapon)
+		stackPushFloat(weapon->moveSpeedScale);
+}
+
+// A localized string, as the weapon files give it
+void gsc_weapons_getweapondisplayname()
+{
+	WeaponDef *weapon = gsc_weapons_getdef("gsc_weapons_getweapondisplayname");
+	if (weapon)
+		Scr_AddIString(weapon->displayName);
+}
+
+void gsc_weapons_issemiautoweapon()
+{
+	WeaponDef *weapon = gsc_weapons_getdef("gsc_weapons_issemiautoweapon");
+	if (weapon)
+		stackPushBool(weapon->semiAuto != 0);
+}
+
+#define MAX_IGNORED_WEAPONS 64
+static char ignoredWeapons[MAX_IGNORED_WEAPONS][64];
+static int numIgnoredWeapons;
+
+// Weapons a mod asked not to load; BG_GetWeaponIndexForName gives them
+// defaultweapon_mp instead
+bool BG_IsWeaponIgnored(const char *name)
+{
+	for (int i = 0; i < numIgnoredWeapons; i++)
+	{
+		if (!I_stricmp(ignoredWeapons[i], name))
+			return true;
+	}
+	return false;
+}
+
+void gsc_weapons_ignoreweapon()
+{
+	const char *name;
+
+	if (!stackGetParams("s", &name))
+	{
+		stackError("gsc_weapons_ignoreweapon() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (strlen(name) >= sizeof(ignoredWeapons[0]))
+	{
+		stackError("gsc_weapons_ignoreweapon() weapon name is too long");
+		stackPushUndefined();
+		return;
+	}
+
+	if (numIgnoredWeapons == MAX_IGNORED_WEAPONS)
+	{
+		stackError("gsc_weapons_ignoreweapon() at most %i weapons can be ignored", MAX_IGNORED_WEAPONS);
+		stackPushUndefined();
+		return;
+	}
+
+	I_strncpyz(ignoredWeapons[numIgnoredWeapons++], name, sizeof(ignoredWeapons[0]));
+	stackPushBool(qtrue);
+}
+
+void gsc_weapons_resetignoredweapons()
+{
+	numIgnoredWeapons = 0;
+	stackPushBool(qtrue);
+}
+
 #endif
