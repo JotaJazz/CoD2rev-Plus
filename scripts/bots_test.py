@@ -8,7 +8,7 @@ BOTNAV and BOTCOMBAT lines to games_mp.log. The map is loaded twice: the first
 load must build and save the waypoint graph, the second must read it back.
 Exits with 0 when every check passes.
 """
-import argparse, os, re, secrets, shutil, subprocess, sys, tempfile, time
+import argparse, glob, os, re, secrets, shutil, subprocess, sys, tempfile, time, zipfile
 
 from smoke_test import free_port, query, rcon
 
@@ -49,6 +49,17 @@ botsTestMelee()
 }
 '''
 HOOK = 'thread maps\\mp\\bots\\_bots::init();'
+SD_SCRIPT = 'maps/mp/gametypes/sd.gsc'
+
+
+def stock_sd(game_dir):
+    """The stock sd.gsc from the game's iwds (the last iwd wins, as in the game)."""
+    text = None
+    for iwd in sorted(glob.glob(os.path.join(game_dir, 'main', 'iw_*.iwd'))):
+        with zipfile.ZipFile(iwd) as z:
+            if SD_SCRIPT in z.namelist():
+                text = z.read(SD_SCRIPT).decode('latin-1')
+    return text
 
 
 def log_lines(path):
@@ -74,6 +85,8 @@ def main():
     ap.add_argument('--map', default='mp_toujane')
     ap.add_argument('--gametype', default='tdm')
     ap.add_argument('--seconds', type=int, help='play time on the first load (default: 180, SD 240, CTF 300)')
+    ap.add_argument('--bombmode', type=int, choices=(0, 1, 2),
+                    help='SD bomb mode: stock SD always plays 0, so a copy with this mode is installed')
     ap.add_argument('--keep', help='copy games_mp.log and the server log to this folder')
     ap.add_argument('--corrupt-cache', action='store_true',
                     help='start with a garbage waypoint file, which must be rebuilt')
@@ -100,6 +113,20 @@ def main():
         text += ERROR_CALLBACK
         with open(callbacks, 'w', encoding='latin-1', newline='') as f:
             f.write(text)
+
+        if args.bombmode is not None:
+            sd = stock_sd(args.game_dir)
+            if sd is None or 'level.bombmode = 0;' not in sd:
+                ap.error('no stock sd.gsc with level.bombmode in the game folder')
+            path = os.path.join(home, MOD, *SD_SCRIPT.split('/'))
+            sd = sd.replace('level.bombmode = 0;', f'level.bombmode = {args.bombmode};')
+            # stock SD never runs single mode, and there it claims a second
+            # bomb site that does not exist
+            for call in ('clientclaimtrigger', 'clientreleasetrigger'):
+                sd = sd.replace(f'other {call}(bombzone_other);',
+                                f'if(isdefined(bombzone_other)) other {call}(bombzone_other);')
+            with open(path, 'w', encoding='latin-1', newline='') as f:
+                f.write(sd)
 
         cache = os.path.join(home, MOD, 'waypoints', args.map + '_v1.graph')
         if args.corrupt_cache:
@@ -181,6 +208,12 @@ def main():
         roles = {l.split()[3] for l in lines if re.match(r'BOTOBJ \d+ role ', l)}
         events = [' '.join(l.split()[2:]) for l in lines if re.match(r'BOTOBJ \d+ ', l)]
         if args.gametype == 'sd':
+            zones = [l.split()[2:] for l in lines if l.startswith('BOTOBJ zones ')]
+            # only the sites marked for the bomb mode are active: two in the
+            # original mode, one in single mode (on several stock maps only
+            # one of the two is marked for it)
+            active = '1' if args.bombmode == 1 else '2'
+            check('bots only use active bomb sites', bool(zones) and zones[0][0] == active, ' '.join(zones[0]) if zones else 'no zones line')
             check('bots take plant and guard roles', {'plant', 'guard'} <= roles, ', '.join(sorted(roles)))
             check('bots start planting', 'plant start' in events)
             plants = [l for l in lines if l.startswith('A;') and l.endswith(';bomb_plant')]

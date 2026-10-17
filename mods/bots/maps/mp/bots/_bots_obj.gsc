@@ -10,10 +10,11 @@ init()
 
 	if(gametype == "sd" && isDefined(level.bombmode) && level.bombmode < 2)
 	{
-		level.botZones = getentarray("bombzone", "targetname");
+		level.botZones = activeZones();
 		if(!level.botZones.size)
 			return;
 		level.botObjMode = "sd";
+		maps\mp\bots\_bots_nav::debugLog("BOTOBJ zones " + level.botZones.size + " of " + getentarray("bombzone", "targetname").size);
 		for(i = 0; i < level.botZones.size; i++)
 			precomputeTo(level.botZones[i].origin);
 	}
@@ -30,6 +31,25 @@ init()
 		precomputeTo(level.botFlags["allies"].home_origin);
 		precomputeTo(level.botFlags["axis"].home_origin);
 	}
+}
+
+// The bomb sites SD uses in this bomb mode: like the game, only the ones
+// marked for it. A map without the marks keeps all of them.
+activeZones()
+{
+	zones = getentarray("bombzone", "targetname");
+	active = [];
+	for(i = 0; i < zones.size; i++)
+	{
+		if(level.bombmode == 0 && isDefined(zones[i].script_bombmode_original))
+			active[active.size] = zones[i];
+		else if(level.bombmode == 1 && isDefined(zones[i].script_bombmode_single))
+			active[active.size] = zones[i];
+	}
+
+	if(!active.size)
+		return zones;
+	return active;
 }
 
 // Paths to a fixed objective are computed once; graphFindPath then follows
