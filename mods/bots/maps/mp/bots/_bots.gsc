@@ -1,9 +1,11 @@
 // Simple bots for CoD2rev-Plus dedicated servers.
 //
-// They have no waypoints: a bot walks towards the nearest enemy, steers around
-// what blocks it and shoots what it can see. Movement and firing use the libcod
-// bot functions (setWalkDir, fireWeapon, setBotStance, reloadWeapon), so this
-// only works on a server built with libcod.
+// A bot walks the map over a waypoint graph (_bots_nav.gsc): with nobody in
+// sight it follows what it last saw or heard shooting, patrols towards the
+// enemy side, and after 20 s without contact heads for the nearest enemy. In a
+// fight (_bots_combat.gsc) it aims down the sight at range, throws grenades at
+// mid range and knifes up close. Movement and firing use the libcod bot and
+// graph functions, so this only works on a server built with libcod.
 //
 // Server variables:
 //   bots_count  how many bots to keep connected (default 0)

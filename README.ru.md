@@ -51,7 +51,7 @@
 - **Больше колбэков и методов игрока libcod (из zk_libcod, те же имена):** в `_callbacksetup.gsc` можно определить `CodeCallback_Error(critical, function, message)` (ошибки выполнения скриптов, передаются в следующем кадре), `CodeCallback_HitchWarning(msec)`, `CodeCallback_Pickup(type, weapon, name, quantity, clip, origin, angles)` (заменяет стандартный подбор), `CodeCallback_Suicide()` (заменяет `suicide()`; `processSuicide()` убивает), `CodeCallback_WeaponChange(index, name)` и по колбэку на каждое нажатие кнопки: `Attack`, `Melee`, `Use`, `Reload`, `LeanLeft`, `LeanRight`, `Prone`, `Crouch`, `Stand`, `Ads`, `MeleeBreath`, `HoldBreath`, `Frag` и `Smoke` (`CodeCallback_<имя>Button()`). Новые методы игрока: `isFiring`, `isMeleeing`, `isReloading`, `isThrowingGrenade`, `isUsingBinoculars`, `isRechambering`, `isShellShocked`, `isChatting`, `holdBreathButtonPressed`, `get`/`setCurrentWeaponAmmo`, `get`/`setCurrentWeaponClipAmmo`, `getCurrentWeaponSlot`, `get`/`setSpeed`, `get`/`setGravity`, `getGroundEntity`, `getViewOrigin`, `getPlayerstateFlags`, `getInactivityTime`, `getEnterTime` и `processSuicide`. В отличие от zk_libcod, колбэки смены оружия и ошибок никогда не выполняются посреди движения игрока или внутри VM скриптов, а `suicide()` внутри `CodeCallback_Suicide` не зацикливается.
 - **Графы путевых точек с A\* и новые функции скриптов (из zk_libcod):** `graphCreate`, `graphAddNode`, `graphAddEdge`, `graphFindPath`, `graphFindClosestNode`, `graphAutodiscover`, `graphSave`/`graphLoad` и остальные функции `graph*` из zk_libcod позволяют скриптам ботов ориентироваться на карте (`src/libcod/gsc_graph.cpp`, перенесён под его лицензией MIT). В отличие от zk_libcod, графы удаляются и при быстром `map_restart` (каждый раунд SD), неверный id или файл возвращает undefined, не завершая поток скрипта, `graphLoad` отклоняет файлы больше 64 МБ, а `graphSave` — имена `.iwd`, `.cfg` и `.gsc`. Также новые: `abs`, `floor`, `ceil`, `pow`, `atan2`, `roundTo`, `getMilliseconds`, `getMicroseconds`, `toHex`, `fromHex`, `ord`, `chr`, `getEntityCount`, `logPrintConsole` и методы `getUserinfo`/`setUserinfo`; `bulletTrace` и `bulletTracePassed` принимают необязательную маску содержимого, а `bulletTrace` также возвращает `flags`, `contents` и `material`; при `sv_botUseTriggerUse 1` бот, стоящий в триггере использования (например, в зоне бомбы SD), получает `self waittill("bot_trigger", trigger)`.
 - **Проверочный тест:** `scripts/smoke_test.py` запускает сервер для Linux с настоящей папкой игры и проверяет, что он загружает карту, отвечает на запросы и принимает минимального клиента (`scripts/cod2client.py`), который получает gamestate, входит в игру и отправляет команды, в том числе фрагментированными сообщениями.
-- **Простые боты:** `mods/bots` — небольшой скриптовый мод, боты которого идут к ближайшему противнику и стреляют по тем, кого видят, используя функции ботов из libcod. Путевых точек у них нет. `scripts/install_bots.py` устанавливает мод; ботами управляют `bots_count` и `bots_skill`.
+- **Простые боты:** `mods/bots` — небольшой скриптовый мод, боты которого ходят по каждой карте по графу путевых точек, построенному функциями `graph*` из libcod: при первой игре на карте граф строится от её точек появления и сохраняется как `waypoints/<карта>_v1.graph` в папке мода, а при следующих загрузках читается из файла. Когда никого не видно, они идут туда, где последний раз видели или слышали стрельбу, патрулируют в сторону противника и лишь после 20 с без контакта идут к ближайшему врагу. На дистанции целятся через прицел, на средней бросают гранаты, вблизи бьют ножом и перезаряжаются между боями. `scripts/install_bots.py` устанавливает мод; ботами управляют `bots_count`, `bots_skill` и `bots_debug`.
 - **Больше кнопок для ботов в libcod:** скриптовые методы `useButton`, `throwSmoke` и `holdBreath` заставляют бота нажать «использовать» (чтобы заложить или обезвредить бомбу), бросить дымовую гранату или задержать дыхание, как уже существующие `fireWeapon` и `throwNade`. Они принимают `1`, чтобы нажать, и `0`, чтобы отпустить.
 - **Меньше зависаний и более чистый запуск:** имя мастер-сервера определяется один раз, а не при каждом истечении ожидания авторизации, и сервер больше не выдаёт предупреждение на каждый `+set` в командной строке.
 - **Скрипты запуска:** `scripts/windows/iniciar_cod2rev.bat` и `scripts/linux/iniciar_cod2rev.sh`, с режимом локальной сети и режимом интернета.
@@ -160,6 +160,12 @@ make PROTOCOL=118 && python3 scripts/smoke_test.py /путь/к/CoD2 --protocol 
 
 Он запускает сервер в режиме LAN с временной домашней папкой, поэтому папка игры только читается. Он проверяет, что сервер загружает карту и отвечает на `getinfo`, `getstatus` и rcon, а `scripts/cod2client.py`, минимальный клиент, может подключиться, получить gamestate, войти в игру и отправлять команды, в том числе в сообщении, разбитом на фрагменты. Используйте папку игры с оригинальными файлами `.iwd`: моды в `main`, заменяющие скрипты режимов игры, могут не дать карте загрузиться.
 
+`scripts/bots_test.py` устанавливает мод ботов во временную папку, играет карту с шестью ботами и проверяет, что граф путевых точек строится, сохраняется и читается снова, что боты следуют маршрутам и используют прицел, гранаты и нож и что нет ошибок скриптов:
+
+```bash
+python3 scripts/bots_test.py /путь/к/CoD2 --map mp_carentan
+```
+
 Чтобы искать ошибки памяти, соберите сервер с AddressSanitizer в отдельной папке и передайте этот бинарный файл через `--binary`:
 
 ```bash
@@ -184,7 +190,7 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 | `src/win32`, `src/unix` | Код, зависящий от платформы. |
 | `src/zlib` | Копия zlib. |
 | `test` | Материалы обратной разработки: база данных IDA, таблицы смещений и тестовый загрузчик. |
-| `scripts` | Скрипты запуска для Windows и Linux, пример `server.cfg` и его генератор, установщик ботов, а также проверочный тест с минимальным клиентом. |
+| `scripts` | Скрипты запуска для Windows и Linux, пример `server.cfg` и его генератор, установщик ботов, проверочный тест с минимальным клиентом, а также тест ботов. |
 | `mods/bots` | Скриптовый мод простых ботов. |
 
 ## Лицензия

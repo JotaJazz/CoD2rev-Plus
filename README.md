@@ -51,7 +51,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **More libcod callbacks and player methods (from zk_libcod, same names):** `_callbacksetup.gsc` can define `CodeCallback_Error(critical, function, message)` (script runtime errors, delivered on the next frame), `CodeCallback_HitchWarning(msec)`, `CodeCallback_Pickup(type, weapon, name, quantity, clip, origin, angles)` (replaces the stock pickup), `CodeCallback_Suicide()` (replaces `suicide()`; `processSuicide()` kills), `CodeCallback_WeaponChange(index, name)` and one callback per button press: `Attack`, `Melee`, `Use`, `Reload`, `LeanLeft`, `LeanRight`, `Prone`, `Crouch`, `Stand`, `Ads`, `MeleeBreath`, `HoldBreath`, `Frag` and `Smoke` (`CodeCallback_<name>Button()`). New player methods: `isFiring`, `isMeleeing`, `isReloading`, `isThrowingGrenade`, `isUsingBinoculars`, `isRechambering`, `isShellShocked`, `isChatting`, `holdBreathButtonPressed`, `get`/`setCurrentWeaponAmmo`, `get`/`setCurrentWeaponClipAmmo`, `getCurrentWeaponSlot`, `get`/`setSpeed`, `get`/`setGravity`, `getGroundEntity`, `getViewOrigin`, `getPlayerstateFlags`, `getInactivityTime`, `getEnterTime` and `processSuicide`. Unlike zk_libcod, the weapon change and error callbacks never run inside player movement or the script VM, and a `suicide()` inside `CodeCallback_Suicide` does not loop.
 - **Waypoint graphs with A\* and more script functions (from zk_libcod):** `graphCreate`, `graphAddNode`, `graphAddEdge`, `graphFindPath`, `graphFindClosestNode`, `graphAutodiscover`, `graphSave`/`graphLoad` and the rest of zk_libcod's `graph*` functions let bot scripts navigate a map (`src/libcod/gsc_graph.cpp`, ported under its MIT license). Unlike in zk_libcod, graphs are also cleared on a fast `map_restart` (every round of SD), a bad id or file returns undefined without ending the script thread, `graphLoad` refuses files over 64 MB and `graphSave` refuses `.iwd`, `.cfg` and `.gsc` names. Also new: `abs`, `floor`, `ceil`, `pow`, `atan2`, `roundTo`, `getMilliseconds`, `getMicroseconds`, `toHex`, `fromHex`, `ord`, `chr`, `getEntityCount`, `logPrintConsole` and the `getUserinfo`/`setUserinfo` methods; `bulletTrace` and `bulletTracePassed` take an optional content mask, and `bulletTrace` also returns `flags`, `contents` and `material`; with `sv_botUseTriggerUse 1`, a bot standing in a use trigger (such as an SD bomb zone) gets `self waittill("bot_trigger", trigger)`.
 - **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages.
-- **Simple bots:** `mods/bots` is a small script mod whose bots walk towards the nearest enemy and shoot what they see, using the libcod bot functions. They have no waypoints. `scripts/install_bots.py` installs it; `bots_count` and `bots_skill` control them.
+- **Simple bots:** `mods/bots` is a small script mod whose bots navigate each map over a waypoint graph built with the libcod `graph*` functions: the first time a map is played the graph is generated from its spawn points and saved as `waypoints/<map>_v1.graph` in the mod folder, and later loads read it. With nobody in sight they follow what they last saw or heard shooting, patrol towards the enemy side, and only after 20 s without contact head for the nearest enemy. They aim down the sight at range, throw grenades at mid range, knife up close and reload between fights. `scripts/install_bots.py` installs it; `bots_count`, `bots_skill` and `bots_debug` control them.
 - **More bot buttons in libcod:** the script methods `useButton`, `throwSmoke` and `holdBreath` make a bot press use (to plant or defuse the bomb), throw a smoke grenade or hold its breath, like the existing `fireWeapon` and `throwNade`. Each takes `1` to press and `0` to release.
 - **Fewer stalls and a cleaner startup:** the master server name is resolved once instead of on every authorization timeout, and the server no longer warns about every `+set` on the command line.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode.
@@ -160,6 +160,12 @@ make PROTOCOL=118 && python3 scripts/smoke_test.py /path/to/CoD2 --protocol 118
 
 It starts the server in LAN mode with a temporary home folder, so the game folder is only read. It checks that the server loads a map and answers `getinfo`, `getstatus` and rcon, and that `scripts/cod2client.py`, a minimal client, can connect, receive the gamestate, enter the game and send commands, including a message split into fragments. Use a game folder with the stock `.iwd` files: mods in `main` that replace the gametype scripts can stop the map from loading.
 
+`scripts/bots_test.py` installs the bots mod in a temporary folder, plays a map with six bots and checks that the waypoint graph is built, saved and read back, that the bots follow paths and use sights, grenades and knives, and that no script error occurs:
+
+```bash
+python3 scripts/bots_test.py /path/to/CoD2 --map mp_carentan
+```
+
 To look for memory errors, build the server with AddressSanitizer in a separate folder and pass that binary with `--binary`:
 
 ```bash
@@ -184,7 +190,7 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 | `src/win32`, `src/unix` | Platform-specific code. |
 | `src/zlib` | Copy of zlib. |
 | `test` | Reverse-engineering material: IDA database, offset tables and test loader. |
-| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, and the smoke test with its minimal client. |
+| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, the smoke test with its minimal client, and the bots test. |
 | `mods/bots` | The simple bots script mod. |
 
 ## License
