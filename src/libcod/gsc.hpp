@@ -6,6 +6,8 @@
 
 #define COD2_MAX_STRINGLENGTH MAX_STRING_CHARS
 
+#include "libcod_client.h"
+
 /* default stuff */
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,11 +146,16 @@ extern dvar_t *jump_bounceEnable;
 extern dvar_t *g_mantleBlockEnable;
 extern dvar_t *g_fixedWeaponSpreads;
 extern dvar_t *g_dropGrenadeOnDeath;
+extern char consolePrefix[64];
+extern char testClientName[];
 
 void RegisterLibcodDvars();
 int hook_findMap(const char *qpath, void **buffer);
 bool SV_IsBannedIp(netadr_t adr);
 void hook_ClientCommand(int clientNum);
+bool Scr_RemoteCommandCallback(netadr_t from);
+bool Scr_ProcessRemoteCommand();
+void SV_ExecuteRemoteCommand(netadr_t from, const char *command);
 void InitLibcodCallbacks();
 void Scr_QueueErrorCallback(const char *message);
 void Scr_RunFrameCallbacks();

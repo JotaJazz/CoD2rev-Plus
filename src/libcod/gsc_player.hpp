@@ -78,6 +78,18 @@ void gsc_player_getinactivitytime(scr_entref_t id);
 void gsc_player_getentertime(scr_entref_t id);
 void gsc_player_processsuicide(scr_entref_t id);
 void gsc_player_getuserinfo(scr_entref_t id);
+void gsc_player_muteclient(scr_entref_t id);
+void gsc_player_unmuteclient(scr_entref_t id);
+void gsc_player_sethiddenfromscoreboard(scr_entref_t id);
+void gsc_player_ishiddenfromscoreboard(scr_entref_t id);
+void gsc_player_sethiddenfromserverstatus(scr_entref_t id);
+void gsc_player_ishiddenfromserverstatus(scr_entref_t id);
+void gsc_player_setallowspectators(scr_entref_t id);
+void gsc_player_isallowingspectators(scr_entref_t id);
+void gsc_player_setconfigstringforplayer(scr_entref_t id);
+void gsc_player_getservercommandqueuesize(scr_entref_t id);
+void gsc_player_getcdkeyhash(scr_entref_t id);
+void gsc_player_getclienthudelemcount(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

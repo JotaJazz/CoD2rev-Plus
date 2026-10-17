@@ -183,6 +183,36 @@ static void SV_RconRegisterResult( netadr_t from, bool valid )
 	}
 }
 
+// show_bug.cgi?id=376
+// if we send an OOB print message this size, 1.31 clients die in a Com_Printf buffer overflow
+// the buffer overflow will be fixed in > 1.31 clients
+// but we want a server side fix
+// we must NEVER send an OOB message that will be > 1.31 MAXPRINTMSG (4096)
+#define SV_OUTPUTBUF_LENGTH ( 256 * MAX_CLIENTS - 16 )
+
+/*
+===============
+SV_ExecuteRemoteCommand
+Runs an accepted rcon command and sends its output back to from
+===============
+*/
+void SV_ExecuteRemoteCommand( netadr_t from, const char *command )
+{
+	char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
+
+	// start redirecting all print outputs to the packet
+	svs.redirectAddress = from;
+	// FIXME TTimo our rcon redirection could be improved
+	//   big rcon commands such as status lead to sending
+	//   out of band packets on every single call to Com_Printf
+	//   which leads to client overflows
+	//   see show_bug.cgi?id=51
+	//     (also a Q3 issue)
+	Com_BeginRedirect( sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect );
+	SV_Cmd_ExecuteString( command );
+	Com_EndRedirect();
+}
+
 /*
 ===============
 SVC_RemoteCommand
@@ -196,12 +226,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	qboolean valid;
 	int time;
 	char remaining[1024];
-	// show_bug.cgi?id=376
-	// if we send an OOB print message this size, 1.31 clients die in a Com_Printf buffer overflow
-	// the buffer overflow will be fixed in > 1.31 clients
-	// but we want a server side fix
-	// we must NEVER send an OOB message that will be > 1.31 MAXPRINTMSG (4096)
-#define SV_OUTPUTBUF_LENGTH ( 256 * MAX_CLIENTS - 16 )
 	char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 	static int lasttime = 0;
 
@@ -264,6 +288,14 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	{
 		SV_RconRegisterResult( from, valid );
 	}
+
+#ifdef LIBCOD
+	// CodeCallback_RemoteCommand decides what to do with accepted commands
+	if ( valid && rcon_password->current.string[0] && Scr_RemoteCommandCallback( from ) )
+	{
+		return;
+	}
+#endif
 
 	// start redirecting all print outputs to the packet
 	svs.redirectAddress = from;

@@ -44,9 +44,12 @@ void gsc_utils_sqrtInv();
 void gsc_utils_vectorscale();
 void gsc_utils_remove_file();
 void gsc_utils_putchar();
-void gsc_utils_remotecommand();
+void gsc_utils_processremotecommand();
 
 void gsc_utils_abs();
+void gsc_utils_setconsoleprefix();
+void gsc_utils_setnexttestclientname();
+void gsc_utils_resettestclientnaming();
 void gsc_utils_floor();
 void gsc_utils_ceil();
 void gsc_utils_pow();

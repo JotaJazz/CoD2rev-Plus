@@ -455,6 +455,22 @@ void SV_VoicePacket( netadr_t from, msg_t *msg )
 
 /*
 ================
+SV_HiddenFromStatus
+Players a script hid with setHiddenFromServerStatus are left out of the
+getinfo counts and the getstatus lists
+================
+*/
+static bool SV_HiddenFromStatus( int clientNum )
+{
+#ifdef LIBCOD
+	return libcodClients[clientNum].hiddenFromServerStatus;
+#else
+	return false;
+#endif
+}
+
+/*
+================
 SVC_Info
 Responds with a short info message that should be enough to determine
 if a user is interested in a server to do a full status
@@ -491,7 +507,7 @@ void SVC_Info( netadr_t from )
 
 	for ( i = 0; i < sv_privateClients->current.integer; ++i )
 	{
-		if ( svs.clients[i].state >= CS_CONNECTED )
+		if ( svs.clients[i].state >= CS_CONNECTED && !SV_HiddenFromStatus(i) )
 			++privateClientCount;
 	}
 
@@ -499,7 +515,7 @@ void SVC_Info( netadr_t from )
 
 	for ( i = sv_privateClients->current.integer; i < sv_maxclients->current.integer; ++i )
 	{
-		if ( svs.clients[i].state >= CS_CONNECTED )
+		if ( svs.clients[i].state >= CS_CONNECTED && !SV_HiddenFromStatus(i) )
 			++clientCount;
 	}
 
@@ -675,7 +691,7 @@ void SVC_Status( netadr_t from )
 	for ( i = 0 ; i < sv_maxclients->current.integer ; i++ )
 	{
 		cl = &svs.clients[i];
-		if ( cl->state >= CS_CONNECTED )
+		if ( cl->state >= CS_CONNECTED && !SV_HiddenFromStatus(i) )
 		{
 			if ( gameInitialized )
 				Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n", G_GetClientScore(cl - svs.clients), cl->ping, cl->name );
@@ -772,7 +788,7 @@ void SVC_GameCompleteStatus( netadr_t from )
 	for ( i = 0 ; i < sv_maxclients->current.integer ; i++ )
 	{
 		cl = &svs.clients[i];
-		if ( cl->state >= CS_CONNECTED )
+		if ( cl->state >= CS_CONNECTED && !SV_HiddenFromStatus(i) )
 		{
 			Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n",
 			             G_GetClientScore(cl - svs.clients), cl->ping, cl->name );

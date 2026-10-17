@@ -414,6 +414,17 @@ void gsc_player_clientcommand(scr_entref_t id)
 		return;
 	}
 
+	// the command arguments are only those of this client's command while
+	// CodeCallback_PlayerCommand runs for it
+	extern int playerCommandClient;
+	if (id.entnum != playerCommandClient)
+	{
+		stackError("gsc_player_clientcommand() must be called on the player from CodeCallback_PlayerCommand, without delay, and at most once per player command");
+		stackPushUndefined();
+		return;
+	}
+	playerCommandClient = -1;
+
 	ClientCommand(id.entnum);
 	stackPushBool(qtrue);
 }
@@ -1318,6 +1329,218 @@ void gsc_player_getuserinfo(scr_entref_t id)
 	}
 
 	stackPushString(Info_ValueForKey(svs.clients[id.entnum].userinfo, key));
+}
+
+// Methods below are named and behave as in zk_libcod
+
+static bool gsc_player_isclient(scr_entref_t id, const char *function)
+{
+	if (id.entnum >= MAX_CLIENTS)
+	{
+		stackError("%s() entity %i is not a player", function, id.entnum);
+		stackPushUndefined();
+		return false;
+	}
+	return true;
+}
+
+static void gsc_player_setmuted(scr_entref_t id, const char *function, bool muted)
+{
+	int other;
+
+	if (!stackGetParams("i", &other))
+	{
+		stackError("%s() argument is undefined or has a wrong type", function);
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, function))
+		return;
+
+	if (other < 0 || other >= MAX_CLIENTS)
+	{
+		stackError("%s() client %i is not a player", function, other);
+		stackPushUndefined();
+		return;
+	}
+
+	// the same list the client's own muteclient command edits
+	svs.clients[id.entnum].muteList[other] = muted;
+	stackPushBool(qtrue);
+}
+
+void gsc_player_muteclient(scr_entref_t id)
+{
+	gsc_player_setmuted(id, "gsc_player_muteclient", true);
+}
+
+void gsc_player_unmuteclient(scr_entref_t id)
+{
+	gsc_player_setmuted(id, "gsc_player_unmuteclient", false);
+}
+
+void gsc_player_sethiddenfromscoreboard(scr_entref_t id)
+{
+	int hidden;
+
+	if (!stackGetParams("i", &hidden))
+	{
+		stackError("gsc_player_sethiddenfromscoreboard() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_sethiddenfromscoreboard"))
+		return;
+
+	libcodClients[id.entnum].hiddenFromScoreboard = hidden != 0;
+	stackPushBool(qtrue);
+}
+
+void gsc_player_ishiddenfromscoreboard(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_ishiddenfromscoreboard"))
+		return;
+
+	stackPushBool(libcodClients[id.entnum].hiddenFromScoreboard);
+}
+
+void gsc_player_sethiddenfromserverstatus(scr_entref_t id)
+{
+	int hidden;
+
+	if (!stackGetParams("i", &hidden))
+	{
+		stackError("gsc_player_sethiddenfromserverstatus() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_sethiddenfromserverstatus"))
+		return;
+
+	libcodClients[id.entnum].hiddenFromServerStatus = hidden != 0;
+	stackPushBool(qtrue);
+}
+
+void gsc_player_ishiddenfromserverstatus(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_ishiddenfromserverstatus"))
+		return;
+
+	stackPushBool(libcodClients[id.entnum].hiddenFromServerStatus);
+}
+
+void gsc_player_setallowspectators(scr_entref_t id)
+{
+	int allowed;
+
+	if (!stackGetParams("i", &allowed))
+	{
+		stackError("gsc_player_setallowspectators() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setallowspectators"))
+		return;
+
+	libcodClients[id.entnum].notAllowingSpectators = !allowed;
+
+	if (!allowed)
+	{
+		// whoever follows the player now goes back to free spectating
+		for (int i = 0; i < level.maxclients; i++)
+		{
+			gentity_t *ent = &g_entities[i];
+
+			if (i == id.entnum || !ent->client || ent->client->sess.connected == CON_DISCONNECTED)
+				continue;
+
+			if (ent->client->sess.sessionState == SESS_STATE_SPECTATOR && ent->client->spectatorClient == id.entnum)
+				StopFollowing(ent);
+		}
+	}
+
+	stackPushBool(qtrue);
+}
+
+void gsc_player_isallowingspectators(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_isallowingspectators"))
+		return;
+
+	stackPushBool(!libcodClients[id.entnum].notAllowingSpectators);
+}
+
+// Sends one configstring to this player only. The next gamestate (map change,
+// reconnect) brings back the value every player has.
+void gsc_player_setconfigstringforplayer(scr_entref_t id)
+{
+	int index;
+	const char *value;
+
+	if (!stackGetParams("is", &index, &value))
+	{
+		stackError("gsc_player_setconfigstringforplayer() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setconfigstringforplayer"))
+		return;
+
+	if (index < 0 || index >= MAX_CONFIGSTRINGS)
+	{
+		stackError("gsc_player_setconfigstringforplayer() bad index %i", index);
+		stackPushUndefined();
+		return;
+	}
+
+	client_t *cl = &svs.clients[id.entnum];
+	if (cl->state < CS_PRIMED)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	SV_SendConfigstring(cl, index, value);
+	stackPushBool(qtrue);
+}
+
+// Reliable commands sent to this player and not acknowledged yet; the
+// player is dropped when it reaches MAX_RELIABLE_COMMANDS
+void gsc_player_getservercommandqueuesize(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getservercommandqueuesize"))
+		return;
+
+	client_t *cl = &svs.clients[id.entnum];
+	stackPushInt(cl->reliableSequence - cl->reliableAcknowledge);
+}
+
+void gsc_player_getcdkeyhash(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getcdkeyhash"))
+		return;
+
+	stackPushString(svs.clients[id.entnum].clientPBguid);
+}
+
+// Hud elements created only for this player (newClientHudElem)
+void gsc_player_getclienthudelemcount(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getclienthudelemcount"))
+		return;
+
+	int count = 0;
+	for (int i = 0; i < MAX_HUDELEMS_TOTAL; i++)
+	{
+		if (g_hudelems[i].elem.type != HE_TYPE_FREE && g_hudelems[i].clientNum == id.entnum)
+			count++;
+	}
+	stackPushInt(count);
 }
 
 #endif

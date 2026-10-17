@@ -988,25 +988,75 @@ void gsc_utils_remove_file()
 	stackPushInt(remove( filename ));
 }
 
-void gsc_utils_remotecommand()
+// Runs the rcon command CodeCallback_RemoteCommand was called for
+void gsc_utils_processremotecommand()
 {
-	const char *sFrom;
-	long int pointerMsg;
-
-	if (!stackGetParams("sl", &sFrom, &pointerMsg))
+	if (!Scr_ProcessRemoteCommand())
 	{
-		stackError("gsc_utils_remotecommand() one or more arguments is undefined or has a wrong type");
+		stackError("gsc_utils_processremotecommand() must be called from CodeCallback_RemoteCommand, without delay, and at most once per rcon command");
 		return;
 	}
-
-	netadr_t from;
-
-	msg_t * msg = (msg_t *)pointerMsg;
-	NET_StringToAdr(sFrom, &from);
-	SVC_RemoteCommand(from, msg);
 }
 
 // Functions below are named and behave as in zk_libcod
+
+// Replaces "console: " in front of the say and tell console commands
+void gsc_utils_setconsoleprefix()
+{
+	const char *prefix;
+
+	if (!stackGetParams("s", &prefix))
+	{
+		stackError("gsc_utils_setconsoleprefix() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	I_strncpyz(consolePrefix, prefix, sizeof(consolePrefix));
+	stackPushString(consolePrefix);
+}
+
+// The name for the test clients (bots) added from now on, instead of
+// bot<number>
+void gsc_utils_setnexttestclientname()
+{
+	const char *name;
+
+	if (!stackGetParams("s", &name))
+	{
+		stackError("gsc_utils_setnexttestclientname() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	int len = strlen(name);
+	if (len < 1 || len >= MAX_NAME_LENGTH)
+	{
+		stackError("gsc_utils_setnexttestclientname() requires a name of 1-%i characters", MAX_NAME_LENGTH - 1);
+		stackPushUndefined();
+		return;
+	}
+
+	// the name goes into the bot's userinfo string
+	for (int i = 0; i < len; i++)
+	{
+		if ((unsigned char)name[i] < ' ' || name[i] == '\\' || name[i] == '"' || name[i] == ';')
+		{
+			stackError("gsc_utils_setnexttestclientname() name contains a control character, \\, \" or ;");
+			stackPushUndefined();
+			return;
+		}
+	}
+
+	I_strncpyz(testClientName, name, MAX_NAME_LENGTH);
+	stackPushBool(qtrue);
+}
+
+void gsc_utils_resettestclientnaming()
+{
+	testClientName[0] = 0;
+	stackPushBool(qtrue);
+}
 
 void gsc_utils_abs()
 {

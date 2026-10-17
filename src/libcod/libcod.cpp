@@ -33,6 +33,10 @@ int codecallback_hitchwarning = 0;
 int codecallback_pickup = 0;
 int codecallback_suicide = 0;
 int codecallback_weapon_change = 0;
+int codecallback_remotecommand = 0;
+
+char consolePrefix[64] = "console: ";
+char testClientName[MAX_NAME_LENGTH];
 
 // CodeCallback_<name>Button runs when the button goes down; names and order
 // are the same as in zk_libcod
@@ -119,6 +123,7 @@ void InitLibcodCallbacks()
 	codecallback_pickup = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_Pickup", 0);
 	codecallback_suicide = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_Suicide", 0);
 	codecallback_weapon_change = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_WeaponChange", 0);
+	codecallback_remotecommand = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", "CodeCallback_RemoteCommand", 0);
 
 	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
 		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
@@ -596,6 +601,35 @@ int bot_buttons[MAX_CLIENTS] = {0};
 int bot_weapon[MAX_CLIENTS] = {0};
 char bot_forwardmove[MAX_CLIENTS] = {0};
 char bot_rightmove[MAX_CLIENTS] = {0};
+
+libcodClient_t libcodClients[MAX_CLIENTS];
+
+// Called when a client slot is freed: what scripts set for the old player
+// must not carry over to the next one in that slot
+void Libcod_ResetClient(int clientNum)
+{
+	extern int custom_animation[];
+
+	memset(&libcodClients[clientNum], 0, sizeof(libcodClients[clientNum]));
+
+	custom_animation[clientNum] = 0;
+	libcod_weaponChange[clientNum] = 0;
+	bot_buttons[clientNum] = 0;
+	bot_weapon[clientNum] = 0;
+	bot_forwardmove[clientNum] = 0;
+	bot_rightmove[clientNum] = 0;
+
+#if LIBCOD_COMPILE_PLAYER == 1
+	extern int player_g_speed[];
+	extern int player_g_gravity[];
+	extern int player_disableitempickup[];
+
+	player_g_speed[clientNum] = 0;
+	player_g_gravity[clientNum] = 0;
+	player_disableitempickup[clientNum] = 0;
+#endif
+}
+
 void SV_BotUserMove_libcod(client_t *client)
 {
 	int num;
@@ -652,6 +686,10 @@ void SV_ResetPureClient_libcod(client_t *cl)
 	}
 }
 
+// The client whose command CodeCallback_PlayerCommand is looking at; only
+// that client's clientCommand() may run it, once
+int playerCommandClient = -1;
+
 void hook_ClientCommand(int clientNum)
 {
 	if ( ! codecallback_playercommand)
@@ -686,8 +724,64 @@ void hook_ClientCommand(int clientNum)
 		}
 	}
 
+	playerCommandClient = clientNum;
 	short ret = Scr_ExecEntThread(&g_entities[clientNum], codecallback_playercommand, 1);
 	Scr_FreeThread(ret);
+	playerCommandClient = -1;
+}
+
+// The rcon command CodeCallback_RemoteCommand is looking at; processRemoteCommand
+// runs it, at most once
+static struct
+{
+	bool pending;
+	netadr_t from;
+	char command[1024];
+} remoteCommand;
+
+// Hands an accepted rcon command to CodeCallback_RemoteCommand(from, args).
+// Returns false when there is no callback and the server should run it.
+bool Scr_RemoteCommandCallback(netadr_t from)
+{
+	if (!codecallback_remotecommand || !Scr_IsSystemActive())
+		return false;
+
+	// the same text SVC_RemoteCommand would run
+	int len = 0;
+	for (int i = 2; i < SV_Cmd_Argc(); i++)
+	{
+		len = Com_AddToString(SV_Cmd_Argv(i), remoteCommand.command, len, sizeof(remoteCommand.command), 1);
+		len = Com_AddToString(" ", remoteCommand.command, len, sizeof(remoteCommand.command), 0);
+	}
+	if (len >= (int)sizeof(remoteCommand.command))
+		return true;
+	remoteCommand.command[len] = 0;
+	remoteCommand.from = from;
+	remoteCommand.pending = true;
+
+	stackPushArray();
+	for (int i = 2; i < SV_Cmd_Argc(); i++)
+	{
+		stackPushString(SV_Cmd_Argv(i));
+		stackPushArrayLast();
+	}
+	stackPushString(NET_AdrToString(from));
+
+	short ret = Scr_ExecThread(codecallback_remotecommand, 2);
+	Scr_FreeThread(ret);
+
+	remoteCommand.pending = false;
+	return true;
+}
+
+bool Scr_ProcessRemoteCommand()
+{
+	if (!remoteCommand.pending)
+		return false;
+
+	remoteCommand.pending = false;
+	SV_ExecuteRemoteCommand(remoteCommand.from, remoteCommand.command);
+	return true;
 }
 
 void hook_ClientUserinfoChanged(int clientNum)

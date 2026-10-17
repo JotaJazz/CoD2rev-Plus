@@ -177,6 +177,9 @@ void DeathmatchScoreboardMessage( gentity_t *ent )
 	int j;
 	int i;
 	int stringlength;
+#ifdef LIBCOD
+	int numListed = 0;
+#endif
 
 	// send the latest information on all clients
 	string[0] = 0;
@@ -191,6 +194,11 @@ void DeathmatchScoreboardMessage( gentity_t *ent )
 	{
 		clientNum = level.sortedClients[i];
 		client = &level.clients[clientNum];
+
+#ifdef LIBCOD
+		if ( libcodClients[clientNum].hiddenFromScoreboard )
+			continue;
+#endif
 
 		if ( client->sess.connected == CON_CONNECTING )
 		{
@@ -224,7 +232,15 @@ void DeathmatchScoreboardMessage( gentity_t *ent )
 			break;
 		strcpy(string + stringlength, entry);
 		stringlength += j;
+#ifdef LIBCOD
+		numListed++;
+#endif
 	}
+
+#ifdef LIBCOD
+	// the count must match the entries, which skip hidden players
+	i = numListed;
+#endif
 
 	SV_GameSendServerCommand( ent - g_entities, SV_CMD_RELIABLE, va("%c %i %i %i%s", 98, i,
 	                          level.teamScores[TEAM_AXIS], level.teamScores[TEAM_ALLIES],
@@ -1281,6 +1297,14 @@ qboolean Cmd_FollowCycle_f( gentity_t *ent, int dir )
 		{
 			continue;
 		}
+
+#ifdef LIBCOD
+		// nor a player a script closed to spectators
+		if ( libcodClients[clientnum].notAllowingSpectators )
+		{
+			continue;
+		}
+#endif
 
 		// this is good, we can use it
 		ent->client->spectatorClient = clientnum;

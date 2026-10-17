@@ -536,6 +536,10 @@ void SV_FreeClient( client_t *cl )
 
 	SV_SetUserinfo(cl - svs.clients, NULL);
 	SV_FreeClientScriptId(cl);
+
+#ifdef LIBCOD
+	Libcod_ResetClient(cl - svs.clients);
+#endif
 }
 
 /*
@@ -1638,12 +1642,20 @@ gentity_t *SV_AddTestClient()
 		return NULL;
 	}
 
+	char name[MAX_NAME_LENGTH];
+	Com_sprintf(name, sizeof(name), "bot%d", botport);
+#ifdef LIBCOD
+	// a name set with setNextTestClientName
+	if ( testClientName[0] )
+		I_strncpyz(name, testClientName, sizeof(name));
+#endif
+
 	snprintf(
 	    userinfo,
 	    sizeof(userinfo),
 	    "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
-	    "bot%d\\password\\%s\\protocol\\%d\"",
-	    botport,
+	    "%s\\password\\%s\\protocol\\%d\"",
+	    name,
 	    g_password->current.string,
 	    PROTOCOL_VERSION);
 

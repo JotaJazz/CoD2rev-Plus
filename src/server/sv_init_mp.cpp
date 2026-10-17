@@ -329,17 +329,66 @@ void SV_GetConfigstring( unsigned int index, char *buffer, int bufferSize )
 
 /*
 ===============
+SV_SendConfigstring
+Sends a configstring to one client, in chunks when it is long
+===============
+*/
+void SV_SendConfigstring( client_t *client, unsigned int index, const char *val )
+{
+	int len;
+	int maxChunk;
+	int overhead;
+	char buf[MAX_STRING_CHARS];
+	char cmd;
+
+	len = strlen( val );
+	sprintf(buf, "%i", index);
+	overhead = strlen(buf) + 4;
+	maxChunk = sizeof(buf) - overhead;
+
+	if ( len > maxChunk )
+	{
+		int sent = 0;
+		int remaining = len;
+
+		while ( remaining > 0 )
+		{
+			if ( sent == 0 )
+			{
+				cmd = 'x';
+			}
+			else if ( remaining <= maxChunk )
+			{
+				cmd = 'z';
+			}
+			else
+			{
+				cmd = 'y';
+			}
+
+			Q_strncpyz( buf, &val[sent], maxChunk + 1 );
+			SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", cmd, index, buf );
+
+			sent += maxChunk;
+			remaining -= maxChunk;
+		}
+	}
+	else
+	{
+		// standard cs, just send it
+		SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", 'd', index, val );
+	}
+}
+
+/*
+===============
 SV_SetConfigstring
 ===============
 */
 void SV_SetConfigstring( unsigned int index, const char *val )
 {
-	int len, i;
-	int maxChunk;
-	int overhead;
-	char buf[MAX_STRING_CHARS];
+	int i;
 	client_t *client;
-	char cmd;
 
 	if ( index >= MAX_CONFIGSTRINGS )
 	{
@@ -373,11 +422,6 @@ void SV_SetConfigstring( unsigned int index, const char *val )
 		return;
 	}
 
-	len = strlen( val );
-	sprintf(buf, "%i", index);
-	overhead = strlen(buf) + 4;
-	maxChunk = sizeof(buf) - overhead;
-
 	for ( i = 0, client = svs.clients; i < sv_maxclients->current.integer ; i++, client++ )
 	{
 		if ( client->state < CS_PRIMED )
@@ -385,38 +429,7 @@ void SV_SetConfigstring( unsigned int index, const char *val )
 			continue;
 		}
 
-		if ( len > maxChunk )
-		{
-			int sent = 0;
-			int remaining = len;
-
-			while ( remaining > 0 )
-			{
-				if ( sent == 0 )
-				{
-					cmd = 'x';
-				}
-				else if ( remaining <= maxChunk )
-				{
-					cmd = 'z';
-				}
-				else
-				{
-					cmd = 'y';
-				}
-
-				Q_strncpyz( buf, &val[sent], maxChunk + 1 );
-				SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", cmd, index, buf );
-
-				sent += maxChunk;
-				remaining -= maxChunk;
-			}
-		}
-		else
-		{
-			// standard cs, just send it
-			SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", 'd', index, val );
-		}
+		SV_SendConfigstring( client, index, val );
 	}
 }
 

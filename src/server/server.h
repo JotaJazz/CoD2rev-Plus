@@ -368,6 +368,7 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... );
 void SV_SetConfig(int start, int max, unsigned short bit);
 void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
 void SV_SetConfigstring(unsigned int index, const char *val);
+void SV_SendConfigstring(client_t *client, unsigned int index, const char *val);
 void SV_GetConfigstring( unsigned int index, char *buffer, int bufferSize );
 const char* SV_GetConfigstringConst(int index);
 void SV_GetUserinfo( int index, char *buffer, int bufferSize );

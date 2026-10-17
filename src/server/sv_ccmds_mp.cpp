@@ -708,7 +708,11 @@ static void SV_ConSay_f( void )
 		return;
 	}
 
+#ifdef LIBCOD
+	I_strncpyz( text, consolePrefix, sizeof( text ) );
+#else
 	strcpy( text, "console: " );
+#endif
 	p = Cmd_Args(1);
 
 	if ( *p == '"' )
@@ -757,7 +761,11 @@ static void SV_ConTell_f( void )
 		return;
 	}
 
+#ifdef LIBCOD
+	I_strncpyz( text, consolePrefix, sizeof( text ) );
+#else
 	strcpy( text, "console: " );
+#endif
 	p = Cmd_Args(2);
 
 	if ( *p == '"' )

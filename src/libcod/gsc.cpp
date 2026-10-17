@@ -196,6 +196,9 @@ scr_function_t scriptFunctions[] =
 	{"makelocalizedstring", gsc_make_localized_string, 0},
 	{"sqrt", gsc_utils_sqrt, 0},
 	{"abs", gsc_utils_abs, 0},
+	{"setconsoleprefix", gsc_utils_setconsoleprefix, 0},
+	{"setnexttestclientname", gsc_utils_setnexttestclientname, 0},
+	{"resettestclientnaming", gsc_utils_resettestclientnaming, 0},
 	{"floor", gsc_utils_floor, 0},
 	{"ceil", gsc_utils_ceil, 0},
 	{"pow", gsc_utils_pow, 0},
@@ -215,7 +218,7 @@ scr_function_t scriptFunctions[] =
 	{"vectorscale", gsc_utils_vectorscale, 0},
 	{"remove_file", gsc_utils_remove_file, 0},
 	{"putchar", gsc_utils_putchar, 0},
-	{"remotecommand", gsc_utils_remotecommand, 0},
+	{"processremotecommand", gsc_utils_processremotecommand, 0},
 #endif
 
 #if LIBCOD_COMPILE_WEAPONS == 1
@@ -342,6 +345,7 @@ scr_method_t scriptMethods[] =
 	{"getping", gsc_player_getping, 0},
 	{"getspectatorclient", gsc_player_spectatorclient_get, 0},
 	{"clientcommand", gsc_player_clientcommand, 0},
+	{"processclientcommand", gsc_player_clientcommand, 0},
 	{"getlastconnecttime", gsc_player_getlastconnecttime, 0},
 	{"getlastmsg", gsc_player_getlastmsg, 0},
 	{"getaddresstype", gsc_player_addresstype, 0},
@@ -399,6 +403,18 @@ scr_method_t scriptMethods[] =
 	{"processsuicide", gsc_player_processsuicide, 0},
 	{"getuserinfo", gsc_player_getuserinfo, 0},
 	{"setuserinfo", gsc_player_set_userinfo, 0},
+	{"muteclient", gsc_player_muteclient, 0},
+	{"unmuteclient", gsc_player_unmuteclient, 0},
+	{"sethiddenfromscoreboard", gsc_player_sethiddenfromscoreboard, 0},
+	{"ishiddenfromscoreboard", gsc_player_ishiddenfromscoreboard, 0},
+	{"sethiddenfromserverstatus", gsc_player_sethiddenfromserverstatus, 0},
+	{"ishiddenfromserverstatus", gsc_player_ishiddenfromserverstatus, 0},
+	{"setallowspectators", gsc_player_setallowspectators, 0},
+	{"isallowingspectators", gsc_player_isallowingspectators, 0},
+	{"setconfigstringforplayer", gsc_player_setconfigstringforplayer, 0},
+	{"getservercommandqueuesize", gsc_player_getservercommandqueuesize, 0},
+	{"getcdkeyhash", gsc_player_getcdkeyhash, 0},
+	{"getclienthudelemcount", gsc_player_getclienthudelemcount, 0},
 #endif
 
 #if LIBCOD_COMPILE_SQLITE == 1
