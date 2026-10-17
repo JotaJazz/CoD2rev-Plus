@@ -122,6 +122,8 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set g_fixedWeaponSpreads 0                  // bool: use a fixed spread pattern instead of random spread
 // set g_dropGrenadeOnDeath 1                  // bool: a player killed while holding a primed grenade drops it
 // set sv_botUseTriggerUse 0                   // bool: send bots a "bot_trigger" notify for the use triggers they stand in
+// set g_bulletDrop 0                          // bool: let enableBulletDrop give a player's bullets travel time and drop
+// set g_bulletDropMaxTime 10000               // int, 50 to 60000: milliseconds a dropping bullet flies before it is dropped
 // set g_debugGraph 0                          // bool: print debug messages from the graph (A*) script functions
 // set sv_graphAstarMaxIterations 0            // int, 0 to 100000: maximum nodes expanded by one graphFindPath; 0 = no limit
 // set sv_graphAstarWeight 1.0                 // float, 1.0 to 2.0: A* heuristic weight; above 1 finds paths faster but less short

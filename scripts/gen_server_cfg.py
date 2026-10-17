@@ -189,6 +189,8 @@ DESC = {
  'sv_kickMessages':'tell everyone when a player is kicked',
  'sv_timeoutMessages':'tell everyone when a player times out',
  'sv_botUseTriggerUse':'send bots a "bot_trigger" notify for the use triggers they stand in',
+ 'g_bulletDrop':'let enableBulletDrop give a player\'s bullets travel time and drop',
+ 'g_bulletDropMaxTime':'milliseconds a dropping bullet flies before it is dropped',
  'g_debugGraph':'print debug messages from the graph (A*) script functions',
  'sv_graphAstarMaxIterations':'maximum nodes expanded by one graphFindPath; 0 = no limit',
  'sv_graphAstarWeight':'A* heuristic weight; above 1 finds paths faster but less short',
