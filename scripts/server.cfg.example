@@ -109,6 +109,8 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_wwwDlDisconnected 0                  // bool: disconnect clients while they download over HTTP
 
 // --- libcod extensions ---
+// set sv_httpAllowedHosts ""                  // string: hosts httpFetch and webSocketConnect may reach (spaces or commas, *.example.com for subdomains); empty = all
+// set sv_httpCaFile ""                        // string: PEM file with the certificates https and wss trust; empty = the system's
 // set sv_master1 "cod2master.activision.com"  // string: first master server
 // set fs_library ""                           // string: folder used by the libcod manymaps map download
 // set g_playerCollision 1                     // bool: players collide with each other
