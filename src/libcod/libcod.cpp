@@ -180,6 +180,10 @@ void Scr_RunFrameCallbacks()
 	}
 	hitchFrameTime = 0;
 
+#if LIBCOD_COMPILE_SPEEX == 1
+	Libcod_RunSoundCallbacks();
+#endif
+
 	// CodeCallback_Error(critical, internal_function, message, position);
 	// errors that stop the map never get here, so critical is always 0.
 	// position ("file:line") is undefined outside developer mode (developer 2

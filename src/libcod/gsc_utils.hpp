@@ -47,6 +47,10 @@ void gsc_utils_putchar();
 void gsc_utils_processremotecommand();
 
 void gsc_utils_abs();
+void gsc_utils_loadsoundfile();
+void gsc_utils_loadspeexfile();
+void gsc_utils_savespeexfile();
+void gsc_utils_getsoundfileduration();
 void gsc_utils_sendpacket();
 void gsc_utils_makestring();
 void gsc_utils_makeclientlocalizedstring();

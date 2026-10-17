@@ -903,6 +903,8 @@ typedef struct
 	unsigned short bot_trigger;
 	unsigned short land;
 	unsigned short bounce;
+	unsigned short sound_file_done;
+	unsigned short sound_file_stop;
 #endif
 } scr_const_t;
 

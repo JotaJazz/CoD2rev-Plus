@@ -133,6 +133,10 @@ void gsc_player_enablebulletdrop(scr_entref_t id);
 void gsc_player_disablebulletdrop(scr_entref_t id);
 void gsc_player_setbulletdrag(scr_entref_t id);
 void gsc_player_setbulletvelocity(scr_entref_t id);
+void gsc_player_playsoundfile(scr_entref_t id);
+void gsc_player_stopsoundfile(scr_entref_t id);
+void gsc_player_isplayingsoundfile(scr_entref_t id);
+void gsc_player_getremainingsoundfileduration(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

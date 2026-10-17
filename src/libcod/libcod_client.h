@@ -37,6 +37,13 @@ typedef struct
 	float bulletDrag;
 	float bulletVelocity;
 
+	// playSoundFile: the sound playing (index, 0 for none), who it comes from,
+	// the next packet and the packets due
+	int soundIndex;
+	int soundTalker;
+	int soundPacket;
+	float soundPending;
+
 	// counts the players a slot has had, so what an old player left behind
 	// (bullets in flight) can tell it is gone
 	int generation;
@@ -115,5 +122,8 @@ extern bool libcodBulletHit;
 void Libcod_ClearDroppingBullets();
 bool Libcod_FireDroppingBullet(gentity_t *attacker, const weaponParms *wp, gentity_t *weaponEnt, int gameTime, const vec3_t end);
 void Libcod_RunDroppingBullets();
+
+void Libcod_RunSounds();
+void Libcod_RunSoundCallbacks();
 
 #endif

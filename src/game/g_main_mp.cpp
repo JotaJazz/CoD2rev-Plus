@@ -851,6 +851,10 @@ void G_RunFrame( int levelTime )
 	// enableBulletDrop: bullets in flight
 	Libcod_RunDroppingBullets();
 #endif
+#if defined(LIBCOD) && LIBCOD_COMPILE_SPEEX == 1
+	// playSoundFile: this frame's voice packets
+	Libcod_RunSounds();
+#endif
 
 	G_UpdateObjectiveToClients();
 	G_UpdateHudElemsToClients();

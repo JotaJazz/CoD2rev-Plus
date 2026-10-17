@@ -267,6 +267,13 @@ scr_function_t scriptFunctions[] =
 	{"getloadedweapons", gsc_weapons_getloadedweapons, 0},
 #endif
 
+#if LIBCOD_COMPILE_SPEEX == 1
+	{"loadsoundfile", gsc_utils_loadsoundfile, 0},
+	{"loadspeexfile", gsc_utils_loadspeexfile, 0},
+	{"savespeexfile", gsc_utils_savespeexfile, 0},
+	{"getsoundfileduration", gsc_utils_getsoundfileduration, 0},
+#endif
+
 #if LIBCOD_COMPILE_JSON == 1
 	{"json_parse", gsc_json_parse, 0},
 	{"json_stringify", gsc_json_stringify, 0},
@@ -533,6 +540,12 @@ scr_method_t scriptMethods[] =
 	{"disablebulletdrop", gsc_player_disablebulletdrop, 0},
 	{"setbulletdrag", gsc_player_setbulletdrag, 0},
 	{"setbulletvelocity", gsc_player_setbulletvelocity, 0},
+#if LIBCOD_COMPILE_SPEEX == 1
+	{"playsoundfile", gsc_player_playsoundfile, 0},
+	{"stopsoundfile", gsc_player_stopsoundfile, 0},
+	{"isplayingsoundfile", gsc_player_isplayingsoundfile, 0},
+	{"getremainingsoundfileduration", gsc_player_getremainingsoundfileduration, 0},
+#endif
 	{"setanimation", gsc_player_set_anim, 0},
 #endif
 

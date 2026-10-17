@@ -172,6 +172,7 @@ class Client:
         self.fragment_buffer = bytearray()
         self.server_time = 1000
         self.messages_received = 0
+        self.voice_packets = []
         self.server_id = None
         self.pending_commands = []
 
@@ -198,7 +199,7 @@ class Client:
         if not line.startswith('challengeResponse'):
             return line
         self.challenge = int(line.split()[1])
-        userinfo = ('\\protocol\\%d\\challenge\\%d\\qport\\%d\\name\\%s\\rate\\25000\\snaps\\20'
+        userinfo = ('\\protocol\\%d\\challenge\\%d\\qport\\%d\\name\\%s\\rate\\25000\\snaps\\20\\cl_voice\\1'
                     % (protocol, self.challenge, self.qport, name))
         line = self._oob('connect "%s"' % userinfo, 'connectResponse')
         return None if line.startswith('connectResponse') else line
@@ -274,11 +275,26 @@ class Client:
             except socket.timeout:
                 break
             if packet.startswith(PREFIX):
+                self._voice(packet[len(PREFIX):])
                 continue
             message = self._process(packet)
             if message:
                 messages.append(message)
         return messages
+
+    def _voice(self, data):
+        """SV_SendClientVoiceData sends voice outside the netchan: "v", then the
+        packet count and, for each packet, the talker, the size and the Speex
+        data. Kept in voice_packets as (talker, data)."""
+        if not data.startswith(b'v\0') or len(data) < 3:
+            return
+        pos, count = 3, data[2]
+        for _ in range(count):
+            if pos + 2 > len(data):
+                return
+            talker, size = data[pos], data[pos + 1]
+            self.voice_packets.append((talker, data[pos + 2:pos + 2 + size]))
+            pos += 2 + size
 
     # server messages
 

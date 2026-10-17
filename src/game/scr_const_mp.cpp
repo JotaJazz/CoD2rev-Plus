@@ -107,5 +107,7 @@ void GScr_LoadConsts()
 	scr_const.bot_trigger = GScr_AllocString("bot_trigger");
 	scr_const.land = GScr_AllocString("land");
 	scr_const.bounce = GScr_AllocString("bounce");
+	scr_const.sound_file_done = GScr_AllocString("sound_file_done");
+	scr_const.sound_file_stop = GScr_AllocString("sound_file_stop");
 #endif
 }
