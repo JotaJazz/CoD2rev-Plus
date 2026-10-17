@@ -29,6 +29,7 @@ init()
 	level.botsTeamBased = (getCvar("g_gametype") != "dm");
 
 	maps\mp\bots\_bots_nav::init();
+	maps\mp\bots\_bots_obj::init();
 	level thread manageBots();
 }
 
@@ -152,6 +153,7 @@ releaseButtons()
 	self adsAim(0);
 	self holdBreath(0);
 	self throwNade(0);
+	self useButton(0);
 }
 
 // One life: runs until the bot dies or stops playing.
@@ -167,6 +169,7 @@ playLife()
 
 	self maps\mp\bots\_bots_nav::resetNav();
 	self maps\mp\bots\_bots_combat::resetCombat();
+	self maps\mp\bots\_bots_obj::resetObjective();
 
 	angles = self getPlayerAngles();
 	yaw = angles[1];
