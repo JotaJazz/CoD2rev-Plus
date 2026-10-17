@@ -29,9 +29,9 @@ Este repositorio es un fork de [voron00/CoD2rev_Server](https://github.com/voron
 - **Seguridad y estabilidad:** se valida la entrada de red que tumbaba el servidor o sobrescribía su memoria; rcon bloquea las IP tras contraseñas erróneas; las descargas ya no entregan los archivos originales del juego; los baneos por IP se aplican; y un fallo deja un informe en `crash.log`.
 - **Compatibilidad:** mensajes grandes de clientes 1.3, clientes de Game Pass, servidores maestros como `host:puerto`, `dedicated 1`, archivos del juego en unidades de Windows bajo WSL, un reloj de juego estable y bots que vuelven tras un cambio de mapa.
 - **Administración:** contraseñas fuera del log, nombre, rotación y marcas de tiempo del log, rate y snapshots forzados, servidor de autorización de CD key configurable y mensajes de kick y timeout opcionales.
-- **Scripting (libcod):** la mayoría de las funciones y callbacks de script de [zk_libcod](https://github.com/ibuddieat/zk_libcod), con los mismos nombres: errores de script con archivo y línea, pulsaciones de botones, comandos rcon, control de jugadores y armas, herramientas de administración, grafos de waypoints con A\* y más, corrigiendo varios de sus errores en el camino.
+- **Scripting (libcod):** la mayoría de las funciones y callbacks de script de [zk_libcod](https://github.com/ibuddieat/zk_libcod), con los mismos nombres: errores de script con archivo y línea, pulsaciones de botones, comandos rcon, control de jugadores y armas, herramientas de administración, grafos de waypoints con A\*, lo que cada jugador ve, oye y con qué choca, y más, corrigiendo varios de sus errores en el camino.
 - **Mod de bots:** `mods/bots`, bots que se orientan con grafos de waypoints, usan la mira, granadas y cuchillo, y juegan los objetivos de SD y CTF.
-- **Pruebas:** un smoke test con un cliente mínimo y una prueba de bots que juegan mapas reales.
+- **Pruebas:** un smoke test con un cliente mínimo que lee los snapshots del servidor, y una prueba de bots que juegan mapas reales.
 
 Cada cambio en detalle, con sus funciones, variables y arreglos, está en [docs/CHANGES.md](docs/CHANGES.md) (en inglés).
 

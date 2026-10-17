@@ -29,9 +29,9 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Security and stability:** network input that crashed the server or overwrote its memory is now bounds-checked; rcon locks out IPs after wrong passwords; downloads can't fetch the stock game files; IP bans are enforced; and a crash leaves a report in `crash.log`.
 - **Compatibility:** large messages from 1.3 clients, Game Pass clients, master servers given as `host:port`, `dedicated 1`, game files on Windows drives under WSL, a steady game clock, and bots that come back after a map change.
 - **Administration:** passwords kept out of the log, log naming, rotation and timestamps, a forced rate and snapshot rate, a configurable CD key authorization server and optional kick and timeout messages.
-- **Scripting (libcod):** most of [zk_libcod](https://github.com/ibuddieat/zk_libcod)'s script functions and callbacks, with the same names: script errors with file and line, button presses, rcon commands, player and weapon control, admin tools, waypoint graphs with A\* and more, fixing several of its bugs on the way.
+- **Scripting (libcod):** most of [zk_libcod](https://github.com/ibuddieat/zk_libcod)'s script functions and callbacks, with the same names: script errors with file and line, button presses, rcon commands, player and weapon control, admin tools, waypoint graphs with A\*, what each player sees, hears and collides with, and more, fixing several of its bugs on the way.
 - **Bots mod:** `mods/bots`, bots that find their way over waypoint graphs, use sights, grenades and knives, and play the SD and CTF objectives.
-- **Tests:** a smoke test with a minimal client and a bots test that play real maps.
+- **Tests:** a smoke test with a minimal client that reads the server's snapshots, and a bots test that play real maps.
 
 Every change in detail, with its functions, variables and fixes, is in [docs/CHANGES.md](docs/CHANGES.md) (in English).
 
