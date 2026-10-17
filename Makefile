@@ -60,6 +60,7 @@ XANIM_DIR=$(SRC_DIR)/xanim
 WITH_LIBCOD=true
 WITH_MYSQL=false
 WITH_SQLITE=true
+WITH_SPEEX=true
 
 ifeq ($(WITH_LIBCOD),true)
 LIBCOD_SETTINGS=-D LIBCOD
@@ -77,6 +78,9 @@ LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_PLAYER=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_RATELIMITER=1
 ifeq ($(WITH_SQLITE),true)
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_SQLITE=1
+endif
+ifeq ($(WITH_SPEEX),true)
+LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_SPEEX=1 -I$(SRC_DIR)/libcod/speex/include
 endif
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_UTILS=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_WEAPONS=1
@@ -97,6 +101,11 @@ LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
 YYJSON_DIR=$(SRC_DIR)/libcod/yyjson
 YYJSON_SOURCES=$(wildcard $(YYJSON_DIR)/*.c)
 YYJSON_OBJ=$(patsubst $(YYJSON_DIR)/%.c,$(OBJ_DIR)/%.o,$(YYJSON_SOURCES))
+ifeq ($(WITH_SPEEX),true)
+SPEEX_DIR=$(SRC_DIR)/libcod/speex
+SPEEX_SOURCES=$(wildcard $(SPEEX_DIR)/libspeex/*.c)
+SPEEX_OBJ=$(patsubst $(SPEEX_DIR)/libspeex/%.c,$(OBJ_DIR)/%.o,$(SPEEX_SOURCES))
+endif
 ifeq ($(WITH_SQLITE),true)
 SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
 SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
@@ -145,13 +154,13 @@ ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
 	$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
-	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SQLITE_OBJ)
+	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SPEEX_OBJ) $(SQLITE_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
 	@echo $(PROTOCOL) > $(BUILD_STAMP)
 
 # Create the output folders before compiling anything, also with -j.
 $(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
-$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SQLITE_OBJ): | mkdir
+$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SPEEX_OBJ) $(SQLITE_OBJ): | mkdir
 
 # Link again when the binary in bin/ was built for another game version.
 ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL))
@@ -243,6 +252,11 @@ $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
 $(OBJ_DIR)/%.o: $(YYJSON_DIR)/%.c
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS) -o $@ $<
+
+# A rule to build libspeex source code.
+$(OBJ_DIR)/%.o: $(SPEEX_DIR)/libspeex/%.c
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) -DHAVE_CONFIG_H -I$(SPEEX_DIR) -I$(SPEEX_DIR)/include -o $@ $<
 
 # A rule to build sqlite source code.
 $(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
