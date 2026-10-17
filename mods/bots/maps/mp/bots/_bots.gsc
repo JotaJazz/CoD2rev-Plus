@@ -203,6 +203,10 @@ playLife()
 
 		if(isDefined(self.botTarget))
 		{
+			// past half the plant or defuse, finishing beats fighting
+			if(self maps\mp\bots\_bots_obj::keepUsing())
+				continue;
+
 			self maps\mp\bots\_bots_combat::fight(self.botTarget, skill);
 			self.botPath = undefined;
 			checkPos = self.origin;
@@ -221,6 +225,10 @@ playLife()
 		}
 
 		self maps\mp\bots\_bots_combat::idleReload();
+
+		// planting, defusing or standing watch
+		if(self maps\mp\bots\_bots_obj::objectiveAction())
+			continue;
 
 		goalPos = self maps\mp\bots\_bots_nav::chooseGoal();
 		if(isDefined(goalPos))

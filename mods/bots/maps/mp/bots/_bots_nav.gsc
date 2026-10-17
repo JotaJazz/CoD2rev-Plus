@@ -227,6 +227,17 @@ flatDist(a, b)
 chooseGoal()
 {
 	now = getTime();
+
+	objective = self maps\mp\bots\_bots_obj::objectiveGoal();
+	if(isDefined(objective))
+	{
+		if(self.botGoalKind != "objective")
+		{
+			debugLog("BOTNAV " + self getEntityNumber() + " goal objective");
+			self.botGoalKind = "objective";
+		}
+		return objective;
+	}
 	kind = "patrol";
 	pos = undefined;
 
