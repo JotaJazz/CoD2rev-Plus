@@ -866,6 +866,10 @@ void SV_SpawnServer( char *server )
 	extern void gsc_graph_cleanup_on_spawn_server(void);
 	gsc_graph_cleanup_on_spawn_server();
 #endif
+#if LIBCOD_COMPILE_JSON == 1
+	// unfinished async jobs belong to the old map's scripts
+	gsc_json_cleanup_on_spawn_server();
+#endif
 
 	// ydnar: broadcast a level change to all connected clients
 	qboolean savepersist = qfalse;

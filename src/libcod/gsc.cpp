@@ -267,6 +267,17 @@ scr_function_t scriptFunctions[] =
 	{"getloadedweapons", gsc_weapons_getloadedweapons, 0},
 #endif
 
+#if LIBCOD_COMPILE_JSON == 1
+	{"json_parse", gsc_json_parse, 0},
+	{"json_stringify", gsc_json_stringify, 0},
+	{"json_load", gsc_json_load, 0},
+	{"json_save", gsc_json_save, 0},
+	{"json_load_async", gsc_json_load_async, 0},
+	{"json_save_async", gsc_json_save_async, 0},
+	{"json_async_done", gsc_json_async_done, 0},
+	{"json_async_result", gsc_json_async_result, 0},
+#endif
+
 #if LIBCOD_COMPILE_GRAPH == 1
 	{"graphcreate", gsc_graph_create, 0},
 	{"graphfindpath", gsc_graph_find_path, 0},

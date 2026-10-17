@@ -111,6 +111,10 @@ void RegisterLibcodDvars()
 	g_bulletDrop = Dvar_RegisterBool("g_bulletDrop", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_bulletDropMaxTime = Dvar_RegisterInt("g_bulletDropMaxTime", 10000, 50, 60000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
+#if LIBCOD_COMPILE_JSON == 1
+	gsc_json_register_dvars();
+#endif
+
 #if LIBCOD_COMPILE_GRAPH == 1
 	g_debugGraph = Dvar_RegisterBool("g_debugGraph", false, DVAR_CHANGEABLE_RESET);
 	sv_graphAstarMaxIterations = Dvar_RegisterInt("sv_graphAstarMaxIterations", 0, 0, 100000, DVAR_CHANGEABLE_RESET);

@@ -67,6 +67,7 @@ LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_BOTS=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_ENTITY=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_EXEC=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_GRAPH=1
+LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_JSON=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_LEVEL=1
 LIBCOD_SETTINGS+=-D LIBCOD_COMPILE_MEMORY=1
 ifeq ($(WITH_MYSQL),true)
@@ -93,6 +94,9 @@ endif
 LIBCOD_DIR=$(SRC_DIR)/libcod
 LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/*.cpp)
 LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
+YYJSON_DIR=$(SRC_DIR)/libcod/yyjson
+YYJSON_SOURCES=$(wildcard $(YYJSON_DIR)/*.c)
+YYJSON_OBJ=$(patsubst $(YYJSON_DIR)/%.c,$(OBJ_DIR)/%.o,$(YYJSON_SOURCES))
 ifeq ($(WITH_SQLITE),true)
 SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
 SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
@@ -141,13 +145,13 @@ ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
 	$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
-	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
+	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SQLITE_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
 	@echo $(PROTOCOL) > $(BUILD_STAMP)
 
 # Create the output folders before compiling anything, also with -j.
 $(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
-$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ): | mkdir
+$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SQLITE_OBJ): | mkdir
 
 # Link again when the binary in bin/ was built for another game version.
 ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL))
@@ -234,6 +238,11 @@ $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+
+# A rule to build yyjson source code.
+$(OBJ_DIR)/%.o: $(YYJSON_DIR)/%.c
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build sqlite source code.
 $(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
