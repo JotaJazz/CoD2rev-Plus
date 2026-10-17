@@ -464,4 +464,211 @@ void gsc_entity_solidforplayer(scr_entref_t id)
 	gsc_entity_setsolidforplayer(id, "gsc_entity_solidforplayer", true);
 }
 
+// Script model physics, as in zk_libcod: enableGravity makes a script model
+// fall, slide off walls and land; enableBounce makes it bounce
+static bool gsc_entity_isscriptmodel(gentity_t *ent, const char *function)
+{
+	if (ent->classname != scr_const.script_model)
+	{
+		stackError("%s() entity %i is not a script_model", function, ent->s.number);
+		stackPushUndefined();
+		return false;
+	}
+	return true;
+}
+
+// enableGravity([collideModels], [alignToGround]): collideModels traces
+// against the hit boxes of models instead of their bounds
+void gsc_entity_enablegravity(scr_entref_t id)
+{
+	int locational = 1, align = 1;
+	int params = Scr_GetNumParam();
+
+	if ((params > 0 && !stackGetParamInt(0, &locational)) || (params > 1 && !stackGetParamInt(1, &align)))
+	{
+		stackError("gsc_entity_enablegravity() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = GetEntity(id);
+	if (!gsc_entity_isscriptmodel(ent, "gsc_entity_enablegravity"))
+		return;
+
+	Libcod_EnableGravity(ent, libcodEntities[ent->s.number].gravity == LIBCOD_GRAVITY_BOUNCE, locational != 0, align != 0);
+	stackPushBool(qtrue);
+}
+
+void gsc_entity_disablegravity(scr_entref_t id)
+{
+	gentity_t *ent = GetEntity(id);
+	if (!gsc_entity_isscriptmodel(ent, "gsc_entity_disablegravity"))
+		return;
+
+	bool was = libcodEntities[ent->s.number].gravity != LIBCOD_GRAVITY_NONE;
+	Libcod_DisableGravity(ent);
+	stackPushBool(was);
+}
+
+void gsc_entity_isgravityenabled(scr_entref_t id)
+{
+	stackPushBool(libcodEntities[GetEntity(id)->s.number].gravity != LIBCOD_GRAVITY_NONE);
+}
+
+// enableBounce([parallel], [perpendicular]): how much speed is kept along
+// and across the surface at each bounce (0 to 1)
+void gsc_entity_enablebounce(scr_entref_t id)
+{
+	float parallel = 0.5f, perpendicular = 0.25f;
+	int params = Scr_GetNumParam();
+
+	if ((params > 0 && !stackGetParamFloat(0, &parallel)) || (params > 1 && !stackGetParamFloat(1, &perpendicular)))
+	{
+		stackError("gsc_entity_enablebounce() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = GetEntity(id);
+	if (!gsc_entity_isscriptmodel(ent, "gsc_entity_enablebounce"))
+		return;
+
+	libcodEntity_t *le = &libcodEntities[ent->s.number];
+	if (!le->gravity)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	Libcod_EnableGravity(ent, true, le->locational, le->alignToGround);
+	le->parallelBounce = parallel < 0 ? 0 : parallel > 1 ? 1 : parallel;
+	le->perpendicularBounce = perpendicular < 0 ? 0 : perpendicular > 1 ? 1 : perpendicular;
+	stackPushBool(qtrue);
+}
+
+void gsc_entity_disablebounce(scr_entref_t id)
+{
+	gentity_t *ent = GetEntity(id);
+	if (!gsc_entity_isscriptmodel(ent, "gsc_entity_disablebounce"))
+		return;
+
+	libcodEntity_t *le = &libcodEntities[ent->s.number];
+	if (!le->gravity)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	Libcod_EnableGravity(ent, false, le->locational, le->alignToGround);
+	stackPushBool(qtrue);
+}
+
+static gentity_t *gsc_entity_withgravity(scr_entref_t id, const char *function)
+{
+	gentity_t *ent = GetEntity(id);
+	if (!gsc_entity_isscriptmodel(ent, function))
+		return NULL;
+	return ent;
+}
+
+void gsc_entity_getentityvelocity(scr_entref_t id)
+{
+	gentity_t *ent = gsc_entity_withgravity(id, "gsc_entity_getentityvelocity");
+	if (!ent)
+		return;
+
+	if (!libcodEntities[ent->s.number].gravity)
+	{
+		stackPushUndefined();
+		return;
+	}
+
+	vec3_t velocity;
+	Libcod_GetEntityVelocity(ent, velocity);
+	stackPushVector(velocity);
+}
+
+static void gsc_entity_changevelocity(scr_entref_t id, const char *function, bool add)
+{
+	vec3_t velocity, current;
+
+	if (!stackGetParams("v", velocity))
+	{
+		stackError("%s() argument is undefined or has a wrong type", function);
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = gsc_entity_withgravity(id, function);
+	if (!ent)
+		return;
+
+	if (!libcodEntities[ent->s.number].gravity)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	if (add)
+	{
+		Libcod_GetEntityVelocity(ent, current);
+		VectorAdd(velocity, current, velocity);
+	}
+
+	Libcod_SetEntityVelocity(ent, velocity);
+	stackPushBool(qtrue);
+}
+
+void gsc_entity_setentityvelocity(scr_entref_t id)
+{
+	gsc_entity_changevelocity(id, "gsc_entity_setentityvelocity", false);
+}
+
+void gsc_entity_addentityvelocity(scr_entref_t id)
+{
+	gsc_entity_changevelocity(id, "gsc_entity_addentityvelocity", true);
+}
+
+void gsc_entity_setmaxentityvelocity(scr_entref_t id)
+{
+	float speed;
+
+	if (!stackGetParams("f", &speed))
+	{
+		stackError("gsc_entity_setmaxentityvelocity() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gentity_t *ent = gsc_entity_withgravity(id, "gsc_entity_setmaxentityvelocity");
+	if (!ent)
+		return;
+
+	libcodEntity_t *le = &libcodEntities[ent->s.number];
+	if (!le->gravity)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	vec3_t velocity;
+	Libcod_GetEntityVelocity(ent, velocity);
+	le->maxVelocity = speed < 0 ? 0 : speed;
+	if (!le->resting)
+		Libcod_SetEntityVelocity(ent, velocity);
+	stackPushBool(qtrue);
+}
+
+void gsc_entity_getmaxentityvelocity(scr_entref_t id)
+{
+	gentity_t *ent = gsc_entity_withgravity(id, "gsc_entity_getmaxentityvelocity");
+	if (!ent)
+		return;
+
+	if (!libcodEntities[ent->s.number].gravity)
+		stackPushUndefined();
+	else
+		stackPushFloat(libcodEntities[ent->s.number].maxVelocity);
+}
+
 #endif

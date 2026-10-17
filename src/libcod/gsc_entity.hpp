@@ -30,5 +30,15 @@ void gsc_entity_setlight(scr_entref_t id);
 void gsc_entity_hidefromplayer(scr_entref_t id);
 void gsc_entity_notsolidforplayer(scr_entref_t id);
 void gsc_entity_solidforplayer(scr_entref_t id);
+void gsc_entity_enablegravity(scr_entref_t id);
+void gsc_entity_disablegravity(scr_entref_t id);
+void gsc_entity_isgravityenabled(scr_entref_t id);
+void gsc_entity_enablebounce(scr_entref_t id);
+void gsc_entity_disablebounce(scr_entref_t id);
+void gsc_entity_getentityvelocity(scr_entref_t id);
+void gsc_entity_setentityvelocity(scr_entref_t id);
+void gsc_entity_addentityvelocity(scr_entref_t id);
+void gsc_entity_setmaxentityvelocity(scr_entref_t id);
+void gsc_entity_getmaxentityvelocity(scr_entref_t id);
 
 #endif

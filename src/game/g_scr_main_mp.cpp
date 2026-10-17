@@ -736,6 +736,10 @@ void Scr_SetOrigin( gentity_t *ent, int offset )
 	Scr_GetVector(0, org);
 	G_SetOrigin(ent, org);
 
+#ifdef LIBCOD
+	Libcod_EntityOriginSet(ent);
+#endif
+
 	if ( ent->r.linked )
 	{
 		SV_LinkEntity(ent);

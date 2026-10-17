@@ -56,7 +56,23 @@ typedef struct
 		int sequence;
 		int target;
 	} fxOnTag[4];
+
+	// enableGravity
+	int gravity;
+	bool resting;
+	bool locational;
+	bool alignToGround;
+	float maxVelocity;
+	float parallelBounce;
+	float perpendicularBounce;
 } libcodEntity_t;
+
+enum
+{
+	LIBCOD_GRAVITY_NONE,
+	LIBCOD_GRAVITY_FALL,
+	LIBCOD_GRAVITY_BOUNCE,
+};
 
 enum
 {
@@ -77,5 +93,12 @@ void Libcod_FreeEntity(int entityNum);
 bool Libcod_SkipCollision(int clientNum, int otherNum);
 bool Libcod_IsNotSolidFor(int entityNum, int clientNum);
 bool Libcod_IsSilencedEvent(int entityNum, int event);
+
+bool Libcod_RunEntityGravity(gentity_t *ent);
+void Libcod_EnableGravity(gentity_t *ent, bool bounce, bool locational, bool alignToGround);
+void Libcod_DisableGravity(gentity_t *ent);
+void Libcod_EntityOriginSet(gentity_t *ent);
+void Libcod_GetEntityVelocity(gentity_t *ent, vec3_t velocity);
+void Libcod_SetEntityVelocity(gentity_t *ent, const vec3_t velocity);
 
 #endif

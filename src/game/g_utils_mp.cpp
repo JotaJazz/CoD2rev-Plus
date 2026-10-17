@@ -1606,6 +1606,10 @@ qboolean G_EntLinkToInternal( gentity_t *ent, gentity_t *parent, unsigned int ta
 	assert(parent);
 	assert(ent->flags & FL_SUPPORTS_LINKTO);
 
+#ifdef LIBCOD
+	Libcod_DisableGravity(ent);
+#endif
+
 	G_EntUnlink(ent);
 
 	assert(!ent->tagInfo);

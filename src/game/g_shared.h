@@ -901,6 +901,8 @@ typedef struct
 	unsigned short contents;
 	unsigned short material;
 	unsigned short bot_trigger;
+	unsigned short land;
+	unsigned short bounce;
 #endif
 } scr_const_t;
 

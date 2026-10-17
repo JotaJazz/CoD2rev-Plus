@@ -372,6 +372,16 @@ scr_method_t scriptMethods[] =
 	{"hidefromplayer", gsc_entity_hidefromplayer, 0},
 	{"notsolidforplayer", gsc_entity_notsolidforplayer, 0},
 	{"solidforplayer", gsc_entity_solidforplayer, 0},
+	{"enablegravity", gsc_entity_enablegravity, 0},
+	{"disablegravity", gsc_entity_disablegravity, 0},
+	{"isgravityenabled", gsc_entity_isgravityenabled, 0},
+	{"enablebounce", gsc_entity_enablebounce, 0},
+	{"disablebounce", gsc_entity_disablebounce, 0},
+	{"getentityvelocity", gsc_entity_getentityvelocity, 0},
+	{"setentityvelocity", gsc_entity_setentityvelocity, 0},
+	{"addentityvelocity", gsc_entity_addentityvelocity, 0},
+	{"setmaxentityvelocity", gsc_entity_setmaxentityvelocity, 0},
+	{"getmaxentityvelocity", gsc_entity_getmaxentityvelocity, 0},
 #endif
 
 #if LIBCOD_COMPILE_PLAYER == 1

@@ -867,6 +867,10 @@ ScriptMover_RotateSpeed
 */
 void ScriptMover_RotateSpeed( gentity_t *pEnt, const float *vRotSpeed, float fTotalTime, float fAccelTime, float fDecelTime )
 {
+#ifdef LIBCOD
+	Libcod_DisableGravity(pEnt);
+#endif
+
 	ScriptMover_SetupMoveSpeed(
 	    &pEnt->s.apos,
 	    vRotSpeed,
@@ -891,6 +895,10 @@ ScriptMover_Rotate
 */
 void ScriptMover_Rotate( gentity_t *pEnt, const vec3_t vRot, float fTotalTime, float fAccelTime, float fDecelTime )
 {
+#ifdef LIBCOD
+	Libcod_DisableGravity(pEnt);
+#endif
+
 	ScriptMover_SetupMove(
 	    &pEnt->s.apos,
 	    vRot,
@@ -915,6 +923,10 @@ ScriptMover_GravityMove
 */
 void ScriptMover_GravityMove( gentity_t *mover, const vec3_t velocity, float totalTime )
 {
+#ifdef LIBCOD
+	Libcod_DisableGravity(mover);
+#endif
+
 	assert(mover);
 	assert(!IS_NAN((velocity)[0]) && !IS_NAN((velocity)[1]) && !IS_NAN((velocity)[2]));
 
@@ -938,6 +950,10 @@ ScriptMover_Move
 */
 void ScriptMover_Move( gentity_s *pEnt, const vec3_t vPos, float fTotalTime, float fAccelTime, float fDecelTime )
 {
+#ifdef LIBCOD
+	Libcod_DisableGravity(pEnt);
+#endif
+
 	ScriptMover_SetupMove(
 	    &pEnt->s.pos,
 	    vPos,

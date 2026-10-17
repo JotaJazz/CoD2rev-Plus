@@ -1221,6 +1221,14 @@ void G_RunFrameForEntity( gentity_t *ent )
 		return;
 	}
 
+#ifdef LIBCOD
+	// enableGravity
+	if ( Libcod_RunEntityGravity(ent) )
+	{
+		return;
+	}
+#endif
+
 	if ( ent->s.eType == ET_SCRIPTMOVER )
 	{
 		G_RunMover(ent);

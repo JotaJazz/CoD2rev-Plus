@@ -105,5 +105,7 @@ void GScr_LoadConsts()
 	scr_const.contents = GScr_AllocString("contents");
 	scr_const.material = GScr_AllocString("material");
 	scr_const.bot_trigger = GScr_AllocString("bot_trigger");
+	scr_const.land = GScr_AllocString("land");
+	scr_const.bounce = GScr_AllocString("bounce");
 #endif
 }
