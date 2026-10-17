@@ -167,6 +167,8 @@ repath(goalNode, now)
 	if(!isDefined(start))
 		return;
 
+	debugLog("BOTNAV " + self getEntityNumber() + " repath");
+
 	// A* never skips its start node, so a path from a blocked node would lead
 	// straight back to it: walk straight for a moment to get away from it
 	for(i = 0; i < self.botBlocked.size; i++)

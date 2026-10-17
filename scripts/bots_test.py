@@ -94,6 +94,8 @@ def main():
     if args.seconds is None:
         args.seconds = {'sd': 240, 'ctf': 300}.get(args.gametype, 180)
     fights = args.gametype in ('tdm', 'dm')
+    if fights and args.seconds < 120:
+        ap.error('the combat checks need --seconds 120 or more')
 
     failures = []
 
@@ -147,11 +149,13 @@ def main():
                  '+set', 'sv_maxclients', '8', '+set', 'bots_count', '6', '+set', 'bots_debug', '1',
                  '+map', args.map],
                 stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
+        changed_at = None
         try:
             first = wait_lines(game_log, r'^BOTNAV graph ', 1, 120)
             check('graph ready on the first load', first)
             if first:
                 time.sleep(args.seconds)
+                changed_at = len(log_lines(game_log))
                 rcon(port, password, 'map ' + args.map)
                 check('graph ready on the second load', wait_lines(game_log, r'^BOTNAV graph ', 2, 120))
                 time.sleep(15)
@@ -179,6 +183,18 @@ def main():
         nodes = [l for l in lines if re.match(r'BOTNAV \d+ node ', l)]
         bots = {l.split()[1] for l in nodes}
         check('bots follow paths', len(nodes) >= 60 and len(bots) >= 3, f'{len(nodes)} nodes by {len(bots)} bots')
+        after = sum(1 for l in lines[changed_at:] if re.match(r'BOTNAV \d+ node ', l)) if changed_at else 0
+        check('bots follow the saved graph', after >= 10, f'{after} nodes after the map change')
+        # a moving goal (an enemy, a flag carrier) must not make a bot search
+        # every tick (10 a second); a few goal changes in a row are normal
+        repaths = {}
+        for raw in open(game_log, encoding='latin-1').read().splitlines() if os.path.exists(game_log) else []:
+            m = re.match(r'^\s*(\d+):(\d+) BOTNAV (\d+) repath', raw)
+            if m:
+                key = (m.group(3), int(m.group(1)) * 60 + int(m.group(2)))
+                repaths[key] = repaths.get(key, 0) + 1
+        busiest = max(repaths.values(), default=0)
+        check('bots search paths sparingly', 0 < busiest <= 6, f'at most {busiest} searches by a bot in a second')
         goals = {l.split()[3] for l in lines if re.match(r'BOTNAV \d+ goal ', l)}
         # in SD and CTF most bots play the objective instead of patrolling
         if fights:

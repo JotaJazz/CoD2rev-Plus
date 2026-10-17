@@ -166,7 +166,7 @@ Es startet den Server im LAN-Modus mit einem temporären Benutzerordner, der Spi
 python3 scripts/bots_test.py /pfad/zu/CoD2 --map mp_carentan
 ```
 
-Mit `--gametype sd` oder `--gametype ctf` prüft er stattdessen, dass die Bots die Bombe legen oder die gegnerische Flagge aufnehmen.
+Mit `--gametype sd` oder `--gametype ctf` prüft er stattdessen, dass die Bots die Bombe legen oder die gegnerische Flagge aufnehmen. `--bombmode 1` spielt SD im Modus mit nur einer Bombenzone. `--corrupt-cache` startet mit einer beschädigten Wegpunktdatei, die die Bots durch einen neuen Graphen ersetzen müssen.
 
 Um Speicherfehler zu finden, baue den Server mit AddressSanitizer in einem eigenen Ordner und übergib dieses Binary mit `--binary`:
 
