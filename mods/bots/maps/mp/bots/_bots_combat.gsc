@@ -155,12 +155,24 @@ tryGrenade(pos, skill)
 	if(self teammateNear(pos, 250))
 		return false;
 
+	// aim above the target, more the farther it is
+	angles = vectorToAngles(pos - self getEye());
+	pitch = 0 - (10 + dist / 30);
+	if(pitch < -45)
+		pitch = -45;
+
+	// a wall or ceiling right ahead would bounce the grenade back
+	eye = self getEye();
+	ahead = bulletTrace(eye, eye + maps\mp\bots\_bots::scaleVector(anglesToForward((pitch, angles[1], 0)), 150), false, self);
+	if(ahead["fraction"] < 1)
+		return false;
+
 	self.botNadeAt = now + 8000;
-	self thread throwGrenadeAt(pos, dist);
+	self thread throwGrenadeAt(pitch, angles[1]);
 	return true;
 }
 
-throwGrenadeAt(pos, dist)
+throwGrenadeAt(pitch, yaw)
 {
 	self endon("disconnect");
 	self endon("death");
@@ -169,16 +181,10 @@ throwGrenadeAt(pos, dist)
 	self fireWeapon(0);
 	self adsAim(0);
 
-	// aim above the target, more the farther it is
-	angles = vectorToAngles(pos - self getEye());
-	pitch = 0 - (10 + dist / 30);
-	if(pitch < -45)
-		pitch = -45;
-
-	self maps\mp\bots\_bots::lookAt((pitch, angles[1], 0));
+	self maps\mp\bots\_bots::lookAt((pitch, yaw, 0));
 	self throwNade(1);
 	wait 0.3;
-	self maps\mp\bots\_bots::lookAt((pitch, angles[1], 0));
+	self maps\mp\bots\_bots::lookAt((pitch, yaw, 0));
 	self throwNade(0);
 	maps\mp\bots\_bots_nav::debugLog("BOTCOMBAT " + self getEntityNumber() + " nade");
 
