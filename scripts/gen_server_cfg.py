@@ -50,7 +50,8 @@ d = read_dvars()
 MAC = {'PROTOCOL_VERSION':'115','MAX_CLIENTS':'64','DEFAULT_GRAVITY':'800','PORT_SERVER':'28960','ENTITYNUM_NONE':'1023',
        'MAX_LANGUAGES - 1':'13','UINT16_MAX':'65535','0x7FFFFFFF':'2147483647',
        'MASTER_SERVER_NAME':'"cod2master.activision.com"','AUTHORIZE_SERVER_NAME':'"cod2master.activision.com"','PORT_AUTHORIZE':'20700','COMMUNITY_MASTER_SERVER_NAME':'"master.cod2x.me"',
-       'GAMEVERSION':'"Call of Duty 2"'}
+       'GAMEVERSION':'"Call of Duty 2"',
+       'JSON_DEF_MAX_LOAD_BYTES':'8388608','JSON_HARD_MAX_LOAD_BYTES':'33554432','JSON_DEF_SLOW_WARN_MS':'25','JSON_DEF_ASYNC_MAX_JOBS':'64'}
 UNB = {'INT_MAX','INT_MIN','FLT_MAX','-FLT_MAX'}
 
 COMMON = '''// --- Identity ---
@@ -189,8 +190,13 @@ DESC = {
  'sv_kickMessages':'tell everyone when a player is kicked',
  'sv_timeoutMessages':'tell everyone when a player times out',
  'sv_botUseTriggerUse':'send bots a "bot_trigger" notify for the use triggers they stand in',
+ 'scr_json_max_load_bytes':'largest JSON file json_load and json_load_async read, in bytes',
+ 'scr_json_slow_warn_ms':'a JSON call slower than this many milliseconds prints a warning',
+ 'scr_json_async_max_jobs':'JSON jobs that can run in the background at once',
  'g_bulletDrop':'let enableBulletDrop give a player\'s bullets travel time and drop',
  'g_bulletDropMaxTime':'milliseconds a dropping bullet flies before it is dropped',
+ 'sv_httpAllowedHosts':'hosts httpFetch and webSocketConnect may reach (spaces or commas, *.example.com for subdomains); empty = all',
+ 'sv_httpCaFile':'PEM file with the certificates https and wss trust; empty = the system\'s',
  'g_debugGraph':'print debug messages from the graph (A*) script functions',
  'sv_graphAstarMaxIterations':'maximum nodes expanded by one graphFindPath; 0 = no limit',
  'sv_graphAstarWeight':'A* heuristic weight; above 1 finds paths faster but less short',

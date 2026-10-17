@@ -109,6 +109,11 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_wwwDlDisconnected 0                  // bool: disconnect clients while they download over HTTP
 
 // --- libcod extensions ---
+// set sv_httpAllowedHosts ""                  // string: hosts httpFetch and webSocketConnect may reach (spaces or commas, *.example.com for subdomains); empty = all
+// set sv_httpCaFile ""                        // string: PEM file with the certificates https and wss trust; empty = the system's
+// set scr_json_max_load_bytes 8388608         // int, 1 to 33554432: largest JSON file json_load and json_load_async read, in bytes
+// set scr_json_slow_warn_ms 25                // int, 1 to 60000: a JSON call slower than this many milliseconds prints a warning
+// set scr_json_async_max_jobs 64              // int, 1 to 1024: JSON jobs that can run in the background at once
 // set sv_master1 "cod2master.activision.com"  // string: first master server
 // set fs_library ""                           // string: folder used by the libcod manymaps map download
 // set g_playerCollision 1                     // bool: players collide with each other

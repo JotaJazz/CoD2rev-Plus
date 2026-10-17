@@ -115,6 +115,10 @@ void RegisterLibcodDvars()
 	gsc_json_register_dvars();
 #endif
 
+#if LIBCOD_COMPILE_HTTP == 1
+	gsc_http_register_dvars();
+#endif
+
 #if LIBCOD_COMPILE_GRAPH == 1
 	g_debugGraph = Dvar_RegisterBool("g_debugGraph", false, DVAR_CHANGEABLE_RESET);
 	sv_graphAstarMaxIterations = Dvar_RegisterInt("sv_graphAstarMaxIterations", 0, 0, 100000, DVAR_CHANGEABLE_RESET);
@@ -152,6 +156,10 @@ void InitLibcodCallbacks()
 	// errors of the previous map are not reported to the new one
 	numQueuedScriptErrors = 0;
 	hitchFrameTime = 0;
+
+#if LIBCOD_COMPILE_HTTP == 1
+	gsc_http_cleanup_on_level_load();
+#endif
 }
 
 // position is "file:line", or NULL outside developer mode, where the
@@ -204,6 +212,10 @@ void Scr_RunFrameCallbacks()
 	}
 	runningErrorCallback = false;
 	numQueuedScriptErrors = 0;
+
+#if LIBCOD_COMPILE_HTTP == 1
+	gsc_http_frame();
+#endif
 }
 
 // Called after each usercmd of an active client. The callbacks can drop the
