@@ -161,7 +161,9 @@ def main():
         # K;victimguid;victimnum;team;name;attackerguid;attackernum;...
         self_nades = sum(1 for l in kills if 'MOD_GRENADE_SPLASH' in l and l.split(';')[2] == l.split(';')[6])
         print(f'     {nade_kills} grenade kills, {melee_kills} melee kills')
-        check('few grenade suicides', self_nades <= 2, f'{self_nades}')
+        # bots shot while holding a grenade drop it, so a few are normal
+        allowed_nades = max(2, len(kills) // 20)
+        check('few grenade suicides', self_nades <= allowed_nades, f'{self_nades} of at most {allowed_nades}')
 
         errors = [l for l in lines if l.startswith('BOTERROR')]
         allowed = 1 if args.corrupt_cache else 0
