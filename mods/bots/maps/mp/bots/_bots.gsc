@@ -192,6 +192,10 @@ playLife()
 
 		self scanEnemies();
 
+		// a grenade throw owns the view and the buttons until it is done
+		if(self.botThrowing)
+			continue;
+
 		if(isDefined(self.botTarget))
 		{
 			self maps\mp\bots\_bots_combat::fight(self.botTarget, skill);
@@ -203,6 +207,14 @@ playLife()
 
 		// nothing in sight: hunt hints, patrol, or after a while the nearest enemy
 		self.botLastTarget = undefined;
+
+		// the enemy just ducked out of sight: a grenade where it was
+		if(isDefined(self.botLastSeenPos) && now - self.botLastSeenTime < 2000)
+		{
+			if(self maps\mp\bots\_bots_combat::tryGrenade(self.botLastSeenPos, skill))
+				continue;
+		}
+
 		self maps\mp\bots\_bots_combat::idleReload();
 
 		goalPos = self maps\mp\bots\_bots_nav::chooseGoal();

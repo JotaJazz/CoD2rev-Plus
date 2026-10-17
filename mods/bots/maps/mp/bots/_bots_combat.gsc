@@ -57,6 +57,9 @@ fight(target, skill)
 
 	self meleeWeapon(0);
 
+	if(self tryGrenade(target.origin, skill))
+		return;
+
 	wantAds = false;
 	if(class == "sniper" || class == "rifle" || class == "bolt")
 		wantAds = dist > 400;
@@ -129,6 +132,85 @@ fight(target, skill)
 		self.botStrafeUntil = now + 600 + randomInt(900);
 	}
 	self setWalkDir(self.botStrafeDir);
+}
+
+// Throws a frag at pos (the target, or where it was just seen): 300-900
+// units away, at most every 8 s, never with a teammate near the impact.
+tryGrenade(pos, skill)
+{
+	now = getTime();
+	if(self.botThrowing || now < self.botNadeAt)
+		return false;
+
+	// decide at most once a second; better bots throw more often
+	self.botNadeAt = now + 1000;
+	if(randomInt(12) > 1 + skill)
+		return false;
+
+	dist = distance(self.origin, pos);
+	if(dist < 300 || dist > 900)
+		return false;
+	if(self getAmmoCount(self fragGrenade()) <= 0)
+		return false;
+	if(self teammateNear(pos, 250))
+		return false;
+
+	self.botNadeAt = now + 8000;
+	self thread throwGrenadeAt(pos, dist);
+	return true;
+}
+
+throwGrenadeAt(pos, dist)
+{
+	self endon("disconnect");
+	self endon("death");
+
+	self.botThrowing = true;
+	self fireWeapon(0);
+	self adsAim(0);
+
+	// aim above the target, more the farther it is
+	angles = vectorToAngles(pos - self getEye());
+	pitch = 0 - (10 + dist / 30);
+	if(pitch < -45)
+		pitch = -45;
+
+	self maps\mp\bots\_bots::lookAt((pitch, angles[1], 0));
+	self throwNade(1);
+	wait 0.3;
+	self maps\mp\bots\_bots::lookAt((pitch, angles[1], 0));
+	self throwNade(0);
+	maps\mp\bots\_bots_nav::debugLog("BOTCOMBAT " + self getEntityNumber() + " nade");
+
+	wait 0.6;
+	self.botThrowing = false;
+}
+
+// The frag grenade of the bot's nationality; an unknown name has no ammo.
+fragGrenade()
+{
+	if(!isDefined(self.pers["team"]) || !isDefined(game[self.pers["team"]]))
+		return "none";
+
+	return "frag_grenade_" + game[self.pers["team"]] + "_mp";
+}
+
+teammateNear(pos, radius)
+{
+	if(!level.botsTeamBased)
+		return false;
+
+	players = getentarray("player", "classname");
+	for(i = 0; i < players.size; i++)
+	{
+		other = players[i];
+		if(other == self || !isAlive(other) || other.pers["team"] != self.pers["team"])
+			continue;
+		if(distanceSquared(other.origin, pos) < radius * radius)
+			return true;
+	}
+
+	return false;
 }
 
 // With nobody in sight: reload once the clip is below half.
