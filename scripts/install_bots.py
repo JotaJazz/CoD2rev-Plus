@@ -4,7 +4,7 @@
     python3 scripts/install_bots.py /path/to/CoD2 [--dest FOLDER] [--name cod2rev_bots]
 
 It writes two loose script files into FOLDER/<name>:
-  maps/mp/bots/_bots.gsc                 the bots, copied from this repository
+  maps/mp/bots/*.gsc                     the bots, copied from this repository
   maps/mp/gametypes/_callbacksetup.gsc   the game's own file with one line added
 
 The second file is built from your own game files (read from the .iwd archives
@@ -16,7 +16,7 @@ FOLDER defaults to the game folder. Start the server with:
 import argparse, glob, os, shutil, sys, zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BOT_SCRIPT = os.path.join(ROOT, 'mods', 'bots', 'maps', 'mp', 'bots', '_bots.gsc')
+BOT_DIR = os.path.join(ROOT, 'mods', 'bots', 'maps', 'mp', 'bots')
 CALLBACKS = 'maps/mp/gametypes/_callbacksetup.gsc'
 MARKER = '[[level.callbackStartGameType]]();'
 HOOK = 'thread maps\\mp\\bots\\_bots::init();'
@@ -49,7 +49,8 @@ def main():
     mod = os.path.join(args.dest or args.game_dir, args.name)
     os.makedirs(os.path.join(mod, 'maps', 'mp', 'bots'), exist_ok=True)
     os.makedirs(os.path.join(mod, 'maps', 'mp', 'gametypes'), exist_ok=True)
-    shutil.copyfile(BOT_SCRIPT, os.path.join(mod, 'maps', 'mp', 'bots', '_bots.gsc'))
+    for script in sorted(glob.glob(os.path.join(BOT_DIR, '*.gsc'))):
+        shutil.copyfile(script, os.path.join(mod, 'maps', 'mp', 'bots', os.path.basename(script)))
     with open(os.path.join(mod, *CALLBACKS.split('/')), 'w', encoding='latin-1', newline='') as out:
         out.write(text)
 
