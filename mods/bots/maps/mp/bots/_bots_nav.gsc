@@ -168,6 +168,17 @@ repath(goalNode, now)
 	if(!isDefined(start))
 		return;
 
+	// A* never skips its start node, so a path from a blocked node would lead
+	// straight back to it: walk straight for a moment to get away from it
+	for(i = 0; i < self.botBlocked.size; i++)
+	{
+		if(self.botBlocked[i] == start)
+		{
+			self.botDirectUntil = now + 3000;
+			return;
+		}
+	}
+
 	if(self.botBlocked.size)
 		self.botPath = graphFindPath(level.botGraph, start, goalNode, self.botBlocked);
 	else
@@ -180,6 +191,8 @@ stuckOn(node, now)
 {
 	debugLog("BOTNAV " + self getEntityNumber() + " stuck " + node);
 	self.botStuckCount++;
+	self.botBlocked[self.botBlocked.size] = node;
+	self.botBlockedUntil = now + 10000;
 
 	if(self.botStuckCount >= 3)
 	{
@@ -189,8 +202,6 @@ stuckOn(node, now)
 		return;
 	}
 
-	self.botBlocked[self.botBlocked.size] = node;
-	self.botBlockedUntil = now + 10000;
 	self.botRepathAt = 0;
 }
 

@@ -148,8 +148,18 @@ def main():
         check('bots follow paths', len(nodes) >= 60 and len(bots) >= 3, f'{len(nodes)} nodes by {len(bots)} bots')
         goals = {l.split()[3] for l in lines if re.match(r'BOTNAV \d+ goal ', l)}
         check('bots choose patrol and hint goals', {'patrol', 'hint'} <= goals, ', '.join(sorted(goals)))
-        stuck = sum(1 for l in lines if re.match(r'BOTNAV \d+ stuck ', l))
-        print(f'     {stuck} stuck events')
+        # a node a bot got stuck on is avoided for 10 s, so the same bot
+        # should rarely get stuck on the same node again; the game time
+        # prefix gives the seconds
+        stuck = []
+        for raw in open(game_log, encoding='latin-1').read().splitlines() if os.path.exists(game_log) else []:
+            m = re.match(r'^\s*(\d+):(\d+) BOTNAV (\d+) stuck (\d+)', raw)
+            if m:
+                stuck.append((int(m.group(1)) * 60 + int(m.group(2)), m.group(3), m.group(4)))
+        repeats = sum(1 for i, (t, bot, node) in enumerate(stuck)
+                      if any(b == bot and n == node and 0 <= t - t0 < 10 for t0, b, n in stuck[:i]))
+        check('stuck nodes are avoided', repeats <= max(3, len(stuck) // 4),
+              f'{repeats} of {len(stuck)} stuck events repeat the same node within 10 s')
 
         combat = {l.split()[2] for l in lines if re.match(r'BOTCOMBAT \d+ ', l)}
         for action in ('ads', 'nade', 'melee'):
