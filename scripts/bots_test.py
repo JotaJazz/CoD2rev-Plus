@@ -8,7 +8,7 @@ BOTNAV and BOTCOMBAT lines to games_mp.log. The map is loaded twice: the first
 load must build and save the waypoint graph, the second must read it back.
 Exits with 0 when every check passes.
 """
-import argparse, os, re, secrets, subprocess, sys, tempfile, time
+import argparse, os, re, secrets, shutil, subprocess, sys, tempfile, time
 
 from smoke_test import free_port, query, rcon
 
@@ -45,6 +45,7 @@ def main():
     ap.add_argument('--map', default='mp_toujane')
     ap.add_argument('--gametype', default='tdm')
     ap.add_argument('--seconds', type=int, default=180, help='play time on the first load')
+    ap.add_argument('--keep', help='copy games_mp.log and the server log to this folder')
     ap.add_argument('--corrupt-cache', action='store_true',
                     help='start with a garbage waypoint file, which must be rebuilt')
     args = ap.parse_args()
@@ -98,6 +99,12 @@ def main():
                     server.wait(timeout=10)
                 except subprocess.TimeoutExpired:
                     server.kill()
+
+        if args.keep:
+            os.makedirs(args.keep, exist_ok=True)
+            for name in (game_log, os.path.join(home, 'server.log')):
+                if os.path.exists(name):
+                    shutil.copy(name, args.keep)
 
         lines = log_lines(game_log)
         graphs = [l for l in lines if l.startswith('BOTNAV graph ')]
