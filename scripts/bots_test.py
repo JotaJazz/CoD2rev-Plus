@@ -19,7 +19,36 @@ CodeCallback_Error(critical, function, message)
 {
 	logprint("BOTERROR " + function + " " + message + "\\n");
 }
+
+// Knife fights hardly happen on their own (encounters end at range), so
+// every 15 s two enemy bots are put face to face, 40 units apart.
+botsTestMelee()
+{
+	for(;;)
+	{
+		wait 15;
+		players = getentarray("player", "classname");
+		a = undefined;
+		b = undefined;
+		for(i = 0; i < players.size; i++)
+		{
+			p = players[i];
+			if(!isAlive(p) || p.sessionstate != "playing")
+				continue;
+			if(!isDefined(a))
+				a = p;
+			else if(!isDefined(b) && p.pers["team"] != a.pers["team"])
+				b = p;
+		}
+		if(!isDefined(a) || !isDefined(b))
+			continue;
+		forward = anglesToForward((0, a getPlayerAngles()[1], 0));
+		b setOrigin(a.origin + (forward[0] * 40, forward[1] * 40, 0));
+		b setPlayerAngles(vectorToAngles(a.origin - b.origin));
+	}
+}
 '''
+HOOK = 'thread maps\\mp\\bots\\_bots::init();'
 
 
 def log_lines(path):
@@ -60,9 +89,11 @@ def main():
     with tempfile.TemporaryDirectory(prefix='cod2rev_bots_') as home:
         subprocess.run([sys.executable, os.path.join(ROOT, 'scripts', 'install_bots.py'), args.game_dir,
                         '--dest', home, '--name', MOD], check=True, stdout=subprocess.DEVNULL)
-        with open(os.path.join(home, MOD, 'maps', 'mp', 'gametypes', '_callbacksetup.gsc'), 'a',
-                  encoding='latin-1') as f:
-            f.write(ERROR_CALLBACK)
+        callbacks = os.path.join(home, MOD, 'maps', 'mp', 'gametypes', '_callbacksetup.gsc')
+        text = open(callbacks, encoding='latin-1').read()
+        text = text.replace(HOOK, HOOK + ' thread botsTestMelee();') + ERROR_CALLBACK
+        with open(callbacks, 'w', encoding='latin-1', newline='') as f:
+            f.write(text)
 
         cache = os.path.join(home, MOD, 'waypoints', args.map + '_v1.graph')
         if args.corrupt_cache:

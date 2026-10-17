@@ -146,6 +146,10 @@ releaseButtons()
 	self fireWeapon(0);
 	self reloadWeapon(0);
 	self setBotStance("stand");
+	self meleeWeapon(0);
+	self adsAim(0);
+	self holdBreath(0);
+	self throwNade(0);
 }
 
 // One life: runs until the bot dies or stops playing.
@@ -160,20 +164,16 @@ playLife()
 		skill = 10;
 
 	self maps\mp\bots\_bots_nav::resetNav();
+	self maps\mp\bots\_bots_combat::resetCombat();
 
 	angles = self getPlayerAngles();
 	yaw = angles[1];
 
 	avoidYaw = yaw;
 	avoidUntil = 0;
-	strafeDir = "left";
-	strafeUntil = 0;
-	reactAt = 0;
-	lastTarget = undefined;
 	checkPos = self.origin;
 	checkAt = getTime() + 1000;
 	jumped = false;
-	tick = 0;
 
 	for(;;)
 	{
@@ -182,7 +182,6 @@ playLife()
 		if(!isAlive(self) || self.sessionstate != "playing")
 			return;
 
-		tick++;
 		now = getTime();
 
 		if(jumped)
@@ -195,46 +194,7 @@ playLife()
 
 		if(isDefined(self.botTarget))
 		{
-			target = self.botTarget;
-
-			// a new target is not shot at instantly
-			if(!isDefined(lastTarget) || lastTarget != target)
-			{
-				lastTarget = target;
-				reactAt = now + (10 - skill) * 60;
-			}
-
-			eye = self getEye();
-			spread = (10 - skill) * 3;
-			aimAt = target getEye() + (randomFloat(spread * 2) - spread, randomFloat(spread * 2) - spread, randomFloat(spread * 2) - spread - 14);
-			self lookAt(vectorToAngles(aimAt - eye));
-
-			// three ticks on, one off: bursts for automatics, repeated shots for rifles
-			if(now >= reactAt && (tick % 4) != 0)
-				self fireWeapon(1);
-			else
-				self fireWeapon(0);
-
-			self reloadWeapon(0);
-
-			dist = distance(self.origin, target.origin);
-			self setWalkDir("none");
-
-			if(dist > 600)
-				self setWalkDir("forward");
-			else if(dist < 150)
-				self setWalkDir("back");
-
-			if(now >= strafeUntil)
-			{
-				if(randomInt(2) == 0)
-					strafeDir = "left";
-				else
-					strafeDir = "right";
-				strafeUntil = now + 600 + randomInt(900);
-			}
-			self setWalkDir(strafeDir);
-
+			self maps\mp\bots\_bots_combat::fight(self.botTarget, skill);
 			self.botPath = undefined;
 			checkPos = self.origin;
 			checkAt = now + 1000;
@@ -242,13 +202,8 @@ playLife()
 		}
 
 		// nothing in sight: hunt hints, patrol, or after a while the nearest enemy
-		lastTarget = undefined;
-		self fireWeapon(0);
-
-		if(self getWeaponSlotClipAmmo("primary") == 0)
-			self reloadWeapon(1);
-		else
-			self reloadWeapon(0);
+		self.botLastTarget = undefined;
+		self maps\mp\bots\_bots_combat::idleReload();
 
 		goalPos = self maps\mp\bots\_bots_nav::chooseGoal();
 		if(isDefined(goalPos))
