@@ -518,6 +518,10 @@ scr_method_t scriptMethods[] =
 	{"setcollisionteam", gsc_player_setcollisionteam, 0},
 	{"getcollisionteam", gsc_player_getcollisionteam, 0},
 	{"playfxontagforplayer", gsc_player_playfxontagforplayer, 0},
+	{"enablebulletdrop", gsc_player_enablebulletdrop, 0},
+	{"disablebulletdrop", gsc_player_disablebulletdrop, 0},
+	{"setbulletdrag", gsc_player_setbulletdrag, 0},
+	{"setbulletvelocity", gsc_player_setbulletvelocity, 0},
 	{"setanimation", gsc_player_set_anim, 0},
 #endif
 

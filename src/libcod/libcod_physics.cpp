@@ -238,4 +238,156 @@ bool Libcod_RunEntityGravity(gentity_t *ent)
 	return true;
 }
 
+// Bullet drop (enableBulletDrop, with g_bulletDrop set): a player's bullets
+// fly frame by frame, pulled down by gravity and slowed by drag, instead of
+// hitting at once. Each step is a Bullet_Fire_Extended from the bullet's last
+// position, so impacts, penetration and the player's bullet mask, impacts and
+// range settings all apply; damage falls off with the whole distance flown.
+
+#define MAX_DROPPING_BULLETS 256
+#define MAX_PLAYER_BULLETS 32
+#define BULLET_GRAVITY 386.09f	// 9.81 m/s2 in inches
+
+typedef struct
+{
+	bool active;
+	int attacker;
+	int generation;
+	int weaponEnt;
+	int lagOffset;
+	int startTime;
+	float distance;
+	float maxDistance;
+	vec3_t origin;
+	vec3_t velocity;
+	weaponParms wp;
+} droppingBullet_t;
+
+static droppingBullet_t droppingBullets[MAX_DROPPING_BULLETS];
+
+// Read by Bullet_Fire_Extended while a bullet step runs
+float libcodBulletDistance;
+bool libcodBulletHit;
+
+void Libcod_ClearDroppingBullets()
+{
+	memset(droppingBullets, 0, sizeof(droppingBullets));
+}
+
+// One step of seconds; false once the bullet has hit something, or left
+// its range
+static bool Libcod_StepBullet(droppingBullet_t *b, float seconds, int gameTime)
+{
+	gentity_t *attacker = &g_entities[b->attacker];
+	gentity_t *weaponEnt = &g_entities[b->weaponEnt];
+	float drag = libcodClients[b->attacker].bulletDrag;
+	vec3_t velocity, end, step;
+
+	// drag is the part of the speed lost each second
+	VectorScale(b->velocity, powf(1.0f - drag, seconds), velocity);
+	velocity[2] -= BULLET_GRAVITY * seconds;
+
+	// the mean velocity over the step gives the exact arc under constant
+	// gravity
+	VectorAdd(b->velocity, velocity, step);
+	VectorScale(step, 0.5f * seconds, step);
+	VectorAdd(b->origin, step, end);
+
+	libcodBulletDistance = b->distance;
+	libcodBulletHit = false;
+	Bullet_Fire_Extended(weaponEnt, attacker, b->origin, end, 1.0, 0, &b->wp, weaponEnt, gameTime);
+	libcodBulletDistance = 0;
+
+	if (libcodBulletHit)
+		return false;
+
+	b->distance += VectorLength(step);
+	VectorCopy(end, b->origin);
+	VectorCopy(velocity, b->velocity);
+	return b->distance < b->maxDistance;
+}
+
+// Called by Bullet_Fire with the players already rewound for the shot.
+// Returns false when the shot should be fired the stock way.
+bool Libcod_FireDroppingBullet(gentity_t *attacker, const weaponParms *wp, gentity_t *weaponEnt, int gameTime, const vec3_t end)
+{
+	extern dvar_t *g_bulletDrop;
+	int num = attacker->s.number;
+	int i, free = -1, count = 0;
+
+	if (!g_bulletDrop->current.boolean || !attacker->client || num >= MAX_CLIENTS || !libcodClients[num].bulletDrop)
+		return false;
+
+	for (i = 0; i < MAX_DROPPING_BULLETS; i++)
+	{
+		if (!droppingBullets[i].active)
+		{
+			if (free < 0)
+				free = i;
+		}
+		else if (droppingBullets[i].attacker == num)
+		{
+			count++;
+		}
+	}
+
+	// too many in flight: this one hits at once
+	if (free < 0 || count >= MAX_PLAYER_BULLETS)
+		return false;
+
+	droppingBullet_t *b = &droppingBullets[free];
+	vec3_t dir;
+
+	memset(b, 0, sizeof(*b));
+	b->attacker = num;
+	b->generation = libcodClients[num].generation;
+	b->weaponEnt = weaponEnt->s.number;
+	b->lagOffset = level.time - gameTime;
+	b->startTime = level.time;
+	b->maxDistance = 8192 * libcodClients[num].fireRangeScale;
+	b->wp = *wp;
+	VectorCopy(wp->muzzleTrace, b->origin);
+	VectorSubtract(end, wp->muzzleTrace, dir);
+	Vec3Normalize(dir);
+	VectorScale(dir, libcodClients[num].bulletVelocity, b->velocity);
+
+	// the first step right away, within the shot's rewind
+	b->active = Libcod_StepBullet(b, level.frameTime * 0.001f, gameTime);
+	return true;
+}
+
+// Moves the bullets in flight, once per game frame, each with the players
+// rewound to where its shooter saw them
+void Libcod_RunDroppingBullets()
+{
+	extern dvar_t *g_bulletDropMaxTime;
+	AntilagClientStore antilagClients;
+
+	for (int i = 0; i < MAX_DROPPING_BULLETS; i++)
+	{
+		droppingBullet_t *b = &droppingBullets[i];
+
+		if (!b->active)
+			continue;
+
+		// the shooter left (or its slot has a new player), or time is up
+		gentity_t *attacker = &g_entities[b->attacker];
+		if (!attacker->r.inuse || !attacker->client || libcodClients[b->attacker].generation != b->generation
+		        || level.time - b->startTime > g_bulletDropMaxTime->current.integer)
+		{
+			b->active = false;
+			continue;
+		}
+
+		// a turret that is gone: the shooter fired it
+		if (!g_entities[b->weaponEnt].r.inuse)
+			b->weaponEnt = b->attacker;
+
+		int gameTime = level.time - b->lagOffset;
+		G_AntiLagRewindClientPos(gameTime, &antilagClients);
+		b->active = Libcod_StepBullet(b, level.frameTime * 0.001f, gameTime);
+		G_AntiLag_RestoreClientPos(&antilagClients);
+	}
+}
+
 #endif

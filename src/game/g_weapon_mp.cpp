@@ -500,6 +500,10 @@ void Bullet_Fire( gentity_t *attacker, float spread, weaponParms *wp, gentity_t 
 			range *= libcodClients[attacker->s.number].fireRangeScale;
 #endif
 		Bullet_Endpos(spread, endpos, wp, range, -1);
+#ifdef LIBCOD
+		// enableBulletDrop: the bullet flies over the next frames
+		if ( !Libcod_FireDroppingBullet(attacker, wp, weaponEnt, gametime, endpos) )
+#endif
 		Bullet_Fire_Extended(weaponEnt, attacker, wp->muzzleTrace, endpos, 1.0, 0, wp, weaponEnt, gametime);
 	}
 
@@ -758,6 +762,12 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	Vec3Lerp(start, end, tr.fraction, hitPos);
 	G_CheckHitTriggerDamage(attacker, start, hitPos, wp->weapDef->damage, mod);
 
+#ifdef LIBCOD
+	// a dropping bullet ends at whatever it meets
+	if ( tr.fraction < 1.0 )
+		libcodBulletHit = true;
+#endif
+
 	traceEnt = &g_entities[tr.entityNum];
 
 	VectorSubtract(end, start, reflect);
@@ -827,7 +837,12 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	}
 
 	VectorSubtract( start, hitPos, dist );
+#ifdef LIBCOD
+	// a dropping bullet's earlier steps count for the range falloff
+	damage = Bullet_GetDamage( wp, VectorLength(dist) + libcodBulletDistance ) * spread;
+#else
 	damage = Bullet_GetDamage( wp, VectorLength(dist) ) * spread;
+#endif
 
 	G_Damage( traceEnt, attacker, attacker, wp->forward, hitPos, damage, dflags, mod, tr.partGroup, level.time - gameTime );
 

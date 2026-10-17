@@ -32,6 +32,15 @@ typedef struct
 	// setCollisionTeam: which players this one collides with
 	int collisionTeam;
 
+	// enableBulletDrop
+	bool bulletDrop;
+	float bulletDrag;
+	float bulletVelocity;
+
+	// counts the players a slot has had, so what an old player left behind
+	// (bullets in flight) can tell it is gone
+	int generation;
+
 	// objective_player_*: a slot that is not empty replaces the shared
 	// objective of the same index for this player
 	objective_t objectives[MAX_OBJECTIVES];
@@ -100,5 +109,11 @@ void Libcod_DisableGravity(gentity_t *ent);
 void Libcod_EntityOriginSet(gentity_t *ent);
 void Libcod_GetEntityVelocity(gentity_t *ent, vec3_t velocity);
 void Libcod_SetEntityVelocity(gentity_t *ent, const vec3_t velocity);
+
+extern float libcodBulletDistance;
+extern bool libcodBulletHit;
+void Libcod_ClearDroppingBullets();
+bool Libcod_FireDroppingBullet(gentity_t *attacker, const weaponParms *wp, gentity_t *weaponEnt, int gameTime, const vec3_t end);
+void Libcod_RunDroppingBullets();
 
 #endif

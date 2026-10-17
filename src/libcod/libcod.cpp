@@ -16,6 +16,8 @@ dvar_t *g_mantleBlockEnable;
 dvar_t *g_fixedWeaponSpreads;
 dvar_t *g_dropGrenadeOnDeath;
 dvar_t *sv_botUseTriggerUse;
+dvar_t *g_bulletDrop;
+dvar_t *g_bulletDropMaxTime;
 #if LIBCOD_COMPILE_GRAPH == 1
 dvar_t *g_debugGraph;
 dvar_t *sv_graphAstarMaxIterations;
@@ -106,6 +108,8 @@ void RegisterLibcodDvars()
 	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", false, DVAR_CHANGEABLE_RESET);
 	g_dropGrenadeOnDeath = Dvar_RegisterBool("g_dropGrenadeOnDeath", true, DVAR_CHANGEABLE_RESET);
 	sv_botUseTriggerUse = Dvar_RegisterBool("sv_botUseTriggerUse", false, DVAR_CHANGEABLE_RESET);
+	g_bulletDrop = Dvar_RegisterBool("g_bulletDrop", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_bulletDropMaxTime = Dvar_RegisterInt("g_bulletDropMaxTime", 10000, 50, 60000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
 #if LIBCOD_COMPILE_GRAPH == 1
 	g_debugGraph = Dvar_RegisterBool("g_debugGraph", false, DVAR_CHANGEABLE_RESET);
@@ -131,6 +135,8 @@ void InitLibcodCallbacks()
 
 	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
 		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
+
+	Libcod_ClearDroppingBullets();
 
 	// objective indexes belong to the map
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -679,6 +685,7 @@ void Libcod_FreeEntity(int entityNum)
 void Libcod_ResetClient(int clientNum)
 {
 	libcodClient_t *client = &libcodClients[clientNum];
+	int generation = client->generation;
 
 	// entities hidden from the old player are shown to the next one
 	int word = clientNum >> 5, bit = 1 << (clientNum & 0x1F);
@@ -693,6 +700,9 @@ void Libcod_ResetClient(int clientNum)
 	}
 
 	memset(client, 0, sizeof(*client));
+	client->generation = generation + 1;
+	client->bulletDrag = 0.01f;
+	client->bulletVelocity = 31500;
 	client->weaponSpreadScale = 1.0f;
 	client->turretSpreadScale = 1.0f;
 	client->meleeRangeScale = 1.0f;

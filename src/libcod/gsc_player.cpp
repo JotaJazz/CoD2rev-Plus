@@ -2305,4 +2305,68 @@ void gsc_player_playfxontagforplayer(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+// Bullet drop, with g_bulletDrop set: this player's bullets fly over the
+// next frames, dropping and slowing down, instead of hitting at once
+void gsc_player_enablebulletdrop(scr_entref_t id)
+{
+	extern dvar_t *g_bulletDrop;
+
+	if (!gsc_player_isclient(id, "gsc_player_enablebulletdrop"))
+		return;
+
+	libcodClients[id.entnum].bulletDrop = true;
+	stackPushBool(g_bulletDrop->current.boolean);
+}
+
+void gsc_player_disablebulletdrop(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_disablebulletdrop"))
+		return;
+
+	libcodClients[id.entnum].bulletDrop = false;
+	stackPushBool(qtrue);
+}
+
+// setBulletDrag(drag): the part of its speed a bullet loses each second, 0
+// to 1 (default 0.01); returns the previous value
+void gsc_player_setbulletdrag(scr_entref_t id)
+{
+	float drag;
+
+	if (!stackGetParams("f", &drag))
+	{
+		stackError("gsc_player_setbulletdrag() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setbulletdrag"))
+		return;
+
+	float old = libcodClients[id.entnum].bulletDrag;
+	libcodClients[id.entnum].bulletDrag = drag < 0 ? 0 : drag > 1 ? 1 : drag;
+	stackPushFloat(old);
+}
+
+// setBulletVelocity(speed): units per second when a bullet leaves the gun
+// (default 31500); returns the previous value
+void gsc_player_setbulletvelocity(scr_entref_t id)
+{
+	float speed;
+
+	if (!stackGetParams("f", &speed))
+	{
+		stackError("gsc_player_setbulletvelocity() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setbulletvelocity"))
+		return;
+
+	float old = libcodClients[id.entnum].bulletVelocity;
+	libcodClients[id.entnum].bulletVelocity = speed < 1 ? 1 : speed;
+	stackPushFloat(old);
+}
+
 #endif

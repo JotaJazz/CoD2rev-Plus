@@ -129,6 +129,10 @@ void gsc_player_disablesilent(scr_entref_t id);
 void gsc_player_setcollisionteam(scr_entref_t id);
 void gsc_player_getcollisionteam(scr_entref_t id);
 void gsc_player_playfxontagforplayer(scr_entref_t id);
+void gsc_player_enablebulletdrop(scr_entref_t id);
+void gsc_player_disablebulletdrop(scr_entref_t id);
+void gsc_player_setbulletdrag(scr_entref_t id);
+void gsc_player_setbulletvelocity(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

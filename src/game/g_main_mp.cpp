@@ -847,6 +847,11 @@ void G_RunFrame( int levelTime )
 
 	level.currentEntityThink = -1;
 
+#ifdef LIBCOD
+	// enableBulletDrop: bullets in flight
+	Libcod_RunDroppingBullets();
+#endif
+
 	G_UpdateObjectiveToClients();
 	G_UpdateHudElemsToClients();
 
