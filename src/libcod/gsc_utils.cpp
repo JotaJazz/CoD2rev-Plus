@@ -507,6 +507,32 @@ void gsc_utils_float()
 	}
 }
 
+// True when one of the ;-separated commands in text changes or restarts the
+// map
+static bool ContainsMapCommand(const char *text)
+{
+	static const char *commands[] = { "map", "devmap", "map_restart", "fast_restart", "map_rotate" };
+	const char *p = text;
+
+	while (*p)
+	{
+		while (*p == ' ' || *p == '\t' || *p == ';' || *p == '\r' || *p == '\n')
+			p++;
+
+		for (size_t i = 0; i < ARRAY_COUNT(commands); i++)
+		{
+			int len = strlen(commands[i]);
+			if (!I_strnicmp(p, commands[i], len) && (p[len] == 0 || p[len] == ' ' || p[len] == '\t' || p[len] == ';' || p[len] == '\r' || p[len] == '\n'))
+				return true;
+		}
+
+		while (*p && *p != ';' && *p != '\r' && *p != '\n')
+			p++;
+	}
+
+	return false;
+}
+
 void gsc_utils_ExecuteString()
 {
 	const char *str;
@@ -518,7 +544,16 @@ void gsc_utils_ExecuteString()
 		return;
 	}
 
-	Cmd_ExecuteString(str);
+	// a map change frees the scripts that are running, this one included, so
+	// it waits in the command buffer, which runs outside of any script
+	if (ContainsMapCommand(str))
+	{
+		Cbuf_AddText(str);
+		Cbuf_AddText("\n");
+	}
+	else
+		Cmd_ExecuteString(str);
+
 	stackPushBool(qtrue);
 }
 
