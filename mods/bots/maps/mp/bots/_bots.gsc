@@ -159,6 +159,8 @@ playLife()
 	if(skill > 10)
 		skill = 10;
 
+	self maps\mp\bots\_bots_nav::resetNav();
+
 	angles = self getPlayerAngles();
 	yaw = angles[1];
 
@@ -233,6 +235,7 @@ playLife()
 			}
 			self setWalkDir(strafeDir);
 
+			self.botPath = undefined;
 			checkPos = self.origin;
 			checkAt = now + 1000;
 			continue;
@@ -248,12 +251,11 @@ playLife()
 			self reloadWeapon(0);
 
 		if(isDefined(self.botGoal))
-		{
-			toGoal = vectorToAngles(self.botGoal.origin - self.origin);
-			yaw = toGoal[1];
-		}
+			yaw = self maps\mp\bots\_bots_nav::navYaw(self.botGoal.origin);
 
-		if(now < avoidUntil)
+		// the random turns are for walking straight; on the graph, stuck
+		// handling picks another path instead
+		if(now < avoidUntil && self.botNavDirect)
 			yaw = avoidYaw;
 
 		// is something right in front, at knee and chest height?
@@ -283,15 +285,15 @@ playLife()
 				avoidYaw = yaw;
 				avoidUntil = now + 400;
 			}
-			else
+			else if(self.botNavDirect)
 			{
 				if(randomInt(2) == 0)
 					avoidYaw = yaw + 60 + randomInt(80);
 				else
 					avoidYaw = yaw - 60 - randomInt(80);
 				avoidUntil = now + 700 + randomInt(900);
+				yaw = avoidYaw;
 			}
-			yaw = avoidYaw;
 		}
 
 		self lookAt((0, yaw, 0));

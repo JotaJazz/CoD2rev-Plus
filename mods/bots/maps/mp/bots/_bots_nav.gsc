@@ -69,6 +69,140 @@ spawnClasses()
 	return classes;
 }
 
+// Clean navigation state for a new life.
+resetNav()
+{
+	self.botPath = undefined;
+	self.botPathIndex = 0;
+	self.botPathGoal = -1;
+	self.botRepathAt = 0;
+	self.botBlocked = [];
+	self.botBlockedUntil = 0;
+	self.botStuckCount = 0;
+	self.botDirectUntil = 0;
+	self.botNavDirect = true;
+	self.botBestDist = 999999;
+	self.botProgressAt = 0;
+}
+
+// Yaw to walk towards goalPos: along the graph when there is one (and then
+// self.botNavDirect is false), otherwise straight at the goal.
+navYaw(goalPos)
+{
+	now = getTime();
+	self.botNavDirect = true;
+
+	if(!isDefined(level.botGraph) || now < self.botDirectUntil)
+		return self yawTo(goalPos);
+
+	if(now >= self.botBlockedUntil)
+		self.botBlocked = [];
+
+	goalNode = graphFindClosestNode(level.botGraph, goalPos);
+	if(!isDefined(goalNode))
+		return self yawTo(goalPos);
+
+	if(!isDefined(self.botPath) || now >= self.botRepathAt || goalNode != self.botPathGoal)
+		self repath(goalNode, now);
+
+	// no path, or the end of a partial one: straight on from here
+	if(!isDefined(self.botPath) || self.botPathIndex >= self.botPath.size)
+		return self yawTo(goalPos);
+
+	nodePos = graphGetNodeOrigin(level.botGraph, self.botPath[self.botPathIndex]);
+
+	// at the node, or already closer to the next one (cutting corners)
+	reached = flatDist(self.origin, nodePos) < 32;
+	if(!reached && self.botPathIndex + 1 < self.botPath.size)
+	{
+		nextPos = graphGetNodeOrigin(level.botGraph, self.botPath[self.botPathIndex + 1]);
+		reached = flatDist(self.origin, nextPos) < flatDist(nodePos, nextPos);
+	}
+
+	if(reached)
+	{
+		debugLog("BOTNAV " + self getEntityNumber() + " node " + self.botPath[self.botPathIndex]);
+		self.botPathIndex++;
+		self.botStuckCount = 0;
+		self startProgress(now);
+
+		if(self.botPathIndex >= self.botPath.size)
+			return self yawTo(goalPos);
+
+		nodePos = graphGetNodeOrigin(level.botGraph, self.botPath[self.botPathIndex]);
+	}
+
+	dist = flatDist(self.origin, nodePos);
+	if(dist < self.botBestDist - 16)
+	{
+		self.botBestDist = dist;
+		self.botProgressAt = now + 1500;
+	}
+	else if(now >= self.botProgressAt)
+	{
+		self stuckOn(self.botPath[self.botPathIndex], now);
+		return self yawTo(nodePos);
+	}
+
+	self.botNavDirect = false;
+	return self yawTo(nodePos);
+}
+
+repath(goalNode, now)
+{
+	self.botPathGoal = goalNode;
+	self.botRepathAt = now + 3000;
+	self.botPathIndex = 0;
+	self.botPath = undefined;
+	self startProgress(now);
+
+	start = graphFindClosestNode(level.botGraph, self.origin);
+	if(!isDefined(start))
+		return;
+
+	if(self.botBlocked.size)
+		self.botPath = graphFindPath(level.botGraph, start, goalNode, self.botBlocked);
+	else
+		self.botPath = graphFindPath(level.botGraph, start, goalNode);
+}
+
+// No progress towards a node: avoid it for a while; after three in a row,
+// walk straight for a moment.
+stuckOn(node, now)
+{
+	debugLog("BOTNAV " + self getEntityNumber() + " stuck " + node);
+	self.botStuckCount++;
+
+	if(self.botStuckCount >= 3)
+	{
+		self.botStuckCount = 0;
+		self.botDirectUntil = now + 3000;
+		self.botPath = undefined;
+		return;
+	}
+
+	self.botBlocked[self.botBlocked.size] = node;
+	self.botBlockedUntil = now + 10000;
+	self.botRepathAt = 0;
+}
+
+startProgress(now)
+{
+	self.botBestDist = 999999;
+	self.botProgressAt = now + 1500;
+}
+
+yawTo(pos)
+{
+	angles = vectorToAngles(pos - self.origin);
+	return angles[1];
+}
+
+flatDist(a, b)
+{
+	return distance((a[0], a[1], 0), (b[0], b[1], 0));
+}
+
 debugLog(text)
 {
 	if(level.botsDebug)
