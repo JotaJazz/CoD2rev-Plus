@@ -623,8 +623,6 @@ libcodClient_t libcodClients[MAX_CLIENTS];
 // must not carry over to the next one in that slot
 void Libcod_ResetClient(int clientNum)
 {
-	extern int custom_animation[];
-
 	libcodClient_t *client = &libcodClients[clientNum];
 
 	memset(client, 0, sizeof(*client));
@@ -635,7 +633,6 @@ void Libcod_ResetClient(int clientNum)
 	client->meleeHeightScale = 1.0f;
 	client->fireRangeScale = 1.0f;
 
-	custom_animation[clientNum] = 0;
 	libcod_weaponChange[clientNum] = 0;
 	bot_buttons[clientNum] = 0;
 	bot_weapon[clientNum] = 0;
@@ -643,6 +640,7 @@ void Libcod_ResetClient(int clientNum)
 	bot_rightmove[clientNum] = 0;
 
 #if LIBCOD_COMPILE_PLAYER == 1
+	extern int custom_animation[];
 	extern int player_g_speed[];
 	extern int player_g_gravity[];
 	extern int player_disableitempickup[];
@@ -650,6 +648,7 @@ void Libcod_ResetClient(int clientNum)
 	player_g_speed[clientNum] = 0;
 	player_g_gravity[clientNum] = 0;
 	player_disableitempickup[clientNum] = 0;
+	custom_animation[clientNum] = 0;
 #endif
 }
 

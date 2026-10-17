@@ -421,4 +421,31 @@ void gsc_bots_holdbreath(scr_entref_t id)
 	gsc_bots_set_button(id, "gsc_bots_holdbreath", BUTTON_HOLDBREATH);
 }
 
+// setWalkValues(forward, right): analog movement, -127 to 127 each
+void gsc_bots_setwalkvalues(scr_entref_t id)
+{
+	int forward, right;
+
+	if (!stackGetParams("ii", &forward, &right))
+	{
+		stackError("gsc_bots_setwalkvalues() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS || svs.clients[id.entnum].netchan.remoteAddress.type != NA_BOT)
+	{
+		stackError("gsc_bots_setwalkvalues() entity %i is not a bot", id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	extern char bot_forwardmove[MAX_CLIENTS];
+	extern char bot_rightmove[MAX_CLIENTS];
+
+	bot_forwardmove[id.entnum] = forward < -127 ? -127 : forward > 127 ? 127 : forward;
+	bot_rightmove[id.entnum] = right < -127 ? -127 : right > 127 ? 127 : right;
+	stackPushBool(qtrue);
+}
+
 #endif

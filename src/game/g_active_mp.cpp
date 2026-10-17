@@ -72,6 +72,12 @@ void G_SetClientContents( gentity_t *pEnt )
 	}
 
 	pEnt->r.contents = CONTENTS_BODY;
+
+#ifdef LIBCOD
+	// overrideContents: what a living player is made of
+	if ( libcodClients[pEnt->s.number].overrideContents )
+		pEnt->r.contents = libcodClients[pEnt->s.number].contents;
+#endif
 }
 
 /*

@@ -225,6 +225,30 @@ static int defineBits[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES][2];
 
 #if LIBCOD_COMPILE_PLAYER == 1
 int custom_animation[MAX_CLIENTS] = {0};
+
+// The index of a loaded player animation, or -1; unlike
+// BG_AnimationIndexForString it never stops the map over an unknown name
+int BG_FindAnimationIndex( const char *string )
+{
+	int i, hash;
+
+	if ( !globalScriptData )
+	{
+		return -1;
+	}
+
+	hash = BG_StringHashValue( string );
+
+	for ( i = 0; i < globalScriptData->numAnimations; i++ )
+	{
+		if ( hash == globalScriptData->animations[i].nameHash && !Q_stricmp( string, globalScriptData->animations[i].name ) )
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
 #endif
 
 /*

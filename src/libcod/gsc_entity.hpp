@@ -17,5 +17,15 @@ void gsc_entity_getweaponitemclipammo(scr_entref_t id);
 void gsc_entity_setweaponitemclipammo(scr_entref_t id);
 void gsc_entity_getitemquantity(scr_entref_t id);
 void gsc_entity_setitemquantity(scr_entref_t id);
+void gsc_entity_gettagorigin(scr_entref_t id);
+void gsc_entity_gettagangles(scr_entref_t id);
+void gsc_entity_hastag(scr_entref_t id);
+void gsc_entity_islinkedto(scr_entref_t id);
+void gsc_entity_getvmin(scr_entref_t id);
+void gsc_entity_getvmax(scr_entref_t id);
+void gsc_entity_getclipmask(scr_entref_t id);
+void gsc_entity_setclipmask(scr_entref_t id);
+void gsc_entity_getcontents(scr_entref_t id);
+void gsc_entity_setlight(scr_entref_t id);
 
 #endif

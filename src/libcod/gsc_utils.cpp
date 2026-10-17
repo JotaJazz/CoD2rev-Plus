@@ -1000,6 +1000,157 @@ void gsc_utils_processremotecommand()
 
 // Functions below are named and behave as in zk_libcod
 
+// The text of a localized string reference (&"...")
+void gsc_utils_makestring()
+{
+	if (Scr_GetNumParam() < 1 || Scr_GetType(0) != VAR_ISTRING)
+	{
+		stackError("gsc_utils_makestring() argument is not a localized string");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushString(Scr_GetIString(0));
+}
+
+// A string the client looks up in its localization files when it shows it
+void gsc_utils_makeclientlocalizedstring()
+{
+	const char *str;
+	char buf[MAX_STRING_CHARS];
+
+	if (!stackGetParams("s", &str))
+	{
+		stackError("gsc_utils_makeclientlocalizedstring() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (strlen(str) > sizeof(buf) - 3)
+	{
+		stackError("gsc_utils_makeclientlocalizedstring() string is too long");
+		stackPushUndefined();
+		return;
+	}
+
+	Com_sprintf(buf, sizeof(buf), "\x14%s\x15", str);
+	stackPushString(buf);
+}
+
+void gsc_utils_getcvarflags()
+{
+	const char *name;
+
+	if (!stackGetParams("s", &name))
+	{
+		stackError("gsc_utils_getcvarflags() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	dvar_t *dvar = Dvar_FindVar(name);
+	if (!dvar)
+	{
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushInt(dvar->flags);
+}
+
+// The name of a surface type number, as bulletTrace's "surfacetype" gives
+void gsc_utils_getsurfacename()
+{
+	int type;
+
+	if (!stackGetParams("i", &type))
+	{
+		stackError("gsc_utils_getsurfacename() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushString(Com_SurfaceTypeToName(type));
+}
+
+// Where north is on the compass, in degrees; the stock getNorthYaw reads it
+void gsc_utils_setnorthyaw()
+{
+	float yaw;
+
+	if (!stackGetParams("f", &yaw))
+	{
+		stackError("gsc_utils_setnorthyaw() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	SV_SetConfigstring(CS_NORTHYAW, va("%g", yaw));
+	stackPushBool(qtrue);
+}
+
+// The map's brush models moved by script (doors, elevators and the like)
+void gsc_utils_getmovers()
+{
+	Scr_MakeArray();
+	for (int i = 0; i < level.num_entities; i++)
+	{
+		gentity_t *ent = &g_entities[i];
+		if (ent->r.inuse && ent->s.eType == ET_SCRIPTMOVER && ent->r.bmodel)
+		{
+			stackPushEntity(ent);
+			Scr_AddArray();
+		}
+	}
+}
+
+// Whether the next map change or map_restart keeps the players' pers data,
+// as map_restart(true) does
+void gsc_utils_getsavepersist()
+{
+	stackPushBool(G_GetSavePersist() != 0);
+}
+
+void gsc_utils_setsavepersist()
+{
+	int persist;
+
+	if (!stackGetParams("i", &persist))
+	{
+		stackError("gsc_utils_setsavepersist() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	G_SetSavePersist(persist != 0);
+	stackPushBool(qtrue);
+}
+
+// As printoutofband(address, message), but false for an address that does
+// not resolve instead of sending nowhere
+void gsc_utils_sendpacket()
+{
+	const char *address;
+	const char *msg;
+	netadr_t to;
+
+	if (!stackGetParams("ss", &address, &msg))
+	{
+		stackError("gsc_utils_sendpacket() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!NET_StringToAdr(address, &to) || to.type == NA_BAD)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	NET_OutOfBandPrint(NS_SERVER, to, msg);
+	stackPushBool(qtrue);
+}
+
 // Replaces "console: " in front of the say and tell console commands
 void gsc_utils_setconsoleprefix()
 {

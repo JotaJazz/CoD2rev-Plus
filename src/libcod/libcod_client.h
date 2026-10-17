@@ -21,6 +21,10 @@ typedef struct
 	int bulletMask;
 	bool fireThroughWalls;
 	bool noBulletImpacts;
+
+	// overrideContents
+	bool overrideContents;
+	int contents;
 } libcodClient_t;
 
 extern libcodClient_t libcodClients[];

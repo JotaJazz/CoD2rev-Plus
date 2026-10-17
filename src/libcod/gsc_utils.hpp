@@ -47,6 +47,15 @@ void gsc_utils_putchar();
 void gsc_utils_processremotecommand();
 
 void gsc_utils_abs();
+void gsc_utils_sendpacket();
+void gsc_utils_makestring();
+void gsc_utils_makeclientlocalizedstring();
+void gsc_utils_getcvarflags();
+void gsc_utils_getsurfacename();
+void gsc_utils_setnorthyaw();
+void gsc_utils_getmovers();
+void gsc_utils_getsavepersist();
+void gsc_utils_setsavepersist();
 void gsc_utils_setconsoleprefix();
 void gsc_utils_setnexttestclientname();
 void gsc_utils_resettestclientnaming();

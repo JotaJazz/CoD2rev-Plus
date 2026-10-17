@@ -16,5 +16,6 @@ void gsc_bots_switchtoweaponid(scr_entref_t id);
 void gsc_bots_usebutton(scr_entref_t id);
 void gsc_bots_throwsmoke(scr_entref_t id);
 void gsc_bots_holdbreath(scr_entref_t id);
+void gsc_bots_setwalkvalues(scr_entref_t id);
 
 #endif

@@ -758,9 +758,21 @@ void gsc_player_set_anim(scr_entref_t id)
 
 	gentity_t *entity = &g_entities[id.entnum];
 
+	// an unknown name used to stop the map in BG_AnimationIndexForString
+	extern int BG_FindAnimationIndex(const char *string);
+	int index = 0;
+	if (strcmp(animation, "none") != 0)
+	{
+		index = BG_FindAnimationIndex(animation);
+		if (index < 0)
+		{
+			stackPushBool(qfalse);
+			return;
+		}
+	}
+
 	if (entity->s.eType == ET_PLAYER_CORPSE)
 	{
-		int index = BG_AnimationIndexForString(animation);
 		entity->s.legsAnim = index;
 		stackPushBool(qtrue);
 		return;
@@ -774,12 +786,7 @@ void gsc_player_set_anim(scr_entref_t id)
 	}
 
 	extern int custom_animation[MAX_CLIENTS];
-	int animationIndex = 0;
-
-	if (strcmp(animation, "none") != 0)
-		animationIndex = BG_AnimationIndexForString(animation);
-
-	custom_animation[id.entnum] = animationIndex;
+	custom_animation[id.entnum] = index;
 	stackPushBool(qtrue);
 }
 
@@ -1335,7 +1342,7 @@ void gsc_player_getuserinfo(scr_entref_t id)
 
 static bool gsc_player_isclient(scr_entref_t id, const char *function)
 {
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("%s() entity %i is not a player", function, id.entnum);
 		stackPushUndefined();
@@ -1847,6 +1854,105 @@ void gsc_player_noclip(scr_entref_t id)
 		client->noclip = !client->noclip;
 
 	stackPushBool(qtrue);
+}
+
+// True while the player looks at something usable (the use hint is up)
+void gsc_player_isusetouching(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_isusetouching"))
+		return;
+
+	gentity_t *ent = &g_entities[id.entnum];
+	stackPushBool(ent->client && G_IsPlaying(ent) && ent->client->ps.cursorHintEntIndex != ENTITYNUM_NONE);
+}
+
+// The game version of the player's client: "1.0", "1.2", "1.3" or "1.4"
+void gsc_player_getprotocolstring(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getprotocolstring"))
+		return;
+
+	switch (svs.clients[id.entnum].netchan.protocol)
+	{
+	case 115: stackPushString("1.0"); break;
+	case 117: stackPushString("1.2"); break;
+	case 118: stackPushString("1.3"); break;
+	case 119: stackPushString("1.4"); break;
+	default: stackPushUndefined(); break;
+	}
+}
+
+// Moves the player at once, like a teleporter: off any turret and unlinked,
+// with no speed left
+void gsc_player_setoriginandangles(scr_entref_t id)
+{
+	vec3_t origin, angles;
+
+	if (!stackGetParams("vv", origin, angles))
+	{
+		stackError("gsc_player_setoriginandangles() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setoriginandangles"))
+		return;
+
+	gentity_t *ent = &g_entities[id.entnum];
+	if (!ent->client || ent->client->sess.connected == CON_DISCONNECTED)
+	{
+		stackPushBool(qfalse);
+		return;
+	}
+
+	if (ent->client->ps.eFlags & EF_TURRET_ACTIVE)
+		G_ClientStopUsingTurret(&g_entities[ent->client->ps.viewlocked_entNum]);
+
+	G_EntUnlink(ent);
+	VectorClear(ent->client->ps.velocity);
+	TeleportPlayer(ent, origin, angles);
+	stackPushBool(qtrue);
+}
+
+// overrideContents(contents) makes a living player out of other contents
+// than CONTENTS_BODY; overrideContents(undefined) goes back. Returns what the
+// player was made of before.
+void gsc_player_overridecontents(scr_entref_t id)
+{
+	if (Scr_GetNumParam() != 1)
+	{
+		stackError("gsc_player_overridecontents() needs exactly one argument");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_overridecontents"))
+		return;
+
+	gentity_t *ent = &g_entities[id.entnum];
+	libcodClient_t *lc = &libcodClients[id.entnum];
+	int old = lc->overrideContents ? lc->contents : ent->r.contents;
+
+	if (Scr_GetType(0) == VAR_UNDEFINED)
+	{
+		lc->overrideContents = false;
+	}
+	else if (Scr_GetType(0) == VAR_INTEGER)
+	{
+		lc->overrideContents = true;
+		lc->contents = Scr_GetInt(0);
+	}
+	else
+	{
+		stackError("gsc_player_overridecontents() argument has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (ent->client)
+		G_SetClientContents(ent);
+
+	stackPushInt(old);
 }
 
 #endif

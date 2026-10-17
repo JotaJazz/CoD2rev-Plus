@@ -108,6 +108,10 @@ void gsc_player_canmantle(scr_entref_t id);
 void gsc_player_getweaponanimation(scr_entref_t id);
 void gsc_player_forceshot(scr_entref_t id);
 void gsc_player_noclip(scr_entref_t id);
+void gsc_player_isusetouching(scr_entref_t id);
+void gsc_player_getprotocolstring(scr_entref_t id);
+void gsc_player_setoriginandangles(scr_entref_t id);
+void gsc_player_overridecontents(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();
