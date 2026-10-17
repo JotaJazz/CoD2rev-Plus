@@ -424,4 +424,44 @@ void gsc_entity_hidefromplayer(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+static void gsc_entity_setsolidforplayer(scr_entref_t id, const char *function, bool solid)
+{
+	gentity_t *ent = GetEntity(id);
+	gentity_t *player = Scr_GetEntity(0);
+
+	if (!player || player->s.number >= MAX_CLIENTS)
+	{
+		stackError("%s() argument is not a player", function);
+		stackPushUndefined();
+		return;
+	}
+
+	if (!ent->r.bmodel)
+	{
+		stackError("%s() entity %i is not a brush model", function, id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	int word = player->s.number >> 5, bit = 1 << (player->s.number & 0x1F);
+	if (solid)
+		libcodEntities[ent->s.number].notSolidMask[word] &= ~bit;
+	else
+		libcodEntities[ent->s.number].notSolidMask[word] |= bit;
+
+	stackPushBool(qtrue);
+}
+
+// A brush model (door, wall) this player walks through, and sees as not
+// solid; the others still collide with it
+void gsc_entity_notsolidforplayer(scr_entref_t id)
+{
+	gsc_entity_setsolidforplayer(id, "gsc_entity_notsolidforplayer", false);
+}
+
+void gsc_entity_solidforplayer(scr_entref_t id)
+{
+	gsc_entity_setsolidforplayer(id, "gsc_entity_solidforplayer", true);
+}
+
 #endif

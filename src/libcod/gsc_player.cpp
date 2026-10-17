@@ -2227,4 +2227,82 @@ void gsc_player_disablesilent(scr_entref_t id)
 	stackPushBool(old);
 }
 
+static const char *collisionTeamNames[] = { "axis_allies", "none", "axis", "allies" };
+
+// setCollisionTeam("axis" | "allies" | "none" | "axis_allies"): the team
+// whose players this player collides with; both sides of a pair must agree
+// to collide
+void gsc_player_setcollisionteam(scr_entref_t id)
+{
+	const char *team;
+
+	if (!stackGetParams("s", &team))
+	{
+		stackError("gsc_player_setcollisionteam() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setcollisionteam"))
+		return;
+
+	for (int i = 0; i < (int)ARRAY_COUNT(collisionTeamNames); i++)
+	{
+		if (!strcmp(team, collisionTeamNames[i]))
+		{
+			libcodClients[id.entnum].collisionTeam = i;
+			stackPushBool(qtrue);
+			return;
+		}
+	}
+
+	stackError("gsc_player_setcollisionteam() team must be \"axis\", \"allies\", \"none\" or \"axis_allies\"");
+	stackPushUndefined();
+}
+
+void gsc_player_getcollisionteam(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_getcollisionteam"))
+		return;
+
+	stackPushString(collisionTeamNames[libcodClients[id.entnum].collisionTeam]);
+}
+
+// playFxOnTagForPlayer(fx, entity, tag): playFxOnTag seen by this player
+// only. The entity can't be a player: a player's events also reach it
+// through its own playerState.
+void gsc_player_playfxontagforplayer(scr_entref_t id)
+{
+	int fxId;
+	const char *tagName;
+
+	if (Scr_GetNumParam() != 3 || !stackGetParamInt(0, &fxId) || Scr_GetType(1) != VAR_POINTER || !stackGetParamString(2, &tagName))
+	{
+		stackError("gsc_player_playfxontagforplayer() needs an effect id, an entity and a tag name");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_playfxontagforplayer"))
+		return;
+
+	gentity_t *ent = Scr_GetEntity(1);
+	unsigned int tag = Scr_GetConstLowercaseString(2);
+
+	if (fxId <= 0 || fxId >= MAX_EFFECT_NAMES || !ent->model || ent->client || strchr(tagName, '"') || SV_DObjGetBoneIndex(ent, tag) < 0)
+	{
+		stackError("gsc_player_playfxontagforplayer() needs a loaded effect and a tag of a model that is not a player");
+		stackPushUndefined();
+		return;
+	}
+
+	int csIndex = G_FindConfigstringIndex(va("%02d%s", fxId, SL_ConvertToString(tag)), CS_EFFECT_TAGS, MAX_EFFECT_TAGS, qtrue, NULL);
+	int slot = ent->s.eventSequence & (MAX_EVENTS - 1);
+
+	libcodEntities[ent->s.number].fxOnTag[slot].sequence = ent->s.eventSequence;
+	libcodEntities[ent->s.number].fxOnTag[slot].target = id.entnum + 1;
+	G_AddEvent(ent, EV_PLAY_FX_ON_TAG, csIndex);
+	stackPushBool(qtrue);
+}
+
 #endif

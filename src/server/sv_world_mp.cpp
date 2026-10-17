@@ -101,6 +101,15 @@ void SV_ClipMoveToEntity( moveclip_t *clip, svEntity_t *entity, trace_t *trace )
 		}
 	}
 
+#ifdef LIBCOD
+	// notSolidForPlayer and setCollisionTeam, for the moving player only
+	if ( libcodPmoveClient >= 0 && clip->passEntityNum == libcodPmoveClient
+	        && ( Libcod_IsNotSolidFor(num, libcodPmoveClient) || Libcod_SkipCollision(libcodPmoveClient, num) ) )
+	{
+		return;
+	}
+#endif
+
 	VectorAdd(touch->r.absmin, clip->mins, mins);
 	VectorAdd(touch->r.absmax, clip->maxs, maxs);
 

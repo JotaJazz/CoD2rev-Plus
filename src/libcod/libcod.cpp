@@ -627,6 +627,48 @@ char bot_rightmove[MAX_CLIENTS] = {0};
 libcodClient_t libcodClients[MAX_CLIENTS];
 libcodEntity_t libcodEntities[MAX_GENTITIES];
 
+int libcodPmoveClient = -1;
+
+// Whether two players walk through each other because of setCollisionTeam
+bool Libcod_SkipCollision(int clientNum, int otherNum)
+{
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS || otherNum < 0 || otherNum >= MAX_CLIENTS)
+		return false;
+
+	gclient_t *a = g_entities[clientNum].client;
+	gclient_t *b = g_entities[otherNum].client;
+	if (!a || !b || a->sess.connected != CON_CONNECTED || b->sess.connected != CON_CONNECTED)
+		return false;
+
+	int teamA = libcodClients[clientNum].collisionTeam;
+	int teamB = libcodClients[otherNum].collisionTeam;
+
+	if (teamA == COLLISION_TEAM_NONE || teamB == COLLISION_TEAM_NONE)
+		return true;
+	if ((teamA == COLLISION_TEAM_AXIS && b->sess.cs.team != TEAM_AXIS) || (teamA == COLLISION_TEAM_ALLIES && b->sess.cs.team != TEAM_ALLIES))
+		return true;
+	if ((teamB == COLLISION_TEAM_AXIS && a->sess.cs.team != TEAM_AXIS) || (teamB == COLLISION_TEAM_ALLIES && a->sess.cs.team != TEAM_ALLIES))
+		return true;
+
+	return false;
+}
+
+// enableSilent: the other players don't get this player's steps, jumps,
+// landings, foliage sounds and empty clicks. The events are only left out of
+// the entity state the others receive; the player's own playerState keeps
+// them, so its prediction is unchanged.
+bool Libcod_IsSilencedEvent(int entityNum, int event)
+{
+	return entityNum >= 0 && entityNum < MAX_CLIENTS && libcodClients[entityNum].silent
+	       && ((event >= EV_FOOTSTEP_RUN_DEFAULT && event <= EV_FOLIAGE_SOUND) || event == EV_NOAMMO);
+}
+
+bool Libcod_IsNotSolidFor(int entityNum, int clientNum)
+{
+	return clientNum >= 0 && clientNum < MAX_CLIENTS
+	       && (libcodEntities[entityNum].notSolidMask[clientNum >> 5] & (1 << (clientNum & 0x1F)));
+}
+
 void Libcod_FreeEntity(int entityNum)
 {
 	memset(&libcodEntities[entityNum], 0, sizeof(libcodEntities[entityNum]));
@@ -647,6 +689,7 @@ void Libcod_ResetClient(int clientNum)
 			libcodEntities[i].hiddenMask[word] &= ~bit;
 			g_entities[i].r.clientMask[word] &= ~bit;
 		}
+		libcodEntities[i].notSolidMask[word] &= ~bit;
 	}
 
 	memset(client, 0, sizeof(*client));

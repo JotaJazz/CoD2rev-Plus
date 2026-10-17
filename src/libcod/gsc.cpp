@@ -370,6 +370,8 @@ scr_method_t scriptMethods[] =
 	{"getcontents", gsc_entity_getcontents, 0},
 	{"setlight", gsc_entity_setlight, 0},
 	{"hidefromplayer", gsc_entity_hidefromplayer, 0},
+	{"notsolidforplayer", gsc_entity_notsolidforplayer, 0},
+	{"solidforplayer", gsc_entity_solidforplayer, 0},
 #endif
 
 #if LIBCOD_COMPILE_PLAYER == 1
@@ -503,6 +505,9 @@ scr_method_t scriptMethods[] =
 	{"objective_player_state", gsc_player_objective_player_state, 0},
 	{"enablesilent", gsc_player_enablesilent, 0},
 	{"disablesilent", gsc_player_disablesilent, 0},
+	{"setcollisionteam", gsc_player_setcollisionteam, 0},
+	{"getcollisionteam", gsc_player_getcollisionteam, 0},
+	{"playfxontagforplayer", gsc_player_playfxontagforplayer, 0},
 	{"setanimation", gsc_player_set_anim, 0},
 #endif
 

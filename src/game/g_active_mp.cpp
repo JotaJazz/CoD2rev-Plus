@@ -196,6 +196,13 @@ qboolean StuckInClient( gentity_t *self )
 			continue;
 		}
 
+#ifdef LIBCOD
+		if ( Libcod_SkipCollision(self->s.number, num) )
+		{
+			continue;
+		}
+#endif
+
 		if ( hit == self )
 		{
 			continue;
@@ -791,7 +798,13 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 	pm.tracemask = ( CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_SKY | CONTENTS_UNKNOWN );   // spectators can fly through bodies
 	pm.handler = PMOVE_HANDLER_SERVER;
 
+#ifdef LIBCOD
+	libcodPmoveClient = ent->s.number;
+#endif
 	Pmove( &pm ); // JPW NERVE
+#ifdef LIBCOD
+	libcodPmoveClient = -1;
+#endif
 
 	// save results of pmove
 	VectorCopy(client->ps.origin, ent->r.currentOrigin);
@@ -1113,7 +1126,13 @@ void ClientThink_real( gentity_t *ent, usercmd_t *ucmd )
 	client->fGunYaw = viewangles[YAW];
 
 	assert(!pm.mantleStarted);
+#ifdef LIBCOD
+	libcodPmoveClient = ent->s.number;
+#endif
 	Pmove(&pm);
+#ifdef LIBCOD
+	libcodPmoveClient = -1;
+#endif
 
 	if ( pm.mantleStarted )
 	{
@@ -1568,6 +1587,13 @@ void G_PlayerStateToEntityStateExtrapolate( playerState_t *ps, entityState_t *s,
 		{
 			continue;
 		}
+
+#ifdef LIBCOD
+		if ( Libcod_IsSilencedEvent(s->number, event) )
+		{
+			continue;
+		}
+#endif
 
 		s->events[s->eventSequence & ( MAX_EVENTS - 1 )] = event;
 		s->eventParms[s->eventSequence & ( MAX_EVENTS - 1 )] = ps->eventParms[i & ( MAX_EVENTS - 1 )];

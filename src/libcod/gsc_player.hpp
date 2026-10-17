@@ -126,6 +126,9 @@ void gsc_player_objective_player_position(scr_entref_t id);
 void gsc_player_objective_player_state(scr_entref_t id);
 void gsc_player_enablesilent(scr_entref_t id);
 void gsc_player_disablesilent(scr_entref_t id);
+void gsc_player_setcollisionteam(scr_entref_t id);
+void gsc_player_getcollisionteam(scr_entref_t id);
+void gsc_player_playfxontagforplayer(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

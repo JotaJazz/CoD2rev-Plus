@@ -1945,6 +1945,44 @@ cachedSnapshot_t* SV_GetCachedSnapshot( int *pArchiveTime )
 	return NULL;
 }
 
+#ifdef LIBCOD
+/*
+=============
+SV_ApplyLibcodEntityState
+
+The copy of an entity state one client receives: what that client walks
+through (notSolidForPlayer, setCollisionTeam) is not solid for it either,
+so its prediction agrees with the server. The copy is also that client's
+delta base for the next snapshot, so the change stays consistent.
+=============
+*/
+static void SV_ApplyLibcodEntityState( int clientNum, entityState_t *es )
+{
+	if ( Libcod_IsNotSolidFor(es->number, clientNum) )
+	{
+		es->eFlags |= EF_NONSOLID_BMODEL;
+	}
+
+	if ( es->number < MAX_CLIENTS && es->number != clientNum && Libcod_SkipCollision(clientNum, es->number) )
+	{
+		es->solid = 0;
+	}
+
+	// an effect from playFxOnTagForPlayer, while its event is still in the
+	// entity's event slots, is left out for everyone else
+	for ( int i = 0; i < MAX_EVENTS; i++ )
+	{
+		int target = libcodEntities[es->number].fxOnTag[i].target;
+
+		if ( target && target - 1 != clientNum && es->eventSequence - libcodEntities[es->number].fxOnTag[i].sequence <= MAX_EVENTS
+		        && es->events[i] == EV_PLAY_FX_ON_TAG )
+		{
+			es->events[i] = EV_NONE;
+		}
+	}
+}
+#endif
+
 /*
 =============
 SV_BuildClientSnapshot
@@ -2043,6 +2081,9 @@ void SV_BuildClientSnapshot( client_t *client )
 			entState = &svs.snapshotEntities[svs.nextSnapshotEntities % svs.numSnapshotEntities];
 
 			*entState = aent->s;
+#ifdef LIBCOD
+			SV_ApplyLibcodEntityState(clientNum, entState);
+#endif
 
 			if ( entState->pos.trTime )
 				entState->pos.trTime += snapTime;
@@ -2097,6 +2138,9 @@ void SV_BuildClientSnapshot( client_t *client )
 		entState = &svs.snapshotEntities[svs.nextSnapshotEntities % svs.numSnapshotEntities];
 
 		*entState = ent->s;
+#ifdef LIBCOD
+		SV_ApplyLibcodEntityState(clientNum, entState);
+#endif
 
 		svs.nextSnapshotEntities++;
 		// this should never hit, map should always be restarted first in SV_Frame
