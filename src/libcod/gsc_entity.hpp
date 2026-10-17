@@ -27,5 +27,6 @@ void gsc_entity_getclipmask(scr_entref_t id);
 void gsc_entity_setclipmask(scr_entref_t id);
 void gsc_entity_getcontents(scr_entref_t id);
 void gsc_entity_setlight(scr_entref_t id);
+void gsc_entity_hidefromplayer(scr_entref_t id);
 
 #endif

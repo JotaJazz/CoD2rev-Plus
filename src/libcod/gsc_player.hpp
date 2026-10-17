@@ -112,6 +112,20 @@ void gsc_player_isusetouching(scr_entref_t id);
 void gsc_player_getprotocolstring(scr_entref_t id);
 void gsc_player_setoriginandangles(scr_entref_t id);
 void gsc_player_overridecontents(scr_entref_t id);
+void gsc_player_playfxforplayer(scr_entref_t id);
+void gsc_player_earthquakeforplayer(scr_entref_t id);
+void gsc_player_disableearthquakes(scr_entref_t id);
+void gsc_player_enableearthquakes(scr_entref_t id);
+void gsc_player_setnorthyawforplayer(scr_entref_t id);
+void gsc_player_setcullfogforplayer(scr_entref_t id);
+void gsc_player_setexpfogforplayer(scr_entref_t id);
+void gsc_player_objective_player_add(scr_entref_t id);
+void gsc_player_objective_player_delete(scr_entref_t id);
+void gsc_player_objective_player_icon(scr_entref_t id);
+void gsc_player_objective_player_position(scr_entref_t id);
+void gsc_player_objective_player_state(scr_entref_t id);
+void gsc_player_enablesilent(scr_entref_t id);
+void gsc_player_disablesilent(scr_entref_t id);
 
 // player functions without entity
 void gsc_kick_slot();

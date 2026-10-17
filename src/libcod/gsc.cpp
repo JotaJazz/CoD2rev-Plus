@@ -369,6 +369,7 @@ scr_method_t scriptMethods[] =
 	{"setclipmask", gsc_entity_setclipmask, 0},
 	{"getcontents", gsc_entity_getcontents, 0},
 	{"setlight", gsc_entity_setlight, 0},
+	{"hidefromplayer", gsc_entity_hidefromplayer, 0},
 #endif
 
 #if LIBCOD_COMPILE_PLAYER == 1
@@ -488,6 +489,20 @@ scr_method_t scriptMethods[] =
 	{"getprotocolstring", gsc_player_getprotocolstring, 0},
 	{"setoriginandangles", gsc_player_setoriginandangles, 0},
 	{"overridecontents", gsc_player_overridecontents, 0},
+	{"playfxforplayer", gsc_player_playfxforplayer, 0},
+	{"earthquakeforplayer", gsc_player_earthquakeforplayer, 0},
+	{"disableearthquakes", gsc_player_disableearthquakes, 0},
+	{"enableearthquakes", gsc_player_enableearthquakes, 0},
+	{"setnorthyawforplayer", gsc_player_setnorthyawforplayer, 0},
+	{"setcullfogforplayer", gsc_player_setcullfogforplayer, 0},
+	{"setexpfogforplayer", gsc_player_setexpfogforplayer, 0},
+	{"objective_player_add", gsc_player_objective_player_add, 0},
+	{"objective_player_delete", gsc_player_objective_player_delete, 0},
+	{"objective_player_icon", gsc_player_objective_player_icon, 0},
+	{"objective_player_position", gsc_player_objective_player_position, 0},
+	{"objective_player_state", gsc_player_objective_player_state, 0},
+	{"enablesilent", gsc_player_enablesilent, 0},
+	{"disablesilent", gsc_player_disablesilent, 0},
 	{"setanimation", gsc_player_set_anim, 0},
 #endif
 

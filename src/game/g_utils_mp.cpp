@@ -810,6 +810,10 @@ void G_FreeEntity( gentity_t *ed )
 	assert(ed->classname == 0);
 	useCount = ed->useCount;
 
+#ifdef LIBCOD
+	Libcod_FreeEntity(ed->s.number);
+#endif
+
 	memset( ed, 0, sizeof( *ed ) );
 	ed->eventTime = level.time;
 

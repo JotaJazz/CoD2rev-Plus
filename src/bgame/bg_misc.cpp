@@ -290,6 +290,17 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 			continue;
 		}
 
+#ifdef LIBCOD
+		// disableSilent: the others don't hear this player's steps, jumps and
+		// landings. The player's own playerState keeps them, so its
+		// prediction is unchanged.
+		if ( s->number < MAX_CLIENTS && libcodClients[s->number].silent
+		        && ( ( event >= EV_FOOTSTEP_RUN_DEFAULT && event <= EV_FOLIAGE_SOUND ) || event == EV_NOAMMO ) )
+		{
+			continue;
+		}
+#endif
+
 		s->events[s->eventSequence & ( MAX_EVENTS - 1 )] = event;
 		s->eventParms[s->eventSequence & ( MAX_EVENTS - 1 )] = ps->eventParms[i & ( MAX_EVENTS - 1 )];
 		s->eventSequence++;

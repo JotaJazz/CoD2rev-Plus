@@ -400,4 +400,28 @@ void gsc_entity_setlight(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+// The opposite of the stock showToPlayer: this player stops receiving the
+// entity
+void gsc_entity_hidefromplayer(scr_entref_t id)
+{
+	gentity_t *ent = GetEntity(id);
+	gentity_t *player = Scr_GetEntity(0);
+
+	if (!player || player->s.number >= MAX_CLIENTS)
+	{
+		stackError("gsc_entity_hidefromplayer() argument is not a player");
+		stackPushUndefined();
+		return;
+	}
+
+	int word = player->s.number >> 5, bit = 1 << (player->s.number & 0x1F);
+	ent->r.clientMask[word] |= bit;
+	libcodEntities[ent->s.number].hiddenMask[word] |= bit;
+
+	if (ent->r.clientMask[0] == -1 && ent->r.clientMask[1] == -1)
+		ent->flags |= FL_NODRAW;
+
+	stackPushBool(qtrue);
+}
+
 #endif

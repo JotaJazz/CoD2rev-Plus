@@ -132,6 +132,13 @@ void InitLibcodCallbacks()
 	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
 		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
 
+	// objective indexes belong to the map
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		for (int j = 0; j < MAX_OBJECTIVES; j++)
+			ClearObjective(&libcodClients[i].objectives[j]);
+	}
+
 	// errors of the previous map are not reported to the new one
 	numQueuedScriptErrors = 0;
 	hitchFrameTime = 0;
@@ -618,12 +625,29 @@ char bot_forwardmove[MAX_CLIENTS] = {0};
 char bot_rightmove[MAX_CLIENTS] = {0};
 
 libcodClient_t libcodClients[MAX_CLIENTS];
+libcodEntity_t libcodEntities[MAX_GENTITIES];
+
+void Libcod_FreeEntity(int entityNum)
+{
+	memset(&libcodEntities[entityNum], 0, sizeof(libcodEntities[entityNum]));
+}
 
 // Called when a client slot is freed: what scripts set for the old player
 // must not carry over to the next one in that slot
 void Libcod_ResetClient(int clientNum)
 {
 	libcodClient_t *client = &libcodClients[clientNum];
+
+	// entities hidden from the old player are shown to the next one
+	int word = clientNum >> 5, bit = 1 << (clientNum & 0x1F);
+	for (int i = 0; i < MAX_GENTITIES; i++)
+	{
+		if (libcodEntities[i].hiddenMask[word] & bit)
+		{
+			libcodEntities[i].hiddenMask[word] &= ~bit;
+			g_entities[i].r.clientMask[word] &= ~bit;
+		}
+	}
 
 	memset(client, 0, sizeof(*client));
 	client->weaponSpreadScale = 1.0f;
@@ -632,6 +656,8 @@ void Libcod_ResetClient(int clientNum)
 	client->meleeWidthScale = 1.0f;
 	client->meleeHeightScale = 1.0f;
 	client->fireRangeScale = 1.0f;
+	for (int i = 0; i < MAX_OBJECTIVES; i++)
+		ClearObjective(&client->objectives[i]);
 
 	libcod_weaponChange[clientNum] = 0;
 	bot_buttons[clientNum] = 0;

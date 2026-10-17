@@ -518,6 +518,9 @@ void ScrCmd_ShowToPlayer( scr_entref_t entref )
 
 	pEnt->flags &= ~FL_NODRAW;
 	pEnt->r.clientMask[clientEnt->s.number >> 5] &= ~(1 << (clientEnt->s.number & 0x1F));
+#ifdef LIBCOD
+	libcodEntities[pEnt->s.number].hiddenMask[clientEnt->s.number >> 5] &= ~(1 << (clientEnt->s.number & 0x1F));
+#endif
 }
 
 /*
@@ -533,6 +536,10 @@ void ScrCmd_Hide( scr_entref_t entref )
 
 	pEnt->r.clientMask[0] = -1;
 	pEnt->r.clientMask[1] = -1;
+#ifdef LIBCOD
+	libcodEntities[pEnt->s.number].hiddenMask[0] = 0;
+	libcodEntities[pEnt->s.number].hiddenMask[1] = 0;
+#endif
 }
 
 /*
@@ -548,6 +555,10 @@ void ScrCmd_Show( scr_entref_t entref )
 
 	pEnt->r.clientMask[0] = 0;
 	pEnt->r.clientMask[1] = 0;
+#ifdef LIBCOD
+	libcodEntities[pEnt->s.number].hiddenMask[0] = 0;
+	libcodEntities[pEnt->s.number].hiddenMask[1] = 0;
+#endif
 }
 
 /*
@@ -5122,7 +5133,7 @@ void GScr_EndXboxLiveLobby()
 GScr_Earthquake
 ===============
 */
-void GScr_Earthquake()
+gentity_t *GScr_EarthquakeEntity()
 {
 	vec3_t source;
 
@@ -5151,6 +5162,22 @@ void GScr_Earthquake()
 	tent->s.scale2 = scale;
 	tent->s.time = duration;
 	tent->s.radius = radius;
+
+#ifdef LIBCOD
+	// players who turned earthquakes off with disableEarthquakes
+	for ( int i = 0; i < MAX_CLIENTS; i++ )
+	{
+		if ( libcodClients[i].noEarthquakes )
+			tent->r.clientMask[i >> 5] |= 1 << (i & 0x1F);
+	}
+#endif
+
+	return tent;
+}
+
+void GScr_Earthquake()
+{
+	GScr_EarthquakeEntity();
 }
 
 /*
@@ -5158,7 +5185,7 @@ void GScr_Earthquake()
 Scr_PlayFX
 ===============
 */
-void Scr_PlayFX()
+gentity_t *Scr_PlayFXEntity()
 {
 	float axis[3][3];
 	vec3_t pos;
@@ -5181,7 +5208,7 @@ void Scr_PlayFX()
 	if ( numParams == 2 )
 	{
 		ent->s.apos.trBase[0] = -90;
-		return;
+		return ent;
 	}
 
 	assert(numParams == 3 || numParams == 4);
@@ -5199,7 +5226,7 @@ void Scr_PlayFX()
 	if ( numParams == 3 )
 	{
 		vectoangles(axis[0], ent->s.apos.trBase);
-		return;
+		return ent;
 	}
 
 	assert(numParams == 4);
@@ -5229,6 +5256,12 @@ void Scr_PlayFX()
 	}
 
 	AxisToAngles(axis, ent->s.apos.trBase);
+	return ent;
+}
+
+void Scr_PlayFX()
+{
+	Scr_PlayFXEntity();
 }
 
 /*

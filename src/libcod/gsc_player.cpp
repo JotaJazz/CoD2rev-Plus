@@ -1955,4 +1955,276 @@ void gsc_player_overridecontents(scr_entref_t id)
 	stackPushInt(old);
 }
 
+// The temp entity of an effect or earthquake is sent to this player only
+static void gsc_player_onlyto(gentity_t *tent, int clientNum)
+{
+	tent->r.clientMask[0] = -1;
+	tent->r.clientMask[1] = -1;
+	tent->r.clientMask[clientNum >> 5] &= ~(1 << (clientNum & 0x1F));
+}
+
+// playFxForPlayer(fx, origin[, forward[, up]]): playFx seen by this player
+// only
+void gsc_player_playfxforplayer(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_playfxforplayer"))
+		return;
+
+	gentity_t *tent = Scr_PlayFXEntity();
+	gsc_player_onlyto(tent, id.entnum);
+	stackPushEntity(tent);
+}
+
+// earthquakeForPlayer(scale, duration, source, radius)
+void gsc_player_earthquakeforplayer(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_earthquakeforplayer"))
+		return;
+
+	gentity_t *tent = GScr_EarthquakeEntity();
+	if (!libcodClients[id.entnum].noEarthquakes)
+		gsc_player_onlyto(tent, id.entnum);
+	else
+		tent->r.clientMask[0] = tent->r.clientMask[1] = -1;
+	stackPushBool(qtrue);
+}
+
+// Script earthquakes (earthquake(), earthquakeForPlayer) leave this player
+// alone; those the client makes itself for explosions still shake it
+void gsc_player_disableearthquakes(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_disableearthquakes"))
+		return;
+
+	bool old = !libcodClients[id.entnum].noEarthquakes;
+	libcodClients[id.entnum].noEarthquakes = true;
+	stackPushBool(old);
+}
+
+void gsc_player_enableearthquakes(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_enableearthquakes"))
+		return;
+
+	bool old = !libcodClients[id.entnum].noEarthquakes;
+	libcodClients[id.entnum].noEarthquakes = false;
+	stackPushBool(old);
+}
+
+// Sends a configstring to this player only; the next gamestate (map
+// change, reconnect) brings back the value every player has
+static bool gsc_player_sendconfigstring(scr_entref_t id, int index, const char *value)
+{
+	client_t *cl = &svs.clients[id.entnum];
+
+	if (cl->state < CS_PRIMED)
+		return false;
+
+	SV_SendConfigstring(cl, index, value);
+	return true;
+}
+
+void gsc_player_setnorthyawforplayer(scr_entref_t id)
+{
+	float yaw;
+
+	if (!stackGetParams("f", &yaw))
+	{
+		stackError("gsc_player_setnorthyawforplayer() argument is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (!gsc_player_isclient(id, "gsc_player_setnorthyawforplayer"))
+		return;
+
+	stackPushBool(gsc_player_sendconfigstring(id, CS_NORTHYAW, va("%g", yaw)));
+}
+
+// The checks and configstring of the stock setCullFog/setExpFog, for one
+// player
+static void gsc_player_setfog(scr_entref_t id, const char *function, float start, float density, float heightDensity, float r, float g, float b, float seconds)
+{
+	if (!gsc_player_isclient(id, function))
+		return;
+
+	if (start < 0 || start >= density || r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || seconds < 0)
+	{
+		stackError("%s() near distance must be >= 0 and less than far distance, colors in [0, 1] and time >= 0", function);
+		stackPushUndefined();
+		return;
+	}
+
+	stackPushBool(gsc_player_sendconfigstring(id, CS_FOGVARS, va("%g %g %g %g %g %g %.0f", start, density, heightDensity, r, g, b, seconds * 1000)));
+}
+
+// setCullFogForPlayer(near, far, red, green, blue, seconds)
+void gsc_player_setcullfogforplayer(scr_entref_t id)
+{
+	float nearDist, farDist, r, g, b, seconds;
+
+	if (!stackGetParams("ffffff", &nearDist, &farDist, &r, &g, &b, &seconds))
+	{
+		stackError("gsc_player_setcullfogforplayer() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	gsc_player_setfog(id, "gsc_player_setcullfogforplayer", nearDist, farDist, 1.0, r, g, b, seconds);
+}
+
+// setExpFogForPlayer(density, red, green, blue, seconds)
+void gsc_player_setexpfogforplayer(scr_entref_t id)
+{
+	float density, r, g, b, seconds;
+
+	if (!stackGetParams("fffff", &density, &r, &g, &b, &seconds))
+	{
+		stackError("gsc_player_setexpfogforplayer() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	if (density <= 0 || density >= 1)
+	{
+		stackError("gsc_player_setexpfogforplayer() density must be greater than 0 and less than 1");
+		stackPushUndefined();
+		return;
+	}
+
+	gsc_player_setfog(id, "gsc_player_setexpfogforplayer", 0, 1.0, density, r, g, b, seconds);
+}
+
+// Per-player compass objectives, as the stock objective_* functions with the
+// index first; they are not shown on entities
+static objective_t *gsc_player_getobjective(scr_entref_t id, const char *function)
+{
+	if (!gsc_player_isclient(id, function))
+		return NULL;
+
+	int index = Scr_GetInt(0);
+	if (index < 0 || index >= MAX_OBJECTIVES)
+	{
+		stackError("%s() index %i is not 0 to %i", function, index, MAX_OBJECTIVES - 1);
+		stackPushUndefined();
+		return NULL;
+	}
+
+	return &libcodClients[id.entnum].objectives[index];
+}
+
+static bool gsc_player_objectivestate(objective_t *obj, int param, const char *function)
+{
+	extern qboolean ObjectiveStateIndexFromString(int *piStateIndex, unsigned int stateString);
+	int state;
+
+	if (!ObjectiveStateIndexFromString(&state, Scr_GetConstString(param)))
+	{
+		stackError("%s() state must be \"empty\", \"invisible\" or \"current\"", function);
+		stackPushUndefined();
+		return false;
+	}
+
+	obj->state = state;
+	return true;
+}
+
+// objective_player_add(index, state[, position[, icon]])
+void gsc_player_objective_player_add(scr_entref_t id)
+{
+	extern void SetObjectiveIcon(objective_t *obj, int paramNum);
+	int params = Scr_GetNumParam();
+
+	if (params < 2)
+	{
+		stackError("gsc_player_objective_player_add() needs an index and a state");
+		stackPushUndefined();
+		return;
+	}
+
+	objective_t *obj = gsc_player_getobjective(id, "gsc_player_objective_player_add");
+	if (!obj)
+		return;
+
+	ClearObjective(obj);
+	if (!gsc_player_objectivestate(obj, 1, "gsc_player_objective_player_add"))
+		return;
+
+	if (params > 2)
+	{
+		Scr_GetVector(2, obj->origin);
+		SnapVector(obj->origin);
+	}
+	if (params > 3)
+		SetObjectiveIcon(obj, 3);
+
+	obj->teamNum = TEAM_NONE;
+	stackPushBool(qtrue);
+}
+
+void gsc_player_objective_player_delete(scr_entref_t id)
+{
+	objective_t *obj = gsc_player_getobjective(id, "gsc_player_objective_player_delete");
+	if (!obj)
+		return;
+
+	ClearObjective(obj);
+	stackPushBool(qtrue);
+}
+
+void gsc_player_objective_player_icon(scr_entref_t id)
+{
+	extern void SetObjectiveIcon(objective_t *obj, int paramNum);
+
+	objective_t *obj = gsc_player_getobjective(id, "gsc_player_objective_player_icon");
+	if (!obj)
+		return;
+
+	SetObjectiveIcon(obj, 1);
+	stackPushBool(qtrue);
+}
+
+void gsc_player_objective_player_position(scr_entref_t id)
+{
+	objective_t *obj = gsc_player_getobjective(id, "gsc_player_objective_player_position");
+	if (!obj)
+		return;
+
+	Scr_GetVector(1, obj->origin);
+	SnapVector(obj->origin);
+	stackPushBool(qtrue);
+}
+
+void gsc_player_objective_player_state(scr_entref_t id)
+{
+	objective_t *obj = gsc_player_getobjective(id, "gsc_player_objective_player_state");
+	if (!obj)
+		return;
+
+	if (gsc_player_objectivestate(obj, 1, "gsc_player_objective_player_state"))
+		stackPushBool(qtrue);
+}
+
+// enableSilent: the other players stop hearing this player's footsteps,
+// jumps, landings, foliage and empty-gun clicks
+void gsc_player_enablesilent(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_enablesilent"))
+		return;
+
+	bool old = libcodClients[id.entnum].silent;
+	libcodClients[id.entnum].silent = true;
+	stackPushBool(old);
+}
+
+void gsc_player_disablesilent(scr_entref_t id)
+{
+	if (!gsc_player_isclient(id, "gsc_player_disablesilent"))
+		return;
+
+	bool old = libcodClients[id.entnum].silent;
+	libcodClients[id.entnum].silent = false;
+	stackPushBool(old);
+}
+
 #endif

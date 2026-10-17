@@ -86,6 +86,15 @@ void G_UpdateObjectiveToClients()
 
 		for ( objNum = 0; objNum < MAX_OBJECTIVES; objNum++ )
 		{
+#ifdef LIBCOD
+			// set for this player with objective_player_add
+			if ( libcodClients[clientNum].objectives[objNum].state != OBJST_EMPTY )
+			{
+				client->ps.objective[objNum] = libcodClients[clientNum].objectives[objNum];
+				continue;
+			}
+#endif
+
 			obj = &level.objectives[objNum];
 
 			if ( obj->state == OBJST_EMPTY || ( obj->teamNum != TEAM_NONE && obj->teamNum != client->sess.cs.team ) )
