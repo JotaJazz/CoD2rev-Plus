@@ -3,10 +3,12 @@
 It speaks just enough of the protocol to take a client slot, receive the
 gamestate, enter the game and send client commands and moves through the same
 path as a real player: netchan (including fragments both ways), the XOR keys,
-Huffman compression, SV_ClientCommand and SV_UserMove. It does not parse
-snapshots, so it never knows where its player is.
+Huffman compression, SV_ClientCommand and SV_UserMove. Server messages are
+parsed by cod2snap: read_frames returns the snapshots and server commands.
 """
 import random, socket, time
+
+import cod2snap
 
 PREFIX = b'\xff\xff\xff\xff'
 
@@ -61,9 +63,6 @@ HUFFMAN_SYMBOLS = {code: symbol for symbol, code in enumerate(HUFFMAN_CODES)}
 
 FRAGMENT_SIZE = 1300
 FRAGMENT_BIT = 1 << 31
-
-SVC_GAMESTATE = 1
-SVC_EOF = 7
 
 CLC_MOVE_NO_DELTA = 1
 CLC_CLIENT_COMMAND = 2
@@ -164,12 +163,17 @@ class Client:
         self.incoming_sequence = 0
         self.command_sequence = 0
         self.last_command = ''
+        self.sent_commands = {0: ''}
+        self.state = cod2snap.ServerState()
+        self.parsed = 0
+        self.parsed_clean = 0
+        self.parse_errors = []
         self.fragment_sequence = None
         self.fragment_buffer = bytearray()
-        self.client_num = None
-        self.checksum_feed = None
         self.server_time = 1000
         self.messages_received = 0
+        self.server_id = None
+        self.pending_commands = []
 
     def close(self):
         self.sock.close()
@@ -276,18 +280,55 @@ class Client:
                 messages.append(message)
         return messages
 
+    # server messages
+
+    @property
+    def client_num(self):
+        return self.state.client_num
+
+    @property
+    def checksum_feed(self):
+        return self.state.checksum_feed
+
+    def _decode(self, sequence, data):
+        """Undoes SV_Netchan_Encode and the Huffman compression. The first 4
+        bytes, the last client command the server executed, are neither; the
+        key is the challenge XORed with the packet sequence, changed by the
+        text of that command (lastClientCommandString)."""
+        executed = int.from_bytes(data[:4], 'little', signed=True)
+        string = self.sent_commands.get(executed, '')
+        return huffman_decompress(xor_codec(data[4:], (self.challenge ^ sequence) & 0xff, string))
+
+    def _parse(self, sequence, data):
+        """Decodes and parses one server message; see cod2snap.ServerState.parse."""
+        result = self.state.parse(self._decode(sequence, data))
+        self.pending_commands += result['commands']
+        self.parsed += 1
+        if result['clean']:
+            self.parsed_clean += 1
+        else:
+            self.parse_errors.append(result['error'])
+        return result
+
     # client messages
 
+    def _acknowledged(self):
+        """The last server command received, which the client acknowledges, and
+        its text: the server keys the XOR of client messages and the usercmds
+        with that slot of its command buffer."""
+        sequence = self.state.command_sequence
+        return sequence, self.state.commands.get(sequence, '')
+
     def _send(self, server_id, payload):
-        """Sends a client message. The server commands stay unacknowledged
-        (reliable acknowledge 0, whose slot is empty), which keeps the XOR and
-        usercmd keys independent of what the server sent; that is fine for the
-        few seconds a test lasts."""
+        """Sends a client message. Acknowledging the server commands keeps the
+        server from resending them all and from dropping the client once 128
+        are pending."""
         message_ack = self.incoming_sequence
+        reliable_ack, string = self._acknowledged()
         body = huffman_compress(payload.data)
-        body = xor_codec(body, (self.challenge ^ server_id ^ message_ack) & 0xff, '')
+        body = xor_codec(body, (self.challenge ^ server_id ^ message_ack) & 0xff, string)
         message = (bytes([server_id & 0xff]) + message_ack.to_bytes(4, 'little')
-                   + (0).to_bytes(4, 'little') + body)
+                   + reliable_ack.to_bytes(4, 'little') + body)
         return self._transmit(message)
 
     def _write_commands(self, payload, texts):
@@ -297,6 +338,7 @@ class Client:
             payload.long(self.command_sequence)
             payload.string(text)
             self.last_command = text
+            self.sent_commands[self.command_sequence] = text
 
     def commands(self, server_id, texts):
         """Sends reliable client commands in one message; returns the number of
@@ -311,56 +353,41 @@ class Client:
 
     def download(self, server_id, name, seconds=2.0):
         """Asks for a file as the client's auto-download does, before entering
-        the game, and returns the server messages that followed, decoded.
-        Messages sent before the server read the command are still encoded
-        with the previous command, so both keys are tried."""
-        previous = self.last_command
+        the game, and returns what the svc_download blocks of the following
+        messages carried: file data, or the error text of a refusal. The key
+        of each message is the command its header says the server executed
+        last, so messages sent before the download command decode too."""
         self.command(server_id, 'download %s' % name)
         out = []
         for sequence, data in self.receive(seconds):
-            for string in (self.last_command, previous):
-                out.append(huffman_decompress(
-                    xor_codec(data[4:], (self.challenge ^ sequence) & 0xff, string)))
+            result = self._parse(sequence, data)
+            if result['error']:
+                out.append(self._decode(sequence, data))
+            for block, size, chunk in result['downloads']:
+                out.append(chunk.encode('latin-1') if isinstance(chunk, str) else chunk)
         return b''.join(out)
 
     def request_gamestate(self, server_id, seconds=5.0):
         """Sends a message from an older map, which makes the server send the
-        gamestate, and reads the client number and checksum feed at its end.
-        Returns True once they are known."""
+        gamestate, and parses it: configstrings, baselines, client number and
+        checksum feed. Returns True once it is received."""
         deadline = time.time() + seconds
+        count = self.state.gamestate_count
         while time.time() < deadline:
             payload = MsgWriter()
             payload.bits(CLC_EOF, 3)
             self._send(server_id ^ 0xf0, payload)
             for sequence, data in self.receive(1.0):
-                # the first 4 bytes are neither encoded nor compressed; nothing
-                # was sent yet, so the encoding string is still empty
-                out = huffman_decompress(
-                    xor_codec(data[4:], (self.challenge ^ sequence) & 0xff, self.last_command))
-                if self._read_gamestate_end(out):
-                    return True
-        return False
-
-    def _read_gamestate_end(self, out):
-        """The gamestate ends with svc_EOF, the client number, the checksum feed
-        and svc_EOF, all byte aligned; the baselines before them need not be
-        parsed. Padding bits can add a few symbols after the last svc_EOF."""
-        if SVC_GAMESTATE not in out[:64]:
-            return False
-        for k in range(len(out) - 10, max(-1, len(out) - 40), -1):
-            if out[k] == SVC_EOF and out[k + 9] == SVC_EOF:
-                client_num = int.from_bytes(out[k + 1:k + 5], 'little')
-                if client_num < 64:
-                    self.client_num = client_num
-                    self.checksum_feed = int.from_bytes(out[k + 5:k + 9], 'little')
-                    return True
+                self._parse(sequence, data)
+            if self.state.gamestate_count > count:
+                return True
         return False
 
     def _write_move(self, payload, forward):
         """One usercmd as MSG_ReadDeltaUsercmdKey reads it against the default
         command: absolute server time, then changed fields XORed with the key."""
         message_ack = self.incoming_sequence
-        key = (self.checksum_feed ^ message_ack ^ hash_key('')) & 0xffffffff
+        key = (self.checksum_feed ^ message_ack ^ hash_key(self._acknowledged()[1])) & 0xffffffff
         self.server_time += 50
 
         payload.bits(CLC_MOVE_NO_DELTA, 3)
@@ -379,7 +406,8 @@ class Client:
     def enter_game(self, server_id, seconds=2.0):
         """Validates the iwds the way a client that references none would, then
         keeps moving forward. The first move makes the server put the client in
-        the world. Needs request_gamestate first."""
+        the world. Needs request_gamestate first. The snapshots received
+        meanwhile are dropped; server commands wait for read_frames."""
         payload = MsgWriter()
         # SV_VerifyIwds_f: no iwds, then the checksum feed XORed with their
         # count, as the signed int atoi reads
@@ -387,10 +415,39 @@ class Client:
         self._write_commands(payload, ['cp @ %d' % (feed - (1 << 32) if feed >= 1 << 31 else feed)])
         self._write_move(payload, True)
         self._send(server_id, payload)
+        self.server_id = server_id
+        self._keep_moving(seconds)
 
+    def _keep_moving(self, seconds, forward=True):
+        """Sends a move after each wait for server messages; returns the
+        parsed messages."""
+        results = []
         deadline = time.time() + seconds
         while time.time() < deadline:
-            self.receive(0.05)
+            for sequence, data in self.receive(0.05):
+                results.append(self._parse(sequence, data))
             payload = MsgWriter()
-            self._write_move(payload, True)
-            self._send(server_id, payload)
+            self._write_move(payload, forward)
+            self._send(self.server_id, payload)
+        return results
+
+    def read_frames(self, seconds, forward=True):
+        """Keeps moving as enter_game does for up to seconds and returns one
+        frame per snapshot received: {'server_time', 'commands' (server
+        commands received since the previous frame, those of the gamestate
+        included), 'entities' {number: fields}, 'clients' {number: fields},
+        'ps', 'flags'}. Arrays are lists, e.g. entity['pos.trBase']; see
+        cod2snap for the field names. Needs enter_game first."""
+        frames = []
+        # each snapshot gets the commands of the messages up to its own; the
+        # ones after the last snapshot wait for the next call
+        carry = self.pending_commands
+        for result in self._keep_moving(seconds, forward):
+            carry = carry + result['commands']
+            snap = result['snapshot']
+            if snap is not None:
+                snap['commands'] = carry
+                carry = []
+                frames.append(snap)
+        self.pending_commands = carry
+        return frames

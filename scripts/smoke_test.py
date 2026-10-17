@@ -110,6 +110,16 @@ def check_client(port, protocol, password, game_log, check):
         ping = (players(port) or {}).get('smokeclient')
         check('client enters the game', ping is not None and 0 <= ping < 999, f'ping {ping}')
 
+        # every server message must parse up to its svc_EOF; a spectator sees
+        # the map's entities, and an rcon say arrives as a server command
+        rcon(port, password, 'say smokesnap')
+        frames = client.read_frames(1.5)
+        entities = max((len(f['entities']) for f in frames), default=0)
+        check('client parses snapshots', frames and entities and client.parsed_clean == client.parsed,
+              f'{len(frames)} snapshots, {client.parsed_clean} of {client.parsed} messages clean, '
+              f'{entities} entities' + (f', {client.parse_errors[0]}' if client.parse_errors else ''))
+        check('client receives server commands', any('smokesnap' in c for f in frames for c in f['commands']))
+
         client.command(server_id, 'userinfo "\\name\\smokerenamed\\rate\\25000\\snaps\\20"')
         check('client command runs', wait_for(lambda: listed('smokerenamed')),
               ', '.join(players(port) or {}))
