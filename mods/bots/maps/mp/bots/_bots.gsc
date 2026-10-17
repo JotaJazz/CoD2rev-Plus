@@ -241,7 +241,7 @@ playLife()
 			continue;
 		}
 
-		// nothing in sight: walk towards the nearest enemy
+		// nothing in sight: hunt hints, patrol, or after a while the nearest enemy
 		lastTarget = undefined;
 		self fireWeapon(0);
 
@@ -250,8 +250,9 @@ playLife()
 		else
 			self reloadWeapon(0);
 
-		if(isDefined(self.botGoal))
-			yaw = self maps\mp\bots\_bots_nav::navYaw(self.botGoal.origin);
+		goalPos = self maps\mp\bots\_bots_nav::chooseGoal();
+		if(isDefined(goalPos))
+			yaw = self maps\mp\bots\_bots_nav::navYaw(goalPos);
 
 		// the random turns are for walking straight; on the graph, stuck
 		// handling picks another path instead
@@ -316,11 +317,12 @@ lookAt(angles)
 	self setPlayerAngles((pitch, angles[1], 0));
 }
 
-// Sets self.botTarget to the nearest enemy in sight and self.botGoal to the nearest enemy at all.
+// Sets self.botTarget to the nearest enemy in sight and self.botNearestEnemy to the nearest enemy at
+// all, and records what the bot sees or hears as hints.
 scanEnemies()
 {
 	self.botTarget = undefined;
-	self.botGoal = undefined;
+	self.botNearestEnemy = undefined;
 
 	eye = self getEye();
 	forward = anglesToForward(self getPlayerAngles());
@@ -342,7 +344,15 @@ scanEnemies()
 		if(distSq < nearestAny)
 		{
 			nearestAny = distSq;
-			self.botGoal = other;
+			self.botNearestEnemy = other;
+		}
+
+		// gunfire gives the shooter away, even out of sight
+		if(distSq < 1500 * 1500 && other isFiring())
+		{
+			self.botHintPos = other.origin;
+			self.botHintTime = getTime();
+			self.botLastContact = getTime();
 		}
 
 		if(distSq >= nearestSeen)
@@ -357,5 +367,14 @@ scanEnemies()
 			nearestSeen = distSq;
 			self.botTarget = other;
 		}
+	}
+
+	if(isDefined(self.botTarget))
+	{
+		self.botHintPos = self.botTarget.origin;
+		self.botHintTime = getTime();
+		self.botLastSeenPos = self.botTarget.origin;
+		self.botLastSeenTime = getTime();
+		self.botLastContact = getTime();
 	}
 }

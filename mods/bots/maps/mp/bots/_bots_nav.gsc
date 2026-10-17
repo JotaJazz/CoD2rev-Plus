@@ -83,6 +83,14 @@ resetNav()
 	self.botNavDirect = true;
 	self.botBestDist = 999999;
 	self.botProgressAt = 0;
+	self.botHintPos = undefined;
+	self.botHintTime = 0;
+	self.botLastSeenPos = undefined;
+	self.botLastSeenTime = 0;
+	self.botPatrolPos = undefined;
+	self.botPatrolUntil = 0;
+	self.botGoalKind = "";
+	self.botLastContact = getTime();
 }
 
 // Yaw to walk towards goalPos: along the graph when there is one (and then
@@ -201,6 +209,127 @@ yawTo(pos)
 flatDist(a, b)
 {
 	return distance((a[0], a[1], 0), (b[0], b[1], 0));
+}
+
+// Where to go with no enemy in sight: a recent hint, then a patrol point,
+// and after 20 s without contact the nearest enemy wherever it is.
+chooseGoal()
+{
+	now = getTime();
+	kind = "patrol";
+	pos = undefined;
+
+	if(isDefined(self.botHintPos) && now - self.botHintTime < 10000)
+	{
+		if(distanceSquared(self.origin, self.botHintPos) < 96 * 96)
+			self.botHintPos = undefined; // nobody there any more
+		else
+		{
+			kind = "hint";
+			pos = self.botHintPos;
+		}
+	}
+
+	if(!isDefined(pos) && now - self.botLastContact > 20000 && isDefined(self.botNearestEnemy))
+	{
+		kind = "enemy";
+		pos = self.botNearestEnemy.origin;
+	}
+
+	if(!isDefined(pos))
+	{
+		if(isDefined(self.botPatrolPos) && distanceSquared(self.origin, self.botPatrolPos) < 96 * 96)
+		{
+			debugLog("BOTNAV " + self getEntityNumber() + " patrol reached");
+			self.botPatrolPos = undefined;
+		}
+
+		// an unreachable patrol point is given up after a while
+		if(!isDefined(self.botPatrolPos) || now >= self.botPatrolUntil)
+		{
+			self.botPatrolPos = self pickPatrolPos();
+			self.botPatrolUntil = now + 30000;
+		}
+
+		pos = self.botPatrolPos;
+	}
+
+	if(kind != self.botGoalKind)
+	{
+		debugLog("BOTNAV " + self getEntityNumber() + " goal " + kind);
+		self.botGoalKind = kind;
+	}
+
+	return pos;
+}
+
+// Half the time an enemy spawn point (SD and CTF have team spawns), otherwise
+// a random far node.
+pickPatrolPos()
+{
+	spawns = self enemySpawns();
+	if(spawns.size && randomInt(2) == 0)
+		return spawns[randomInt(spawns.size)].origin;
+
+	if(isDefined(level.botGraph))
+	{
+		count = graphGetNodeCount(level.botGraph);
+		pos = undefined;
+		for(i = 0; i < 8; i++)
+		{
+			pos = graphGetNodeOrigin(level.botGraph, randomInt(count));
+			if(distanceSquared(self.origin, pos) > 1000 * 1000)
+				break;
+		}
+		return pos;
+	}
+
+	spawns = allSpawns();
+	if(spawns.size)
+		return spawns[randomInt(spawns.size)].origin;
+
+	return undefined;
+}
+
+enemySpawns()
+{
+	none = [];
+	if(!level.botsTeamBased)
+		return none;
+
+	enemy = "axis";
+	if(self.pers["team"] == "axis")
+		enemy = "allies";
+
+	gametype = getCvar("g_gametype");
+	if(gametype == "ctf")
+	{
+		if(enemy == "allies")
+			return getentarray("mp_ctf_spawn_allied", "classname");
+		return getentarray("mp_ctf_spawn_axis", "classname");
+	}
+
+	if(gametype == "sd")
+	{
+		if(isDefined(game["attackers"]) && enemy == game["attackers"])
+			return getentarray("mp_sd_spawn_attacker", "classname");
+		return getentarray("mp_sd_spawn_defender", "classname");
+	}
+
+	return none;
+}
+
+allSpawns()
+{
+	all = [];
+	classes = spawnClasses();
+	for(c = 0; c < classes.size; c++)
+	{
+		spawns = getentarray(classes[c], "classname");
+		for(i = 0; i < spawns.size; i++)
+			all[all.size] = spawns[i];
+	}
+	return all;
 }
 
 debugLog(text)
