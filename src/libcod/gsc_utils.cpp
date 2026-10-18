@@ -299,19 +299,13 @@ void gsc_utils_toupper()
 		return;
 	}
 
-	for ( i = 0; i < 1024; ++i )
+	// a longer string is cut to fit
+	for ( i = 0; i < (int)sizeof(tempString) - 1 && string[i]; ++i )
 	{
-		c = toupper(*string);
+		c = toupper(string[i]);
 		tempString[i] = c;
-
-		if ( !c )
-		{
-			stackPushString(tempString);
-			return;
-		}
-
-		++string;
 	}
+	tempString[i] = 0;
 
 	stackPushString( tempString );
 }
