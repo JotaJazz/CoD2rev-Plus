@@ -329,13 +329,12 @@ void gsc_mysql_real_connect()
 	}
 
 	// options go before connecting, and a failed connect returns NULL
-	// rather than the handle, which has to be closed
+	// rather than the handle, which stays the script's to close
 	bool reconnect = true;
 	mysql_options((MYSQL *)mysql, MYSQL_OPT_RECONNECT, &reconnect);
 	if(mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0) == NULL)
 	{
 		Com_Printf("gsc_mysql_real_connect() failed: %s\n", mysql_error((MYSQL *)mysql));
-		mysql_close((MYSQL *)mysql);
 		stackPushInt64(0);
 		return;
 	}
