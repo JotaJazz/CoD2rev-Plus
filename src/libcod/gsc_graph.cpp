@@ -31,7 +31,9 @@
 #if LIBCOD_COMPILE_GRAPH == 1
 
 #include <vector>
-#include <map>
+#include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
 #include <math.h>
 #include <float.h>
 #include <string.h>
@@ -374,12 +376,23 @@ static bool graphStepOffClear(const vec3_t from, const vec3_t to, const vec3_t m
 
 static void graphLinkNodesTyped(AStarGraph *graph, int a, int b, const vec3_t mins, const vec3_t maxs)
 {
-	float dz = graph->nodes[b].origin[2] - graph->nodes[a].origin[2];
-	float adz = (dz < 0) ? -dz : dz;
-	float cost = edgeDistance(graph->nodes[a].origin, graph->nodes[b].origin);
-	int walkType = (adz <= GRAPH_FLAT_DZ) ? 0 : GRAPH_EDGE_STEP;
-	int ab = graphWalkable(graph->nodes[a].origin, graph->nodes[b].origin, mins, maxs);
-	int ba = graphWalkable(graph->nodes[b].origin, graph->nodes[a].origin, mins, maxs);
+	float dz;
+	float adz;
+	float cost;
+	int walkType;
+	int ab;
+	int ba;
+
+	// nothing left to add, so skip the traces
+	if ( graphFindEdgeIndex(graph, a, b) >= 0 && graphFindEdgeIndex(graph, b, a) >= 0 )
+		return;
+
+	dz = graph->nodes[b].origin[2] - graph->nodes[a].origin[2];
+	adz = (dz < 0) ? -dz : dz;
+	cost = edgeDistance(graph->nodes[a].origin, graph->nodes[b].origin);
+	walkType = (adz <= GRAPH_FLAT_DZ) ? 0 : GRAPH_EDGE_STEP;
+	ab = graphWalkable(graph->nodes[a].origin, graph->nodes[b].origin, mins, maxs);
+	ba = graphWalkable(graph->nodes[b].origin, graph->nodes[a].origin, mins, maxs);
 
 	// Walkable both ways (flat, step or a ramp) -> a two-way link, but only where
 	// the ground carries it: a walk edge is type 0, which skipEdgeTypes cannot
@@ -2317,6 +2330,24 @@ void gsc_graph_get_stats()
 		memset(&graph->stats, 0, sizeof(graph->stats));
 }
 
+// Grid cell of a point for the autodiscover flood. The high half is shifted as
+// unsigned: a left shift of a negative value is undefined before C++20
+static unsigned long long graphCellKey(float x, float y, float step)
+{
+	unsigned int cx = (unsigned int)(int)floorf(x / step);
+	unsigned int cy = (unsigned int)(int)floorf(y / step);
+
+	return ((unsigned long long)cx << 32) | cy;
+}
+
+static unsigned long long graphPairKey(int a, int b)
+{
+	if ( a > b )
+		return ((unsigned long long)(unsigned int)b << 32) | (unsigned int)a;
+
+	return ((unsigned long long)(unsigned int)a << 32) | (unsigned int)b;
+}
+
 /*
  * graphAutodiscover(<graph id>, <seed origin>, [grid step], [max nodes]) ->
  * nodes added. Grid flood-fill from the seed: snap the seed to the floor, then
@@ -2337,12 +2368,12 @@ void gsc_graph_autodiscover()
 	vec3_t playerMins = { -15, -15, 0 };
 	vec3_t playerMaxs = { 15, 15, 72 };
 	vec3_t ground;
-	std::map<long long, int> cellToNode;
+	std::unordered_map<unsigned long long, int> cellToNode;
 	std::vector<unsigned int> queue;
 	size_t head;
 	int added = 0;
 	unsigned int started;
-	long long cellKey;
+	unsigned long long cellKey;
 
 	if ( !stackGetParams("iv", &id, seed) )
 	{
@@ -2403,7 +2434,7 @@ void gsc_graph_autodiscover()
 		return;
 	}
 
-	cellKey = ((long long)(int)floorf(ground[0] / step) << 32) | ((int)floorf(ground[1] / step) & 0xFFFFFFFFLL);
+	cellKey = graphCellKey(ground[0], ground[1], step);
 	{
 		GraphNode node;
 
@@ -2417,7 +2448,7 @@ void gsc_graph_autodiscover()
 	}
 
 	head = 0;
-	while ( head < queue.size() && (int)graph->nodes.size() < maxNodes )
+	while ( head < queue.size() )
 	{
 		unsigned int cur = queue[head++];
 		vec3_t curOrigin;
@@ -2432,14 +2463,14 @@ void gsc_graph_autodiscover()
 			{
 				float nx;
 				float ny;
-				std::map<long long, int>::iterator it;
+				std::unordered_map<unsigned long long, int>::iterator it;
 
 				if ( dx == 0 && dy == 0 )
 					continue;
 
 				nx = curOrigin[0] + dx * step;
 				ny = curOrigin[1] + dy * step;
-				cellKey = ((long long)(int)floorf(nx / step) << 32) | ((int)floorf(ny / step) & 0xFFFFFFFFLL);
+				cellKey = graphCellKey(nx, ny, step);
 
 				it = cellToNode.find(cellKey);
 				if ( it != cellToNode.end() )
@@ -2520,18 +2551,23 @@ void gsc_graph_autodiscover()
 }
 
 /*
- * graphAutodiscoverEx(<graph id>, <seed origin>, [<grid step>], [<max nodes>])
- * -> nodes added. Enhanced autodiscover: it seeds the grid from the graph's
- * EXISTING nodes too, so calling it once per spawn point extends one graph and
- * covers disconnected areas a single seed misses; and its links are typed and
+ * graphAutodiscoverEx(<graph id>, <seed origin or array of origins>, [<grid step>],
+ * [<max nodes>]) -> nodes added. Enhanced autodiscover: it seeds the grid from the
+ * graph's EXISTING nodes too, so repeated calls extend one graph and cover
+ * disconnected areas a single seed misses; and its links are typed and
  * directional - flat and step edges go both ways, a drop (up to GRAPH_MAX_DROP)
  * is a one-way higher->lower edge, a bigger gap is not linked. Edge types
- * (STEP 1, DROP 2) feed graphFindPath's skipEdgeTypes.
+ * (STEP 1, DROP 2) feed graphFindPath's skipEdgeTypes. An array of seeds (every
+ * spawn point, say) is flooded at once, breadth-first from all of them, so a
+ * graph that reaches the node cap is spread over the map instead of filling up
+ * around the first seed.
  */
 void gsc_graph_autodiscover_ex()
 {
 	int id;
 	vec3_t seed;
+	std::vector<float> seeds;
+	unsigned int seedsObject;
 	int gridStep = 48;
 	int maxNodes;
 	AStarGraph *graph;
@@ -2539,14 +2575,51 @@ void gsc_graph_autodiscover_ex()
 	vec3_t playerMins = { -15, -15, 0 };
 	vec3_t playerMaxs = { 15, 15, 72 };
 	vec3_t ground;
-	std::map<long long, int> cellToNode;
+	std::unordered_map<unsigned long long, int> cellToNode;
 	std::vector<unsigned int> queue;
+	std::unordered_set<unsigned long long> linked;
 	size_t head;
 	int added = 0;
 	unsigned int started;
-	long long cellKey;
+	unsigned long long cellKey;
 
-	if ( !stackGetParams("iv", &id, seed) )
+	if ( !stackGetParamInt(0, &id) )
+	{
+		stackError("gsc_graph_autodiscover_ex() one or more arguments are undefined or have a wrong type");
+		stackPushInt(0);
+		return;
+	}
+
+	if ( stackGetParamVector(1, seed) )
+	{
+		seeds.push_back(seed[0]);
+		seeds.push_back(seed[1]);
+		seeds.push_back(seed[2]);
+	}
+	else if ( stackGetParamObject(1, &seedsObject) && Scr_GetPointerType(1) == VAR_ARRAY )
+	{
+		unsigned int it = seedsObject;
+		unsigned int guard = 0;
+
+		while ( guard < SL_MAX_STRING_INDEX )
+		{
+			it = FindNextSibling(it);
+			if ( it == 0 )
+				break;
+
+			VariableValueInternal *entry = &scrVarGlob.variableList[it];
+
+			if ( (entry->w.type & VAR_MASK) == VAR_VECTOR && entry->u.u.vectorValue )
+			{
+				seeds.push_back(entry->u.u.vectorValue[0]);
+				seeds.push_back(entry->u.u.vectorValue[1]);
+				seeds.push_back(entry->u.u.vectorValue[2]);
+			}
+
+			guard++;
+		}
+	}
+	else
 	{
 		stackError("gsc_graph_autodiscover_ex() one or more arguments are undefined or have a wrong type");
 		stackPushInt(0);
@@ -2597,16 +2670,9 @@ void gsc_graph_autodiscover_ex()
 		if ( graph->nodes[i].removed )
 			continue;
 
-		cellKey = ((long long)(int)floorf(graph->nodes[i].origin[0] / step) << 32) | ((int)floorf(graph->nodes[i].origin[1] / step) & 0xFFFFFFFFLL);
+		cellKey = graphCellKey(graph->nodes[i].origin[0], graph->nodes[i].origin[1], step);
 		if ( cellToNode.find(cellKey) == cellToNode.end() )
 			cellToNode[cellKey] = (int)i;
-	}
-
-	if ( !graphTraceGround(seed[0], seed[1], seed[2], ground) || !graphPlayerFits(ground, playerMins, playerMaxs) )
-	{
-		graphDebugPrint("autodiscoverEx: seed (%.0f %.0f %.0f) is not on walkable ground", seed[0], seed[1], seed[2]);
-		stackPushInt(0);
-		return;
 	}
 
 	// the seed is a node too, so a full graph gets none
@@ -2617,28 +2683,45 @@ void gsc_graph_autodiscover_ex()
 		return;
 	}
 
-	cellKey = ((long long)(int)floorf(ground[0] / step) << 32) | ((int)floorf(ground[1] / step) & 0xFFFFFFFFLL);
-
-	if ( cellToNode.find(cellKey) == cellToNode.end() )
+	// Every seed is queued before the flood starts, so the breadth-first order
+	// grows all of them evenly until the node cap is reached
+	for ( size_t i = 0; i + 2 < seeds.size(); i += 3 )
 	{
-		GraphNode node;
+		std::unordered_map<unsigned long long, int>::iterator it;
 
-		VectorCopy(ground, node.origin);
-		node.type = 0;
-		node.removed = false;
-		graph->nodes.push_back(node);
-		cellToNode[cellKey] = (int)graph->nodes.size() - 1;
-		queue.push_back((unsigned int)graph->nodes.size() - 1);
-		added = 1;
-	}
-	else
-	{
-		// Seed cell already covered by an earlier pass - flood out from that node
-		queue.push_back((unsigned int)cellToNode[cellKey]);
+		if ( !graphTraceGround(seeds[i], seeds[i + 1], seeds[i + 2], ground) || !graphPlayerFits(ground, playerMins, playerMaxs) )
+		{
+			graphDebugPrint("autodiscoverEx: seed (%.0f %.0f %.0f) is not on walkable ground", seeds[i], seeds[i + 1], seeds[i + 2]);
+			continue;
+		}
+
+		cellKey = graphCellKey(ground[0], ground[1], step);
+		it = cellToNode.find(cellKey);
+
+		if ( it == cellToNode.end() )
+		{
+			GraphNode node;
+
+			if ( (int)graph->nodes.size() >= maxNodes )
+				continue;
+
+			VectorCopy(ground, node.origin);
+			node.type = 0;
+			node.removed = false;
+			graph->nodes.push_back(node);
+			cellToNode[cellKey] = (int)graph->nodes.size() - 1;
+			queue.push_back((unsigned int)graph->nodes.size() - 1);
+			added++;
+		}
+		else if ( std::find(queue.begin(), queue.end(), (unsigned int)it->second) == queue.end() )
+		{
+			// Seed cell already has a node (an earlier call or another seed) - flood out from it
+			queue.push_back((unsigned int)it->second);
+		}
 	}
 
 	head = 0;
-	while ( head < queue.size() && (int)graph->nodes.size() < maxNodes )
+	while ( head < queue.size() )
 	{
 		unsigned int cur = queue[head++];
 		vec3_t curOrigin;
@@ -2653,21 +2736,23 @@ void gsc_graph_autodiscover_ex()
 			{
 				float nx;
 				float ny;
-				std::map<long long, int>::iterator it;
+				std::unordered_map<unsigned long long, int>::iterator it;
 
 				if ( dx == 0 && dy == 0 )
 					continue;
 
 				nx = curOrigin[0] + dx * step;
 				ny = curOrigin[1] + dy * step;
-				cellKey = ((long long)(int)floorf(nx / step) << 32) | ((int)floorf(ny / step) & 0xFFFFFFFFLL);
+				cellKey = graphCellKey(nx, ny, step);
 
 				it = cellToNode.find(cellKey);
 				if ( it != cellToNode.end() )
 				{
 					int other = it->second;
 
-					if ( other != (int)cur )
+					// Both nodes of a pair see each other as neighbours; the
+					// link is the same from either side, so trace it once
+					if ( other != (int)cur && linked.insert(graphPairKey((int)cur, other)).second )
 						graphLinkNodesTyped(graph, (int)cur, other, playerMins, playerMaxs);
 					continue;
 				}
@@ -2693,6 +2778,7 @@ void gsc_graph_autodiscover_ex()
 					nid = (int)graph->nodes.size() - 1;
 					cellToNode[cellKey] = nid;
 
+					linked.insert(graphPairKey((int)cur, nid));
 					graphLinkNodesTyped(graph, (int)cur, nid, playerMins, playerMaxs);
 
 					queue.push_back((unsigned int)nid);

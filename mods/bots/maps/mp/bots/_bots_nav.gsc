@@ -1,12 +1,12 @@
 // Navigation for the simple bots: one waypoint graph per map, built with the
-// libcod graph* functions and kept in waypoints/<map>_v1.graph, and A* paths
+// libcod graph* functions and kept in waypoints/<map>_v2.graph, and A* paths
 // over it. Without a graph the bots walk straight at their goal.
 
 init()
 {
 	level.botGraph = undefined;
 
-	file = "waypoints/" + getCvar("mapname") + "_v1.graph";
+	file = "waypoints/" + getCvar("mapname") + "_v2.graph";
 	graph = graphLoad(file);
 
 	if(isDefined(graph) && graphGetNodeCount(graph) > 0)
@@ -32,20 +32,25 @@ init()
 }
 
 // Every spawn point of every gametype seeds the flood fill, so floors and
-// areas a single seed would miss are covered too.
+// areas a single seed would miss are covered too. They go in one call so the
+// flood grows from all of them at once: one call per spawn let the first fill
+// the whole node budget.
 generateGraph()
 {
 	graph = graphCreate();
 	if(!isDefined(graph))
 		return undefined;
 
+	seeds = [];
 	classes = spawnClasses();
 	for(c = 0; c < classes.size; c++)
 	{
 		spawns = getentarray(classes[c], "classname");
 		for(i = 0; i < spawns.size; i++)
-			graphAutodiscoverEx(graph, spawns[i].origin, 64);
+			seeds[seeds.size] = spawns[i].origin;
 	}
+
+	graphAutodiscoverEx(graph, seeds, 64);
 
 	if(graphGetNodeCount(graph) == 0)
 	{
