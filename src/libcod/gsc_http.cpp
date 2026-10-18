@@ -197,7 +197,7 @@ static void * Http_Worker(void *arg)
  * Exactly one callback runs, on a later frame:
  *   onDone(status, body, headers)  headers is an array keyed by lowercase name
  *   onError(error)
- * timeout is in seconds for the whole request, 0 for none. Redirects are not
+ * timeout is in seconds for the whole request, 0 for the longest (a day). Redirects are not
  * followed: a 3xx comes to onDone with its "location" header.
  */
 void gsc_http_fetch()
@@ -236,15 +236,16 @@ void gsc_http_fetch()
 	job->req.method = *method ? method : "GET";
 	job->req.headers = headers;
 	job->req.body = data;
-	if ( timeout > HTTP_MAX_TIMEOUT )
+	// even with no timeout, a server that sends a byte now and then can't hold a slot forever
+	if ( timeout <= 0 || timeout > HTTP_MAX_TIMEOUT )
 		timeout = HTTP_MAX_TIMEOUT;
-	job->req.timeoutMs = timeout > 0 ? timeout * 1000 : 0;
+	job->req.timeoutMs = timeout * 1000;
 	job->res.status = 0;
 	job->cancel = 0;
 	job->levelId = libcodLevelGeneration;
 	job->onDone = onDone;
 	job->onError = onError;
-	job->deadline = timeout > 0 ? NetHttp_Milliseconds() + job->req.timeoutMs : 0;
+	job->deadline = NetHttp_Milliseconds() + job->req.timeoutMs;
 	job->refs = 1;
 	job->finished = true;
 

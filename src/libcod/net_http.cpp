@@ -50,6 +50,7 @@ typedef int net_socket_t;
 #define NET_WS_MAX_FRAME (1024 * 1024)
 #define NET_WS_MAX_HANDSHAKE 16384
 #define NET_MAX_HEADERS 100
+#define NET_MAX_INTERIM 5
 #define NET_CA_RELOAD 3600000
 
 // A parsed CA list, shared by the connections that trust it. It is only read
@@ -1216,9 +1217,15 @@ bool NetHttp_Fetch(const NetHttpRequest *req, const volatile int *cancel, NetHtt
 	reader.deadline = deadline;
 	reader.eof = false;
 
-	// skip interim responses such as 100 Continue
-	while ( ok )
+	// skip interim responses such as 100 Continue, but not an endless stream of them
+	for ( int interim = 0; ok; interim++ )
 	{
+		if ( interim > NET_MAX_INTERIM )
+		{
+			res->error = "Too many interim responses";
+			ok = false;
+			break;
+		}
 		ok = Net_ReadHeaderBlock(&reader, NET_HTTP_MAX_STRING, &res->status, &res->headers, &res->error);
 		if ( !ok || res->status >= 200 || res->status == 101 )
 			break;
