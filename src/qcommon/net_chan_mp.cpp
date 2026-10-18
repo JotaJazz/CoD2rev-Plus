@@ -276,7 +276,7 @@ void NetProf_UpdateStatistics( netProfileStream_t *pStream )
 		pStream->iLargestPacket = iLargestSize;
 		pStream->iSmallestPacket = iSmallestSize;
 
-		if ( pStream->iLastBPSCalcTime + 100 < Sys_MilliSeconds() )
+		if ( Sys_MilliSeconds() - pStream->iLastBPSCalcTime > 100 )
 		{
 			iTimeSpan = Sys_MilliSeconds() - iOldestPacketTime;
 
