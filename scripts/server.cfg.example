@@ -255,6 +255,7 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set net_lanauthorize 0                      // bool: also check the keys of clients on the local network
 // set net_ip "localhost"                      // string, applies on the next map or restart: local address to bind to
 // set net_port 28960                          // int, 0 to 65535, applies on the next map or restart: UDP port
+// set net_strictPort 0                        // bool, applies on the next map or restart: 1 = a busy net_port stops the server instead of moving it to one of the next 9 ports (set it on the command line)
 // set net_noudp 0                             // bool: disable UDP networking
 // set net_noipx 0                             // bool, applies on the next map or restart, Windows only
 // set net_socksEnabled 0                      // bool, applies on the next map or restart, Windows only

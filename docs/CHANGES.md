@@ -45,6 +45,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Clean shutdown on Linux:** SIGTERM, SIGINT (Ctrl+C) and SIGHUP make the server quit as the `quit` command does: players get the final message, the masters the flatline heartbeat, and `games_mp.log` and the console log are closed (with `g_logSync 0` the last lines used to be lost). A second signal while it quits exits at once, a signal that `nohup` or the shell ignores stays ignored, and SIGPIPE is ignored. On Windows, logging off or shutting down the system now quits the same way; closing the console window already did.
 - **Console log errors:** when the console log can't be opened (a read-only `fs_homepath`, a bad `logfileName`), the server prints the reason once and tries again only when `logfile` or `logfileName` changes. It used to print that the log was opened, retry on every line printed and rotate the older logs away with `logfileRotate` on each retry.
 - **Game log rotation:** with `g_logRotateSize`, a `games_mp.log` that has reached that size is renamed to `games_mp.log.1` when the next map starts, keeping `g_logRotate` older copies. It used to grow forever.
+- **Strict port:** `net_strictPort 1` stops the server with an error when `net_port` is busy, instead of starting on one of the next 9 ports, where players and the masters don't look for it.
 
 ## libcod script functions and callbacks
 
@@ -68,7 +69,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 
 - **Test client that reads snapshots:** `scripts/cod2snap.py` parses everything the server sends to a client (gamestate, server commands, snapshots with the playerstate, entities and client states, in 1.0 and 1.3), and `cod2client.read_frames()` returns one frame per snapshot, so tests can check what one client receives.
 - **HTTP and WebSocket test:** `scripts/http_test.py` runs local HTTP, HTTPS, WS and WSS servers, makes a test mod call `httpFetch` and `webSocket*` against them, and checks the results, the certificate checks, the limits, malformed responses, WebSocket floods, that the server keeps answering during a slow request and that a map change or `map_restart` drops the old level's requests and connections.
-- **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages. A second run in internet mode (`dedicated 2`) heartbeats to a fake master on `127.0.0.1` and checks the heartbeats, the status sent on its own, the replies to the master's queries and the flatline when SIGTERM stops it, with the real masters cleared so nothing leaves the machine. It also checks that SIGTERM exits with code 0 after closing `games_mp.log` and that a console log that can't be opened is reported once and rotates nothing.
+- **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages. A second run in internet mode (`dedicated 2`) heartbeats to a fake master on `127.0.0.1` and checks the heartbeats, the status sent on its own, the replies to the master's queries and the flatline when SIGTERM stops it, with the real masters cleared so nothing leaves the machine. It also checks that SIGTERM exits with code 0 after closing `games_mp.log`, that a console log that can't be opened is reported once and rotates nothing, that `g_logRotateSize` rotates the game log and that `net_strictPort` stops a second server on a busy port.
 
 ## New variables
 
@@ -82,6 +83,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `logTimestamps` | `0` | 0–1 | `1` starts each console log line with the date and time. |
 | `g_logRotateSize` | `0` | 0–2047 | Size in MB at which `g_log` (`games_mp.log`) is rotated when the next map starts. `0` never rotates it. |
 | `g_logRotate` | `1` | 1–1000 | Older game logs kept when `g_logRotateSize` rotates it, as `<name>.1` (newest) to `<name>.N`. |
+| `net_strictPort` | `0` | 0–1 | `1` stops the server when `net_port` is busy instead of trying the next 9 ports. Only read at startup, so set it on the command line. |
 | `sv_logRcon` | `1` | 0–1 | `0` leaves accepted rcon commands out of the log. Wrong passwords are always logged. |
 | `sv_authorizeServer` | `cod2master.activision.com` | — | CD key authorization server. A new value is used from the next connection. |
 | `sv_authorizePort` | `20700` | 1–65535 | Port of the authorization server. |

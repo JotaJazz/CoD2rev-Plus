@@ -167,6 +167,7 @@ DESC = {
  'net_ip':'local address to bind to',
  'net_port':'UDP port',
  'net_noudp':'disable UDP networking',
+ 'net_strictPort':'1 = a busy net_port stops the server instead of moving it to one of the next 9 ports (set it on the command line)',
  'net_lanauthorize':'also check the keys of clients on the local network',
  'showpackets':'print every packet',
  'showdrop':'print dropped packets',

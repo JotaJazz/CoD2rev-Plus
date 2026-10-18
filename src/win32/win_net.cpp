@@ -729,15 +729,18 @@ NET_OpenIP
 void NET_OpenIP( void ) {
 	dvar_t	*ip;
 	dvar_t	*port;
-	int		i;
+	dvar_t	*strictPort;
+	int		i, tries;
 
 	ip = Dvar_RegisterString( "net_ip", "localhost", DVAR_LATCH );
 	port = Dvar_RegisterInt( "net_port", PORT_SERVER, 0, UINT16_MAX, DVAR_LATCH );
+	strictPort = Dvar_RegisterBool( "net_strictPort", 0, DVAR_LATCH );
 
 	// automatically scan for a valid port, so multiple
 	// dedicated servers can be started without requiring
 	// a different net_port for each one
-	for( i = 0 ; i < 10 ; i++ ) {
+	tries = strictPort->current.boolean ? 1 : 10;
+	for( i = 0 ; i < tries ; i++ ) {
 		ip_socket = NET_IPSocket( ip->current.string, port->current.integer + i );
 		if ( ip_socket ) {
 			port->current.integer = port->current.integer + i;
@@ -748,6 +751,9 @@ void NET_OpenIP( void ) {
 			NET_GetLocalAddress();
 			return;
 		}
+	}
+	if ( strictPort->current.boolean ) {
+		Com_Error( ERR_FATAL, "Couldn't open IP port %i (net_strictPort is set)", port->current.integer );
 	}
 	Com_Printf( "WARNING: Couldn't allocate IP port\n");
 }
