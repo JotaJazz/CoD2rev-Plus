@@ -46,8 +46,8 @@ extern scrVarGlob_t scrVarGlob;
  *   JSON null     <-> GSC undefined
  *   struct/entity/thread/function -> null (no JSON form; see below)
  *
- * On serialize an array becomes a JSON array iff every key is an integer index,
- * else a JSON object. Empty arrays serialize as {} (documented default). Only
+ * On serialize an array becomes a JSON array iff its keys are exactly the
+ * indexes 0..size-1, else a JSON object. Empty arrays serialize as {} (documented default). Only
  * VAR_ARRAY is walked: struct (spawnstruct/level) field names are canonical
  * strings, a separate index space with no reverse lookup exposed, so structs
  * emit null rather than garbage keys.
@@ -116,7 +116,7 @@ extern scrVarGlob_t scrVarGlob;
 // ===========================================================================
 // Tuning dvars, registered in gsc_json_register_dvars() so they show up in
 // dvarlist with defaults and bounds. Read per-call via dvar_int_or(), which
-// falls back to the same defaults if the dvar is ever missing:
+// falls back to the same defaults if the dvar was not registered:
 //   scr_json_max_load_bytes   default 8 MB   (json_load refuses larger files)
 //   scr_json_slow_warn_ms     default 25 ms  (any sync json_* slower logs WARN)
 //   scr_json_async_max_jobs   default 64     (async submission cap)
@@ -133,9 +133,12 @@ static long long now_ms()
 	return (long long)ts.tv_sec * 1000LL + ts.tv_nsec / 1000000L;
 }
 
-static int dvar_int_or(const char *name, int fallback)
+static dvar_t *scr_json_max_load_bytes;
+static dvar_t *scr_json_slow_warn_ms;
+static dvar_t *scr_json_async_max_jobs;
+
+static int dvar_int_or(dvar_t *d, int fallback)
 {
-	dvar_t *d = Dvar_FindVar(name);
 	if ( d == NULL )
 		return fallback;
 
@@ -181,9 +184,9 @@ static double json_double_from_float(float f)
 // with their defaults and min/max. Called once from custom_Com_InitDvars.
 void gsc_json_register_dvars(void)
 {
-	Dvar_RegisterInt("scr_json_max_load_bytes", JSON_DEF_MAX_LOAD_BYTES, 1, JSON_HARD_MAX_LOAD_BYTES, DVAR_ARCHIVE);
-	Dvar_RegisterInt("scr_json_slow_warn_ms", JSON_DEF_SLOW_WARN_MS, 1, 60000, DVAR_ARCHIVE);
-	Dvar_RegisterInt("scr_json_async_max_jobs", JSON_DEF_ASYNC_MAX_JOBS, 1, 1024, DVAR_ARCHIVE);
+	scr_json_max_load_bytes = Dvar_RegisterInt("scr_json_max_load_bytes", JSON_DEF_MAX_LOAD_BYTES, 1, JSON_HARD_MAX_LOAD_BYTES, DVAR_ARCHIVE);
+	scr_json_slow_warn_ms = Dvar_RegisterInt("scr_json_slow_warn_ms", JSON_DEF_SLOW_WARN_MS, 1, 60000, DVAR_ARCHIVE);
+	scr_json_async_max_jobs = Dvar_RegisterInt("scr_json_async_max_jobs", JSON_DEF_ASYNC_MAX_JOBS, 1, 1024, DVAR_ARCHIVE);
 }
 
 // RAII timer: logs a single WARN line on scope exit if the elapsed wall time
@@ -197,7 +200,7 @@ public:
 	JsonTimer(const char *f, const char *d) : func(f), detail(d ? d : ""), t0(now_ms()) {}
 	~JsonTimer()
 	{
-		int threshold = dvar_int_or("scr_json_slow_warn_ms", JSON_DEF_SLOW_WARN_MS);
+		int threshold = dvar_int_or(scr_json_slow_warn_ms, JSON_DEF_SLOW_WARN_MS);
 		long long elapsed = now_ms() - t0;
 		if ( threshold > 0 && elapsed > threshold )
 			Com_Printf("[JSON] WARN: %s took %lld ms (%s)\n", func, elapsed, detail);
@@ -373,19 +376,22 @@ static yyjson_mut_val * gsc_object_to_json(yyjson_mut_doc *doc, unsigned int obj
 // Serialization walk state (main thread only). The node budget bounds aliased
 // subtree re-walks; the ancestor stack turns reference cycles into null.
 // A NULL return from the walk means "budget exhausted, abort the whole call".
+// The caller reports it with json_walk_error() once it has freed what it
+// allocated, since stackError does not return.
 static long json_walk_nodes;
 static unsigned int json_walk_ancestors[JSON_MAX_DEPTH];
+
+static void json_walk_error(const char *function)
+{
+	stackError("%s() aborted: value graph exceeds %d nodes (too large or cyclic)", function, JSON_MAX_NODES);
+}
 
 // Convert a single variable entry (by id) to a yyjson mutable node.
 static yyjson_mut_val * gsc_entry_to_json(yyjson_mut_doc *doc, unsigned int id, int depth)
 {
 	json_walk_nodes--;
 	if ( json_walk_nodes < 0 )
-	{
-		if ( json_walk_nodes == -1 )
-			stackError("json serialization aborted: value graph exceeds %d nodes (too large or cyclic)", JSON_MAX_NODES);
 		return NULL;
-	}
 
 	VariableValueInternal *entry = &scrVarGlob.variableList[id];
 	int type = entry->w.type & VAR_MASK;
@@ -510,12 +516,26 @@ static yyjson_mut_val * gsc_object_to_json(yyjson_mut_doc *doc, unsigned int obj
 		return yyjson_mut_obj(doc);
 	}
 
-	// All integer-indexed -> JSON array, sorted ascending by index. Sorting
-	// the raw `name` works because name = index + MAX_ARRAYINDEX (monotonic).
-	if ( !hasStringKey )
+	// Sorting the raw `name` sorts by index because name = index +
+	// MAX_ARRAYINDEX (monotonic). Only the indexes 0..count-1 make a JSON
+	// array; a sparse array becomes an object so the indexes survive.
+	bool isArray = !hasStringKey;
+	if ( isArray )
 	{
 		qsort(items, count, sizeof(json_kv), json_kv_cmp);
 
+		for ( unsigned int i = 0; i < count; i++ )
+		{
+			if ( items[i].name != MAX_ARRAYINDEX + i )
+			{
+				isArray = false;
+				break;
+			}
+		}
+	}
+
+	if ( isArray )
+	{
 		yyjson_mut_val *arr = yyjson_mut_arr(doc);
 		for ( unsigned int i = 0; i < count; i++ )
 		{
@@ -665,8 +685,9 @@ void gsc_json_parse()
 
 	if ( yyjson_doc_get_val_count(doc) > JSON_MAX_VALUES )
 	{
-		stackError("gsc_json_parse() input has %u values, max is %d (script variable pool)", (unsigned)yyjson_doc_get_val_count(doc), JSON_MAX_VALUES);
+		unsigned count = (unsigned)yyjson_doc_get_val_count(doc);
 		yyjson_doc_free(doc);
+		stackError("gsc_json_parse() input has %u values, max is %d (script variable pool)", count, JSON_MAX_VALUES);
 		stackPushUndefined();
 		return;
 	}
@@ -701,6 +722,8 @@ void gsc_json_stringify()
 	if ( root == NULL )
 	{
 		yyjson_mut_doc_free(doc);
+		if ( json_walk_nodes < 0 )
+			json_walk_error("gsc_json_stringify");
 		stackPushUndefined();
 		return;
 	}
@@ -724,8 +747,8 @@ void gsc_json_stringify()
 
 	if ( out_len >= JSON_MAX_STRING )
 	{
-		stackError("gsc_json_stringify() result (%u bytes) exceeds the engine %d-byte string limit - use json_save", (unsigned)out_len, JSON_MAX_STRING);
 		free(out);
+		stackError("gsc_json_stringify() result (%u bytes) exceeds the engine %d-byte string limit - use json_save", (unsigned)out_len, JSON_MAX_STRING);
 		stackPushUndefined();
 		return;
 	}
@@ -769,7 +792,7 @@ void gsc_json_load()
 
 	// Size guard: refuse pathologically large files outright (would block the
 	// main thread parsing). Use json_load_async for legitimately large data.
-	int maxBytes = dvar_int_or("scr_json_max_load_bytes", JSON_DEF_MAX_LOAD_BYTES);
+	int maxBytes = dvar_int_or(scr_json_max_load_bytes, JSON_DEF_MAX_LOAD_BYTES);
 	if ( maxBytes > 0 && len > maxBytes )
 	{
 		FS_FCloseFile(f);
@@ -809,8 +832,9 @@ void gsc_json_load()
 
 	if ( yyjson_doc_get_val_count(doc) > JSON_MAX_VALUES )
 	{
-		stackError("gsc_json_load() '%s' has %u values, max is %d (script variable pool)", path, (unsigned)yyjson_doc_get_val_count(doc), JSON_MAX_VALUES);
+		unsigned count = (unsigned)yyjson_doc_get_val_count(doc);
 		yyjson_doc_free(doc);
+		stackError("gsc_json_load() '%s' has %u values, max is %d (script variable pool)", path, count, JSON_MAX_VALUES);
 		stackPushUndefined();
 		return;
 	}
@@ -819,8 +843,16 @@ void gsc_json_load()
 	yyjson_doc_free(doc);
 }
 
+// Windows drops trailing dots and spaces ("x.cfg." opens x.cfg) and reads
+// ':' as a stream name, so such names would get past the extension check
 static bool json_save_extension_ok(const char *path)
 {
+	size_t len = strlen(path);
+	if ( len > 0 && ( path[len - 1] == '.' || path[len - 1] == ' ' ) )
+		return false;
+	if ( strchr(path, ':') )
+		return false;
+
 	const char *ext = strrchr(path, '.');
 	return !ext || ( Q_stricmp(ext, ".iwd") && Q_stricmp(ext, ".cfg") && Q_stricmp(ext, ".gsc") && Q_stricmp(ext, ".so") && Q_stricmp(ext, ".dll") );
 }
@@ -847,7 +879,7 @@ void gsc_json_save()
 	// server loads from there (as graphSave)
 	if ( !json_save_extension_ok(path) )
 	{
-		stackError("gsc_json_save() refuses to write a %s file", strrchr(path, '.'));
+		stackError("gsc_json_save() refuses to write '%s'", path);
 		stackPushInt(0);
 		return;
 	}
@@ -875,6 +907,8 @@ void gsc_json_save()
 	if ( root == NULL )
 	{
 		yyjson_mut_doc_free(doc);
+		if ( json_walk_nodes < 0 )
+			json_walk_error("gsc_json_save");
 		stackPushInt(0);
 		return;
 	}
@@ -1294,7 +1328,7 @@ void gsc_json_load_async()
 		return;
 	}
 
-	int maxJobs = dvar_int_or("scr_json_async_max_jobs", JSON_DEF_ASYNC_MAX_JOBS);
+	int maxJobs = dvar_int_or(scr_json_async_max_jobs, JSON_DEF_ASYNC_MAX_JOBS);
 	if ( json_async_pending >= maxJobs )
 	{
 		stackError("gsc_json_load_async() too many pending jobs (%d / %d)", json_async_pending, maxJobs);
@@ -1315,7 +1349,7 @@ void gsc_json_load_async()
 	job->kind      = JSON_ASYNC_KIND_LOAD;
 	job->status    = JSON_ASYNC_STATUS_PENDING;
 	job->abspath   = abs;
-	job->max_bytes = dvar_int_or("scr_json_max_load_bytes", JSON_DEF_MAX_LOAD_BYTES);
+	job->max_bytes = dvar_int_or(scr_json_max_load_bytes, JSON_DEF_MAX_LOAD_BYTES);
 
 	pthread_mutex_lock(&json_async_mutex);
 	job->id   = json_async_next_id++;
@@ -1326,8 +1360,8 @@ void gsc_json_load_async()
 
 	if ( !json_async_spawn(job, json_async_load_worker) )
 	{
-		stackError("gsc_json_load_async() failed to create worker thread");
 		json_async_unlink_head_and_free(job);
+		stackError("gsc_json_load_async() failed to create worker thread");
 		stackPushInt(0);
 		return;
 	}
@@ -1356,7 +1390,7 @@ void gsc_json_save_async()
 	// server loads from there (as graphSave)
 	if ( !json_save_extension_ok(path) )
 	{
-		stackError("gsc_json_save_async() refuses to write a %s file", strrchr(path, '.'));
+		stackError("gsc_json_save_async() refuses to write '%s'", path);
 		stackPushInt(0);
 		return;
 	}
@@ -1371,7 +1405,7 @@ void gsc_json_save_async()
 	if ( Scr_GetNumParam() > 2 )
 		pretty = Scr_GetInt(2);
 
-	int maxJobs = dvar_int_or("scr_json_async_max_jobs", JSON_DEF_ASYNC_MAX_JOBS);
+	int maxJobs = dvar_int_or(scr_json_async_max_jobs, JSON_DEF_ASYNC_MAX_JOBS);
 	if ( json_async_pending >= maxJobs )
 	{
 		stackError("gsc_json_save_async() too many pending jobs (%d / %d)", json_async_pending, maxJobs);
@@ -1401,6 +1435,8 @@ void gsc_json_save_async()
 	{
 		yyjson_mut_doc_free(doc);
 		free(abs);
+		if ( json_walk_nodes < 0 )
+			json_walk_error("gsc_json_save_async");
 		stackPushInt(0);
 		return;
 	}
@@ -1423,8 +1459,8 @@ void gsc_json_save_async()
 
 	if ( !json_async_spawn(job, json_async_save_worker) )
 	{
-		stackError("gsc_json_save_async() failed to create worker thread");
 		json_async_unlink_head_and_free(job);
+		stackError("gsc_json_save_async() failed to create worker thread");
 		stackPushInt(0);
 		return;
 	}
