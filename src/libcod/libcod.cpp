@@ -880,6 +880,7 @@ void hook_ClientCommand(int clientNum)
 static struct
 {
 	bool pending;
+	bool deferred;
 	netadr_t from;
 	char command[1024];
 } remoteCommand;
@@ -912,10 +913,16 @@ bool Scr_RemoteCommandCallback(netadr_t from)
 	}
 	stackPushString(NET_AdrToString(from));
 
+	remoteCommand.deferred = false;
 	short ret = Scr_ExecThread(codecallback_remotecommand, 2);
 	Scr_FreeThread(ret);
 
 	remoteCommand.pending = false;
+	if (remoteCommand.deferred)
+	{
+		remoteCommand.deferred = false;
+		SV_ExecuteRemoteCommand(remoteCommand.from, remoteCommand.command);
+	}
 	return true;
 }
 
@@ -925,7 +932,13 @@ bool Scr_ProcessRemoteCommand()
 		return false;
 
 	remoteCommand.pending = false;
-	SV_ExecuteRemoteCommand(remoteCommand.from, remoteCommand.command);
+
+	// a map change frees the scripts that are running, the callback included,
+	// so it waits until the callback thread is done
+	if (ContainsMapCommand(remoteCommand.command))
+		remoteCommand.deferred = true;
+	else
+		SV_ExecuteRemoteCommand(remoteCommand.from, remoteCommand.command);
 	return true;
 }
 

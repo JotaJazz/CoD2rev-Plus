@@ -163,6 +163,7 @@ bool SV_IsBannedIp(netadr_t adr);
 void hook_ClientCommand(int clientNum);
 bool Scr_RemoteCommandCallback(netadr_t from);
 bool Scr_ProcessRemoteCommand();
+bool ContainsMapCommand(const char *text);
 void SV_ExecuteRemoteCommand(netadr_t from, const char *command);
 void InitLibcodCallbacks();
 void Libcod_InitLevel();

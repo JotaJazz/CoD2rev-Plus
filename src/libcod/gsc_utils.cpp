@@ -508,10 +508,10 @@ void gsc_utils_float()
 }
 
 // True when one of the ;-separated commands in text changes or restarts the
-// map
-static bool ContainsMapCommand(const char *text)
+// map, or shuts the server down
+bool ContainsMapCommand(const char *text)
 {
-	static const char *commands[] = { "map", "devmap", "map_restart", "fast_restart", "map_rotate" };
+	static const char *commands[] = { "map", "devmap", "map_restart", "fast_restart", "map_rotate", "killserver", "quit" };
 	const char *p = text;
 
 	while (*p)
