@@ -50,7 +50,20 @@ static void exec_async_release_argument(exec_async_task *task)
 	}
 }
 
-static void exec_async_free_task(exec_async_task *task)
+static void exec_async_unlink_task(exec_async_task *task)
+{
+	if (task->next != NULL)
+		task->next->prev = task->prev;
+
+	if (task->prev != NULL)
+		task->prev->next = task->next;
+	else
+		first_exec_async_task = task->next;
+
+	task->next = task->prev = NULL;
+}
+
+static void exec_async_delete_task(exec_async_task *task)
 {
 	exec_outputline *output = task->output;
 
@@ -62,16 +75,13 @@ static void exec_async_free_task(exec_async_task *task)
 	}
 
 	exec_async_release_argument(task);
-
-	if (task->next != NULL)
-		task->next->prev = task->prev;
-
-	if (task->prev != NULL)
-		task->prev->next = task->next;
-	else
-		first_exec_async_task = task->next;
-
 	delete task;
+}
+
+static void exec_async_free_task(exec_async_task *task)
+{
+	exec_async_unlink_task(task);
+	exec_async_delete_task(task);
 }
 
 void gsc_exec()
@@ -365,14 +375,19 @@ void gsc_exec_async_create_nosave()
 
 void gsc_exec_async_checkdone()
 {
-	exec_async_task *current = first_exec_async_task;
-
-	while (current != NULL)
+	for (;;)
 	{
-		exec_async_task *task = current;
-		current = current->next;
+		exec_async_task *task = first_exec_async_task;
 
-		if (task->done)
+		while (task != NULL && !task->done)
+			task = task->next;
+
+		if (task == NULL)
+			break;
+
+		// out of the list before its callback, which may run checkdone again
+		exec_async_unlink_task(task);
+
 		{
 			//push to cod
 			if (Scr_IsSystemActive() && task->save && task->callback && !task->error && (libcodLevelGeneration == task->levelId))
@@ -422,7 +437,7 @@ void gsc_exec_async_checkdone()
 				Scr_FreeThread(ret);
 			}
 
-			exec_async_free_task(task);
+			exec_async_delete_task(task);
 		}
 	}
 }
