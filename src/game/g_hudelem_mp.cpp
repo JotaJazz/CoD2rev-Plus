@@ -787,7 +787,7 @@ static void HudElem_SetEnumString( game_hudelem_t *hud, const game_hudelem_field
 	{
 		if ( !I_stricmp(selectedName, names[nameIndex]) )
 		{
-			*value &= ~(f->size << f->shift);
+			*value &= ~((unsigned int)f->size << f->shift);
 			*value |= nameIndex << f->shift;
 			return;
 		}

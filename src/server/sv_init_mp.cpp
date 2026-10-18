@@ -928,7 +928,7 @@ void SV_SpawnServer( char *server )
 
 	// get a new checksum feed and restart the file system
 	srand(Sys_MillisecondsRaw());
-	sv.checksumFeed = rand() ^ rand() << 16 ^ Sys_MilliSeconds();
+	sv.checksumFeed = rand() ^ (unsigned int)rand() << 16 ^ Sys_MilliSeconds();
 
 	FS_Restart(sv.checksumFeed);
 
