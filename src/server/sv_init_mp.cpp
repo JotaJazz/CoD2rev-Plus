@@ -29,6 +29,7 @@ dvar_t *sv_referencedIwdNames;
 dvar_t *rcon_password;
 dvar_t *sv_rconMaxAttempts;
 dvar_t *sv_rconLockTime;
+dvar_t *sv_rconWhitelist;
 dvar_t *sv_logRcon;
 dvar_t *sv_authorizeServer;
 dvar_t *sv_authorizePort;
@@ -114,6 +115,7 @@ void SV_InitDvar()
 	sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", DVAR_CHANGEABLE_RESET);
 	sv_rconMaxAttempts = Dvar_RegisterInt("sv_rconMaxAttempts", 5, 0, 100, DVAR_CHANGEABLE_RESET);
 	sv_rconLockTime = Dvar_RegisterInt("sv_rconLockTime", 600, 0, 86400, DVAR_CHANGEABLE_RESET);
+	sv_rconWhitelist = Dvar_RegisterString("sv_rconWhitelist", "", DVAR_CHANGEABLE_RESET);
 	sv_logRcon = Dvar_RegisterBool("sv_logRcon", true, DVAR_CHANGEABLE_RESET);
 	sv_authorizeServer = Dvar_RegisterString("sv_authorizeServer", AUTHORIZE_SERVER_NAME, DVAR_CHANGEABLE_RESET);
 	sv_authorizePort = Dvar_RegisterInt("sv_authorizePort", PORT_AUTHORIZE, 1, 65535, DVAR_CHANGEABLE_RESET);

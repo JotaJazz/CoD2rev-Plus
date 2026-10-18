@@ -67,6 +67,7 @@ set rcon_password ""
 set sv_allowRcon 1              // 0 = ignore every rcon packet
 set sv_rconMaxAttempts 5        // wrong passwords per IP before the lockout, 0 = no lockout
 set sv_rconLockTime 600         // lockout length in seconds
+set sv_rconWhitelist ""          // admin IPs never locked out, e.g. "203.0.113.5 198.51.100.7"
 
 // --- Master servers (only used with dedicated 2) ---
 // sv_master1 defaults to cod2master.activision.com and sv_master2 to master.cod2x.me.

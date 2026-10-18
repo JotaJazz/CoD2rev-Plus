@@ -36,7 +36,8 @@ RCON BRUTE FORCE PROTECTION
 Every address gets a few attempts. After sv_rconMaxAttempts wrong passwords
 inside sv_rconLockTime seconds the address is ignored by rcon for
 sv_rconLockTime seconds. A correct password clears the counter. Addresses on the
-server machine itself (127.x.x.x) are never locked. sv_rconMaxAttempts 0 disables the lock.
+server machine itself (127.x.x.x) and those in sv_rconWhitelist are never locked.
+sv_rconMaxAttempts 0 disables the lock.
 
 ==============================================================================
 */
@@ -117,10 +118,40 @@ static rconAttempt_t *SV_RconAttemptForAddress( netadr_t from, bool create )
 	return slot;
 }
 
+static bool SV_RconIsWhitelisted( netadr_t from )
+{
+	const char *list = sv_rconWhitelist->current.string;
+	char token[32];
+	netadr_t adr;
+
+	while ( *list )
+	{
+		int len = strcspn( list, " ," );
+
+		// IP addresses only, a host name would block the server on a lookup
+		if ( len > 0 && len < (int)sizeof( token ) && (int)strspn( list, "0123456789." ) == len )
+		{
+			memcpy( token, list, len );
+			token[len] = 0;
+
+			if ( NET_StringToAdr( token, &adr ) && NET_CompareBaseAdr( adr, from ) )
+			{
+				return true;
+			}
+		}
+
+		list += len;
+		list += strspn( list, " ," );
+	}
+
+	return false;
+}
+
 static bool SV_RconIsExempt( netadr_t from )
 {
-	// Tools running on the server machine itself (127.x.x.x) are trusted
-	return NET_IsLocalAddress( from ) || ( from.type == NA_IP && from.ip[0] == 127 );
+	// Tools running on the server machine itself (127.x.x.x) are trusted, and
+	// so are the admin's addresses, which spoofed bad guesses could lock out
+	return NET_IsLocalAddress( from ) || ( from.type == NA_IP && from.ip[0] == 127 ) || SV_RconIsWhitelisted( from );
 }
 
 static bool SV_RconIsLocked( netadr_t from )
@@ -256,6 +287,13 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	valid = strlen( rcon_password->current.string ) &&
 	        !I_strcmpConstantTime( password, rcon_password->current.string );
 
+	// Count every guess, also those the global limits below drop, or
+	// requests from many addresses would keep each one from being locked
+	if ( rcon_password->current.string[0] )
+	{
+		SV_RconRegisterResult( from, valid );
+	}
+
 	// The global limits only apply to wrong passwords, so that bad requests
 	// sent from many addresses can't keep the admin from using rcon
 	if ( !valid )
@@ -282,11 +320,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	else if ( sv_logRcon->current.boolean )
 	{
 		Com_Printf( "Rcon from %s:\n%s\n", NET_AdrToString( from ), Cmd_Argv( 2 ) );
-	}
-
-	if ( rcon_password->current.string[0] )
-	{
-		SV_RconRegisterResult( from, valid );
 	}
 
 #ifdef LIBCOD

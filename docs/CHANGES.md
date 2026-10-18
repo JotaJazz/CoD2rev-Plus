@@ -12,7 +12,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 
 ## Security and stability
 
-- **Rcon lockout after failed attempts:** after several wrong passwords, the IP address is ignored by rcon for a while. A correct password resets the counter, and `127.x.x.x` addresses are never locked.
+- **Rcon lockout after failed attempts:** after several wrong passwords, the IP address is ignored by rcon for a while. A correct password resets the counter, every wrong guess counts (also those dropped by the global rate limit, which a guesser with many addresses could otherwise hide behind), and `127.x.x.x` addresses and those in `sv_rconWhitelist` are never locked, so spoofed guesses cannot lock out the admin.
 - **Bounded strings in libcod script functions:** the libcod `printf` and `sprintf`, the asynchronous SQLite and exec calls and the player rename no longer write past their buffers when a script passes long strings.
 - **Network input hardening:** a connected player could crash the server or overwrite its memory with an oversized compressed message, a fragmented message, a name containing `%` (written to the log by the stock gametypes), `callvote clientkick` with a negative number or voice packets. These paths are now bounds-checked, and the file handles of interrupted HTTP downloads are closed.
 - **libcod proxy address and downloads:** the real address that a local proxy passes in the `ip` userinfo key is only trusted from `127.0.0.1`, must be an IPv4 address and is cleared on every connect. A `donedl` from a player already in the game no longer makes the server resend the whole gamestate.
@@ -69,6 +69,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | --- | --- | --- | --- |
 | `sv_rconMaxAttempts` | `5` | 0–100 | Wrong rcon passwords allowed per IP before the lockout. `0` disables the lockout. |
 | `sv_rconLockTime` | `600` | 0–86400 | Lockout duration in seconds. It is also the window in which attempts are counted. |
+| `sv_rconWhitelist` | `""` | — | IP addresses, separated by spaces or commas, that are never locked out of rcon. Host names are ignored. |
 | `logfileName` | `""` | — | Console log file, in `fs_homepath/<mod>`. Empty uses `console_mp_server.log`; names with `..` or a full path are ignored. |
 | `logfileRotate` | `0` | 0–1000 | Logs of previous runs kept when the server starts, as `<name>.1` (newest) to `<name>.N`. |
 | `logTimestamps` | `0` | 0–1 | `1` starts each console log line with the date and time. |

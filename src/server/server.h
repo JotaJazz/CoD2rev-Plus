@@ -43,6 +43,7 @@ extern dvar_t *sv_floodProtect;
 extern dvar_t *rcon_password;
 extern dvar_t *sv_rconMaxAttempts;
 extern dvar_t *sv_rconLockTime;
+extern dvar_t *sv_rconWhitelist;
 extern dvar_t *sv_logRcon;
 extern dvar_t *sv_authorizeServer;
 extern dvar_t *sv_authorizePort;
