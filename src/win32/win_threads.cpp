@@ -85,21 +85,48 @@ void* Sys_GetValue( int valueIndex )
 	return g_threadValues[valueIndex];
 }
 
+// CreateThread calls a WINAPI (stdcall) function, which pops its argument;
+// the thread functions are cdecl, so they are called through this
+struct sysThreadStart_t
+{
+	void* (*func)(void*);
+	void* arg;
+};
+
+static DWORD WINAPI Sys_ThreadStart(LPVOID param)
+{
+	sysThreadStart_t start = *(sysThreadStart_t *)param;
+
+	free(param);
+	start.func(start.arg);
+	return 0;
+}
+
 HANDLE Sys_CreateThreadWithHandle(void* (*ThreadMain)(void*), threadid_t *tid, void* arg)
 {
 	char errMessageBuf[512];
 	DWORD lastError;
+	sysThreadStart_t *start = (sysThreadStart_t *)malloc(sizeof(*start));
 
+	if(start == NULL)
+	{
+		Com_Printf("Failed to start thread!\n");
+		return NULL;
+	}
+
+	start->func = ThreadMain;
+	start->arg = arg;
 
 	HANDLE thid = CreateThread(	NULL, // LPSECURITY_ATTRIBUTES lpsa,
 	                            0, // DWORD cbStack,
-	                            (LPTHREAD_START_ROUTINE)ThreadMain, // LPTHREAD_START_ROUTINE lpStartAddr,
-	                            arg, // LPVOID lpvThreadParm,
+	                            Sys_ThreadStart, // LPTHREAD_START_ROUTINE lpStartAddr,
+	                            start, // LPVOID lpvThreadParm,
 	                            0, // DWORD fdwCreate,
 	                            tid );
 
 	if(thid == NULL)
 	{
+		free(start);
 		lastError = GetLastError();
 
 		if(lastError != 0)
