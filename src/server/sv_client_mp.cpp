@@ -598,9 +598,9 @@ void SV_DropClient( client_t *drop, const char *reason )
 	{
 		// VoroN: another stock bug fix for broken disconnect msg due to absence of localizedstrings
 		if ( !I_strnicmp(reason, "EXE", 3) || !I_strnicmp(reason, "GAME", 4) || !I_strnicmp(reason, "PC", 2) )
-			SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
+			SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"", 101, name, "\x14", reason);
 		else
-			SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
+			SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s\"", 101, name, reason);
 	}
 
 	assert(drop - svs.clients >= 0 && drop - svs.clients < MAX_CLIENTS);

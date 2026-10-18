@@ -212,7 +212,7 @@ static fileHandle_t FS_HandleForFile(FsThread thread)
 
 	for (i = 1; i < MAX_FILE_HANDLES; ++i)
 	{
-		Com_Printf("FILE %2i: '%s' 0x%x\n", i, fsh[i].name, fsh[i].handleFiles.file.o);
+		Com_Printf("FILE %2i: '%s' %p\n", i, fsh[i].name, (void *)fsh[i].handleFiles.file.o);
 	}
 
 	Com_Error(ERR_DROP, "FS_HandleForFile: none free");

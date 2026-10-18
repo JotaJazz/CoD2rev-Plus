@@ -5,7 +5,7 @@ WINDRES=windres
 # Game version to build: 115 = 1.0, 118 = 1.3.
 PROTOCOL=115
 
-CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
+CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -Wformat -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
 LFLAGS=-no-pie
 # Cheap protection against buffer overflows. The reversed code casts between
 # types and relies on signed overflow wrapping, which -fno-strict-aliasing and

@@ -321,7 +321,7 @@ void Sys_Printf (char *fmt, ...)
 #endif
 
 // single exit point (regular exit or in case of signal fault)
-void Sys_Exit( int ex ) {
+Q_NORETURN void Sys_Exit( int ex ) {
   Sys_ConsoleInputShutdown();
 
 #ifdef NDEBUG // regular behavior
