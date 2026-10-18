@@ -82,10 +82,13 @@ static bool Libcod_SoundPath(const char *rel, char *out, int size)
 	return true;
 }
 
-// Skips a WAV header if there is one; a WAV must be 8192 Hz, mono, 16-bit
-static bool Libcod_SkipWavHeader(FILE *file)
+// Skips a WAV header if there is one; a WAV must be 8192 Hz, mono, 16-bit.
+// dataSize gets the bytes of samples that follow, UINT_MAX for raw PCM.
+static bool Libcod_SkipWavHeader(FILE *file, unsigned int *dataSize)
 {
 	byte header[12];
+
+	*dataSize = UINT_MAX;
 
 	if (fread(header, 1, 12, file) != 12 || memcmp(header, "RIFF", 4) || memcmp(header + 8, "WAVE", 4))
 	{
@@ -94,14 +97,32 @@ static bool Libcod_SkipWavHeader(FILE *file)
 		return true;
 	}
 
+	if (fseek(file, 0, SEEK_END))
+		return false;
+	long length = ftell(file);
+	if (length < 0 || fseek(file, 12, SEEK_SET))
+		return false;
+
 	bool formatOk = false;
 	for (;;)
 	{
 		byte chunk[8];
-		if (fread(chunk, 1, 8, file) != 8)
+		long pos = ftell(file);
+		if (pos < 0 || fread(chunk, 1, 8, file) != 8)
 			return false;
 
 		unsigned int size = chunk[4] | (chunk[5] << 8) | (chunk[6] << 16) | ((unsigned int)chunk[7] << 24);
+
+		if (!memcmp(chunk, "data", 4))
+		{
+			*dataSize = size;
+			return formatOk;
+		}
+
+		// a chunk must end inside the file, so that each one moves forward
+		long long next = (long long)pos + 8 + size + (size & 1);
+		if (size > 0x7FFFFFFE || next > length)
+			return false;
 
 		if (!memcmp(chunk, "fmt ", 4))
 		{
@@ -113,17 +134,10 @@ static bool Libcod_SkipWavHeader(FILE *file)
 			int rate = fmt[4] | (fmt[5] << 8) | (fmt[6] << 16) | (fmt[7] << 24);
 			int bits = fmt[14] | (fmt[15] << 8);
 			formatOk = format == 1 && channels == 1 && rate == SOUND_SAMPLE_RATE && bits == 16;
-			if (fseek(file, size - 16 + (size & 1), SEEK_CUR))
-				return false;
 		}
-		else if (!memcmp(chunk, "data", 4))
-		{
-			return formatOk;
-		}
-		else if (fseek(file, size + (size & 1), SEEK_CUR))
-		{
+
+		if (fseek(file, (long)next, SEEK_SET))
 			return false;
-		}
 	}
 }
 
@@ -131,12 +145,13 @@ static void *Libcod_EncodeSound(void *arg)
 {
 	soundJob_t *job = (soundJob_t *)arg;
 	FILE *file = fopen(job->path, "rb");
+	unsigned int dataSize;
 
 	if (!file)
 	{
 		job->result = SOUND_LOAD_NOT_FOUND;
 	}
-	else if (!Libcod_SkipWavHeader(file))
+	else if (!Libcod_SkipWavHeader(file, &dataSize))
 	{
 		job->result = SOUND_LOAD_READ_ERROR;
 		fclose(file);
@@ -157,10 +172,13 @@ static void *Libcod_EncodeSound(void *arg)
 		{
 			short in[SOUND_FRAME_SAMPLES];
 			float frame[SOUND_FRAME_SAMPLES];
-			size_t read = fread(in, sizeof(short), SOUND_FRAME_SAMPLES, file);
+			// chunks after the samples (LIST, id3) are not sound
+			size_t want = dataSize / sizeof(short) < SOUND_FRAME_SAMPLES ? dataSize / sizeof(short) : SOUND_FRAME_SAMPLES;
+			size_t read = want ? fread(in, sizeof(short), want, file) : 0;
 
 			if (!read)
 				break;
+			dataSize -= read * sizeof(short);
 
 			if (job->numPackets == MAX_SOUND_PACKETS)
 			{
@@ -594,17 +612,20 @@ void gsc_utils_getsoundfileduration()
 		return;
 	}
 
-	bool ok = Libcod_SkipWavHeader(file);
+	unsigned int dataSize;
+	bool ok = Libcod_SkipWavHeader(file, &dataSize);
 	long start = ftell(file);
 	fseek(file, 0, SEEK_END);
 	long bytes = ftell(file) - start;
 	fclose(file);
 
-	if (!ok)
+	if (!ok || start < 0 || bytes < 0)
 	{
 		stackPushUndefined();
 		return;
 	}
+	if ((unsigned long)bytes > dataSize)
+		bytes = dataSize;
 
 	float seconds = (float)(bytes / 2) / SOUND_SAMPLE_RATE;
 	if (!noLimit && seconds > MAX_CUSTOM_SOUND_SECONDS)
