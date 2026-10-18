@@ -1795,7 +1795,7 @@ static void FS_DisplayPath(int bLanguageCull)
 		{
 			if (s->iwd)
 			{
-				Com_Printf("%s (%i files)\n", s->iwd, s->iwd->numFiles);
+				Com_Printf("%s (%i files)\n", s->iwd->iwdFilename, s->iwd->numFiles);
 				if (s->language)
 				{
 					Com_Printf("    localized assets iwd file for %s\n", SEH_GetLanguageName(s->language));
@@ -1815,7 +1815,7 @@ static void FS_DisplayPath(int bLanguageCull)
 			}
 			else
 			{
-				Com_Printf("%s/%s\n", s->dir, s->dir->gamedir);
+				Com_Printf("%s/%s\n", s->dir->path, s->dir->gamedir);
 				if (s->language)
 				{
 					Com_Printf("    localized assets game folder for %s\n", SEH_GetLanguageName(s->language));
