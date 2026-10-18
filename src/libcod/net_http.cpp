@@ -49,6 +49,7 @@ typedef int net_socket_t;
 #define NET_WAIT_SLICE 100
 #define NET_WS_MAX_FRAME (1024 * 1024)
 #define NET_WS_MAX_HANDSHAKE 16384
+#define NET_MAX_HEADERS 100
 #define NET_CA_RELOAD 3600000
 
 // A parsed CA list, shared by the connections that trust it. It is only read
@@ -988,6 +989,13 @@ static bool Net_ReadHeaderBlock(NetReader *r, size_t limit, int *status, std::ve
 	std::string block = r->buf.substr(0, end + 2);
 	r->buf.erase(0, end + 4);
 
+	// the script would cut a name at a NUL, and two names that differ after it would be one array key
+	if ( block.find('\0') != std::string::npos )
+	{
+		*error = "Invalid response";
+		return false;
+	}
+
 	size_t eol = block.find("\r\n");
 	std::string statusLine = block.substr(0, eol);
 	int major, minor, code;
@@ -1000,30 +1008,54 @@ static bool Net_ReadHeaderBlock(NetReader *r, size_t limit, int *status, std::ve
 
 	headers->clear();
 	size_t pos = eol + 2;
+	int lines = 0;
+	size_t last = std::string::npos;
 	while ( pos < block.size() )
 	{
 		size_t next = block.find("\r\n", pos);
 		std::string line = block.substr(pos, next - pos);
 		pos = next + 2;
 
+		if ( ++lines > NET_MAX_HEADERS )
+		{
+			*error = "Response headers too large";
+			return false;
+		}
+
+		// obsolete line folding continues the previous value
+		if ( !line.empty() && ( line[0] == ' ' || line[0] == '\t' ) )
+		{
+			if ( last != std::string::npos )
+				(*headers)[last].second += " " + Net_Trim(line);
+			continue;
+		}
+
 		size_t colon = line.find(':');
 		if ( colon == std::string::npos || colon == 0 )
 			continue;
 		std::string name = line.substr(0, colon);
+		for ( size_t i = 0; i < name.size(); i++ )
+		{
+			if ( (unsigned char)name[i] <= 0x20 || name[i] == 0x7f )
+			{
+				*error = "Invalid response";
+				return false;
+			}
+		}
 		std::string value = Net_Trim(line.substr(colon + 1));
 		Net_ToLower(&name);
 
-		bool merged = false;
+		last = headers->size();
 		for ( size_t i = 0; i < headers->size(); i++ )
 		{
 			if ( (*headers)[i].first == name )
 			{
 				(*headers)[i].second += ", " + value;
-				merged = true;
+				last = i;
 				break;
 			}
 		}
-		if ( !merged )
+		if ( last == headers->size() )
 			headers->push_back(std::make_pair(name, value));
 	}
 

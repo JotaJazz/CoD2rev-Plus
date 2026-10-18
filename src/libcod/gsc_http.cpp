@@ -308,6 +308,9 @@ static void Http_Deliver(http_job_t *job, const char *timeoutError)
 	stackPushArray();
 	for ( size_t i = 0; i < job->res.headers.size(); i++ )
 	{
+		// a NUL would make two names the same key, which the array can't hold twice
+		if ( strlen(job->res.headers[i].first.c_str()) != job->res.headers[i].first.size() )
+			continue;
 		stackPushString(job->res.headers[i].second.c_str());
 		// the array keeps its own reference to the key
 		unsigned int key = SL_GetString(job->res.headers[i].first.c_str(), 0);
