@@ -607,6 +607,55 @@ void Sys_SetCrashLogPath( void )
     Com_sprintf( sys_crashLogPath, sizeof( sys_crashLogPath ), "%s/crash.log", fs_homepath->current.string );
 }
 
+static volatile sig_atomic_t sys_quitSignal = 0;
+
+/*
+==================
+Sys_QuitSignalHandler
+
+Leaves the quit to the main loop, so the server still sends the flatline
+heartbeat and the final message and closes its logs. A second signal
+while it quits exits at once.
+==================
+*/
+static void Sys_QuitSignalHandler( int sig )
+{
+  if ( sys_quitSignal )
+  {
+    if ( ttycon_on )
+      tcsetattr( 0, TCSADRAIN, &tty_tc );
+    _exit( 128 + sig );
+  }
+
+  sys_quitSignal = sig;
+}
+
+/*
+==================
+Sys_InstallQuitHandler
+==================
+*/
+static void Sys_InstallQuitHandler( void )
+{
+  const int signals[] = { SIGTERM, SIGINT, SIGHUP };
+  struct sigaction sa, old;
+  int i;
+
+  memset( &sa, 0, sizeof( sa ) );
+  sa.sa_handler = Sys_QuitSignalHandler;
+  sigemptyset( &sa.sa_mask );
+
+  for ( i = 0; i < ARRAY_COUNT( signals ); i++ )
+  {
+    // a signal that nohup or the shell ignores stays ignored
+    if ( sigaction( signals[i], NULL, &old ) == 0 && old.sa_handler == SIG_IGN )
+      continue;
+    sigaction( signals[i], &sa, NULL );
+  }
+
+  signal( SIGPIPE, SIG_IGN );
+}
+
 /*
 ==================
 Field_Clear
@@ -1386,6 +1435,7 @@ int main ( int argc, char* argv[] )
   // int 	oldtime, newtime; // bk001204 - unused
   int   len, i;
   char  *cmdline;
+  qboolean quitting = qfalse;
   void Sys_SetDefaultCDPath(const char *path);
 
   // go back to real user for config loads
@@ -1393,6 +1443,7 @@ int main ( int argc, char* argv[] )
   seteuid(getuid());
 
   Sys_InstallCrashHandler();
+  Sys_InstallQuitHandler();
   Sys_InitMainThread();
   Dvar_Init();
   Sys_ParseArgs( argc, argv );  // bk010104 - added this for support
@@ -1432,6 +1483,15 @@ int main ( int argc, char* argv[] )
 
   while (1)
   {
+    // quit from the command buffer, inside Com_Frame, where an error
+    // during the shutdown still has its abort frame
+    if ( sys_quitSignal && !quitting )
+    {
+      quitting = qtrue;
+      Com_Printf( "Signal %d received, quitting\n", (int)sys_quitSignal );
+      Cbuf_AddText( "quit\n" );
+    }
+
 #ifdef __linux__
     Sys_ConfigureFPU();
 #endif

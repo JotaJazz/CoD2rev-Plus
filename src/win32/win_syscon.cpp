@@ -147,6 +147,11 @@ static LRESULT WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		Cbuf_AddText("quit\n");
 		PostQuitMessage(0);
 		return 0;
+	case WM_ENDSESSION:
+		// Windows ends the process once this returns, at logoff or shutdown
+		if ( wParam )
+			Com_Quit_f();
+		return 0;
 	case WM_CTLCOLORSTATIC:
 		if ( ( HWND ) lParam == s_wcd.hwndBuffer ) {
 			SetBkColor( ( HDC ) wParam, RGB( 0xff, 0xff, 0xff ) );
