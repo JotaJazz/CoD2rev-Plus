@@ -1523,6 +1523,33 @@ void FS_RotateHomeFile(const char *filename, int count)
 	}
 }
 
+/*
+===========
+FS_HomeFileLength
+
+Size of a file in the home game folder, or -1 when it can't be read.
+===========
+*/
+int FS_HomeFileLength(const char *filename)
+{
+	char ospath[MAX_OSPATH];
+	FILE *f;
+	int len;
+
+	FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, filename, ospath);
+	f = FS_FileOpenReadBinary(ospath);
+
+	if (!f)
+	{
+		return -1;
+	}
+
+	len = FS_FileGetFileSize(f);
+	FS_FileClose(f);
+
+	return len;
+}
+
 fileHandle_t FS_FOpenTextFileWrite(const char* filename)
 {
 	char ospath[MAX_OSPATH];

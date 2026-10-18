@@ -183,6 +183,8 @@ DESC = {
  'logfileName':'console log file in fs_homepath/<mod>; empty = console_mp_server.log',
  'logfileRotate':'older console logs kept as <name>.1 to <name>.N when the server starts',
  'logTimestamps':'start each console log line with the date and time',
+ 'g_logRotate':'older game logs kept as <g_log>.1 to <g_log>.N when g_logRotateSize rotates it',
+ 'g_logRotateSize':'MB the game log reaches before it is rotated at the next map start; 0 = never',
  'sv_logRcon':'log the address and command of every accepted rcon command',
  'sv_authorizeServer':'server that checks CD keys and gives players their GUID',
  'sv_authorizePort':'port of sv_authorizeServer',

@@ -143,6 +143,8 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // gamedate                                    // string, read-only
 // sv_mapname                                  // string, read-only: map currently loaded
 // set g_synchronousClients 0                  // bool: force clients to wait for the server each frame (for demo recording)
+// set g_logRotate 1                           // int, 1 to 1000: older game logs kept as <g_log>.1 to <g_log>.N when g_logRotateSize rotates it
+// set g_logRotateSize 0                       // int, 0 to 2047: MB the game log reaches before it is rotated at the next map start; 0 = never
 // set g_banIPs ""                             // string: list of banned addresses
 // set g_speed 190                             // int: player movement speed
 // set g_gravity 800                           // float, 1 or more: world gravity

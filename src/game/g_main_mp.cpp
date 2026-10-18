@@ -12,6 +12,8 @@ dvar_t *g_maxclients;
 dvar_t *g_synchronousClients;
 dvar_t *g_log;
 dvar_t *g_logSync;
+dvar_t *g_logRotate;
+dvar_t *g_logRotateSize;
 dvar_t *g_password;
 dvar_t *g_banIPs;
 dvar_t *g_dedicated;
@@ -953,6 +955,13 @@ void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 
 	if ( g_log->current.string[0] )
 	{
+		if ( g_logRotateSize->current.integer > 0
+		        && FS_HomeFileLength( g_log->current.string ) >= g_logRotateSize->current.integer * 1024 * 1024 )
+		{
+			Com_Printf("Rotating %s\n", g_log->current.string);
+			FS_RotateHomeFile( g_log->current.string, g_logRotate->current.integer );
+		}
+
 		if ( g_logSync->current.boolean )
 		{
 			FS_FOpenFileByMode(g_log->current.string, &level.logFile, FS_APPEND_SYNC);
@@ -1291,6 +1300,8 @@ void G_RegisterDvars()
 	g_synchronousClients = Dvar_RegisterBool("g_synchronousClients", false, DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
 	g_log = Dvar_RegisterString("g_log", "games_mp.log", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_logSync = Dvar_RegisterBool("g_logSync", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_logRotate = Dvar_RegisterInt("g_logRotate", 1, 1, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_logRotateSize = Dvar_RegisterInt("g_logRotateSize", 0, 0, 2047, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_password = Dvar_RegisterString("g_password", "", DVAR_CHANGEABLE_RESET);
 	g_banIPs = Dvar_RegisterString("g_banIPs", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);

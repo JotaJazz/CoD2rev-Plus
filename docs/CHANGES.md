@@ -44,6 +44,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Logging and admin settings:** the console log can be renamed (`logfileName`), keep the logs of previous runs (`logfileRotate`) and start each line with the date and time (`logTimestamps`). Accepted rcon commands can be left out of the log (`sv_logRcon`), the CD key authorization server can be changed (`sv_authorizeServer`, `sv_authorizePort`), the server can impose a rate and snapshot rate on every client (`g_forceRate`, `g_forceSnaps`), and the messages announcing a kick or a timeout can be turned off (`sv_kickMessages`, `sv_timeoutMessages`). The names are the same as in zk_libcod, so its configs keep working.
 - **Clean shutdown on Linux:** SIGTERM, SIGINT (Ctrl+C) and SIGHUP make the server quit as the `quit` command does: players get the final message, the masters the flatline heartbeat, and `games_mp.log` and the console log are closed (with `g_logSync 0` the last lines used to be lost). A second signal while it quits exits at once, a signal that `nohup` or the shell ignores stays ignored, and SIGPIPE is ignored. On Windows, logging off or shutting down the system now quits the same way; closing the console window already did.
 - **Console log errors:** when the console log can't be opened (a read-only `fs_homepath`, a bad `logfileName`), the server prints the reason once and tries again only when `logfile` or `logfileName` changes. It used to print that the log was opened, retry on every line printed and rotate the older logs away with `logfileRotate` on each retry.
+- **Game log rotation:** with `g_logRotateSize`, a `games_mp.log` that has reached that size is renamed to `games_mp.log.1` when the next map starts, keeping `g_logRotate` older copies. It used to grow forever.
 
 ## libcod script functions and callbacks
 
@@ -79,6 +80,8 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `logfileName` | `""` | — | Console log file, in `fs_homepath/<mod>`. Empty uses `console_mp_server.log`; names with `..` or a full path are ignored. |
 | `logfileRotate` | `0` | 0–1000 | Logs of previous runs kept when the server starts, as `<name>.1` (newest) to `<name>.N`. |
 | `logTimestamps` | `0` | 0–1 | `1` starts each console log line with the date and time. |
+| `g_logRotateSize` | `0` | 0–2047 | Size in MB at which `g_log` (`games_mp.log`) is rotated when the next map starts. `0` never rotates it. |
+| `g_logRotate` | `1` | 1–1000 | Older game logs kept when `g_logRotateSize` rotates it, as `<name>.1` (newest) to `<name>.N`. |
 | `sv_logRcon` | `1` | 0–1 | `0` leaves accepted rcon commands out of the log. Wrong passwords are always logged. |
 | `sv_authorizeServer` | `cod2master.activision.com` | — | CD key authorization server. A new value is used from the next connection. |
 | `sv_authorizePort` | `20700` | 1–65535 | Port of the authorization server. |
