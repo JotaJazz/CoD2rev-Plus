@@ -176,7 +176,7 @@ void gsc_exec_async_create()
 	newtask->done = false;
 	newtask->save = true;
 	newtask->error = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 
 	int valueInt;
@@ -267,7 +267,7 @@ void gsc_exec_async_create_nosave()
 	newtask->done = false;
 	newtask->save = false;
 	newtask->error = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 
 	int valueInt;
@@ -335,7 +335,7 @@ void gsc_exec_async_checkdone()
 		if (task->done)
 		{
 			//push to cod
-			if (Scr_IsSystemActive() && task->save && task->callback && !task->error && (scrVarPub.levelId == task->levelId))
+			if (Scr_IsSystemActive() && task->save && task->callback && !task->error && (libcodLevelGeneration == task->levelId))
 			{
 				if (task->hasargument)
 				{

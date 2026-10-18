@@ -241,7 +241,7 @@ void gsc_http_fetch()
 	job->req.timeoutMs = timeout > 0 ? timeout * 1000 : 0;
 	job->res.status = 0;
 	job->cancel = 0;
-	job->levelId = scrVarPub.levelId;
+	job->levelId = libcodLevelGeneration;
 	job->onDone = onDone;
 	job->onError = onError;
 	job->deadline = timeout > 0 ? NetHttp_Milliseconds() + job->req.timeoutMs : 0;
@@ -288,7 +288,7 @@ void gsc_http_fetch()
 
 static void Http_Deliver(http_job_t *job, const char *timeoutError)
 {
-	if ( !Scr_IsSystemActive() || scrVarPub.levelId != job->levelId )
+	if ( !Scr_IsSystemActive() || libcodLevelGeneration != job->levelId )
 		return;
 
 	if ( timeoutError || !job->res.error.empty() )
@@ -668,7 +668,7 @@ void gsc_websocket_connect()
 	ws->pingMs = pingMs > 0 ? pingMs : 0;
 	ws->stop = 0;
 	ws->logUrl = NetHttp_LogUrl(&ws->url);
-	ws->levelId = scrVarPub.levelId;
+	ws->levelId = libcodLevelGeneration;
 	ws->onConnect = onConnect;
 	ws->onMessage = onMessage;
 	ws->onClose = onClose;
@@ -763,7 +763,7 @@ static void Ws_Deliver(ws_conn_t *ws, const ws_event_t *ev)
 {
 	short ret;
 
-	if ( !Scr_IsSystemActive() || scrVarPub.levelId != ws->levelId )
+	if ( !Scr_IsSystemActive() || libcodLevelGeneration != ws->levelId )
 		return;
 
 	switch ( ev->type )

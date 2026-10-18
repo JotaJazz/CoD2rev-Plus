@@ -249,7 +249,7 @@ void Libcod_RunSoundCallbacks()
 		}
 
 		// a callback of an older map's scripts no longer exists
-		if (Scr_IsSystemActive() && job->levelId == scrVarPub.levelId)
+		if (Scr_IsSystemActive() && job->levelId == libcodLevelGeneration)
 		{
 			stackPushInt(job->result);
 			stackPushInt(job->index + 1);
@@ -415,7 +415,7 @@ void gsc_utils_loadsoundfile()
 	job->volume = volume;
 	job->index = index - 1;
 	job->callback = callback;
-	job->levelId = scrVarPub.levelId;
+	job->levelId = libcodLevelGeneration;
 
 	threadid_t thread;
 	if (!Sys_CreateNewThread(Libcod_EncodeSound, &thread, job))

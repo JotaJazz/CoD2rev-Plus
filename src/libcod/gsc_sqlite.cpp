@@ -92,7 +92,7 @@ void *async_sqlite_query_handler(void*)
 				continue;
 			}
 
-			if (scrVarPub.levelId != task->store->levelId)
+			if (libcodLevelGeneration != task->store->levelId)
 			{
 				task->remove = true;
 				continue;
@@ -259,7 +259,7 @@ void gsc_async_sqlite_create_query()
 	newtask->save = true;
 	newtask->error = false;
 	newtask->remove = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 	newtask->hasentity = false;
 	newtask->gentity = NULL;
@@ -381,7 +381,7 @@ void gsc_async_sqlite_create_query_nosave()
 	newtask->save = false;
 	newtask->error = false;
 	newtask->remove = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 	newtask->hasentity = false;
 	newtask->gentity = NULL;
@@ -503,7 +503,7 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 	newtask->save = true;
 	newtask->error = false;
 	newtask->remove = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 	newtask->hasentity = true;
 	newtask->gentity = &g_entities[entid.entnum];
@@ -625,7 +625,7 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 	newtask->save = false;
 	newtask->error = false;
 	newtask->remove = false;
-	newtask->levelId = scrVarPub.levelId;
+	newtask->levelId = libcodLevelGeneration;
 	newtask->hasargument = true;
 	newtask->hasentity = true;
 	newtask->gentity = &g_entities[entid.entnum];
@@ -691,7 +691,7 @@ void gsc_async_sqlite_checkdone()
 				if (!task->error)
 				{
 					//push to cod
-					if (Scr_IsSystemActive() && task->save && task->callback && (scrVarPub.levelId == task->levelId))
+					if (Scr_IsSystemActive() && task->save && task->callback && (libcodLevelGeneration == task->levelId))
 					{
 						if (task->hasentity)
 						{
@@ -833,7 +833,7 @@ void sqlite_db_store_cleanup()
 		sqlite_db_store *store = current_store;
 		current_store = current_store->next;
 
-		if (store->closed || scrVarPub.levelId != store->levelId)
+		if (store->closed || libcodLevelGeneration != store->levelId)
 		{
 			async_sqlite_task *current_task = first_async_sqlite_task;
 
@@ -920,7 +920,7 @@ void gsc_sqlite_open()
 
 	newstore->prev = current;
 	newstore->next = NULL;
-	newstore->levelId = scrVarPub.levelId;
+	newstore->levelId = libcodLevelGeneration;
 	newstore->db = db;
 	newstore->closed = false;
 

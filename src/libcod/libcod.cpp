@@ -144,6 +144,18 @@ void InitLibcodCallbacks()
 	for (size_t i = 0; i < ARRAY_COUNT(buttonCallbacks); i++)
 		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
 
+}
+
+// Script objects and threads of the previous level are gone, which async
+// work checks against this; levelId is no use, a freed id is often reused
+unsigned int libcodLevelGeneration = 1;
+
+// Called from G_InitGame on every level start, map_restart and
+// fast_restart included
+void Libcod_InitLevel()
+{
+	libcodLevelGeneration++;
+
 	Libcod_ClearDroppingBullets();
 #if LIBCOD_COMPILE_ENTITY == 1
 	gsc_entity_restoreitemquantities();

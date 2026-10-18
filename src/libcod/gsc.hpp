@@ -165,6 +165,8 @@ bool Scr_RemoteCommandCallback(netadr_t from);
 bool Scr_ProcessRemoteCommand();
 void SV_ExecuteRemoteCommand(netadr_t from, const char *command);
 void InitLibcodCallbacks();
+void Libcod_InitLevel();
+extern unsigned int libcodLevelGeneration;
 void Scr_QueueErrorCallback(const char *message, const char *position);
 void Scr_RunFrameCallbacks();
 void Scr_ClientThinkCallbacks(client_t *cl, int oldButtons);

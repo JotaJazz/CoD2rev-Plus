@@ -1044,6 +1044,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 	Com_Printf("-----------------------------------\n");
 
 	Scr_InitSystem();
+#ifdef LIBCOD
+	Libcod_InitLevel();
+#endif
 
 	Scr_SetLoading(true);
 
