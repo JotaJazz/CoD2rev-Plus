@@ -11,6 +11,9 @@ LFLAGS=-no-pie
 # types and relies on signed overflow wrapping, which -fno-strict-aliasing and
 # -fwrapv keep safe if the optimization level is ever raised.
 CFLAGS+=-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-strict-aliasing -fwrapv
+# FORTIFY marks write() and the like; the unchecked calls are in the crash
+# handler and console output, where there is nothing to do on failure.
+CFLAGS+=-Wno-unused-result
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
