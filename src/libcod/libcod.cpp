@@ -320,7 +320,7 @@ void manymaps_prepare(const char *mapname, int read)
 	dvar_t *map = Dvar_FindVar("mapname");
 
 	if (strlen(fs_library->current.string))
-		strncpy(library_path, fs_library->current.string, sizeof(library_path));
+		I_strncpyz(library_path, fs_library->current.string, sizeof(library_path));
 	else
 		snprintf(library_path, sizeof(library_path), "%s/%s/Library", fs_homepath->current.string, fs_game->current.string);
 
@@ -379,13 +379,7 @@ void manymaps_prepare(const char *mapname, int read)
 
 		if (access(fileDelete, F_OK) != -1)
 		{
-#ifdef _WIN32
-			char delcmd[COD2_MAX_STRINGLENGTH];
-			Com_sprintf(delcmd, sizeof(delcmd), "del /F %s", fileDelete);
-			int unlink_success = system(delcmd) == 0;
-#else
 			int unlink_success = unlink(fileDelete) == 0;
-#endif
 			Com_Printf("manymaps> REMOVED OLD LINK: %s result of unlink: %s\n", fileDelete, unlink_success?"success":"failed");
 		}
 	}
@@ -403,9 +397,7 @@ void manymaps_prepare(const char *mapname, int read)
 		if (access(src, F_OK) != -1)
 		{
 #ifdef _WIN32
-			char linkcmd[COD2_MAX_STRINGLENGTH];
-			Com_sprintf(linkcmd, sizeof(linkcmd), "mklink /h %s %s", dst, src);
-			int link_success = system(linkcmd) == 0;
+			int link_success = CreateHardLinkA(dst, src, NULL) != 0;
 #else
 			int link_success = symlink(src, dst) == 0;
 #endif
@@ -583,7 +575,7 @@ bool hook_SV_MapExists(const char *mapname)
 		dvar_t *fs_game = Dvar_FindVar("fs_game");
 
 		if (strlen(fs_library->current.string))
-			strncpy(library_path, fs_library->current.string, sizeof(library_path));
+			I_strncpyz(library_path, fs_library->current.string, sizeof(library_path));
 		else
 			snprintf(library_path, sizeof(library_path), "%s/%s/Library", fs_homepath->current.string, fs_game->current.string);
 

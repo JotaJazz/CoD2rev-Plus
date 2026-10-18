@@ -394,9 +394,7 @@ void gsc_utils_file_link()
 	}
 
 #ifdef _WIN32
-	char linkcmd[COD2_MAX_STRINGLENGTH];
-	Com_sprintf(linkcmd, sizeof(linkcmd), "mklink /h %s %s", dest, source);
-	stackPushInt( system(linkcmd) == 0 );
+	stackPushInt( CreateHardLinkA(dest, source, NULL) != 0 );
 #else
 	stackPushInt( symlink(source, dest) == 0 );
 #endif
