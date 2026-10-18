@@ -828,8 +828,10 @@ def main():
                 if phase2:
                     rcon(port, password, 'set ht_phase 3')
                     restarted = time.time()
-                    rcon(port, password, 'map_restart')
-                    check('map_restart finished', wait_line(game_log, r'^HTTPTEST phase3 end', 120))
+                    # fast_restart reloads no scripts, so InitLibcodCallbacks
+                    # does not run; the 'map' above covers the full reload
+                    rcon(port, password, 'fast_restart')
+                    check('fast_restart finished', wait_line(game_log, r'^HTTPTEST phase3 end', 120))
             check('server still running', server.poll() is None and query(port, 'getinfo') is not None)
         finally:
             pinger.running = False
@@ -946,7 +948,7 @@ def main():
               and re.search(r'webSocket ws://[^ ]*/flood: dropped \d+ messages', console) is not None, flood)
         check('ws flood had no errors', not [l for l in lines if l.startswith('flood error')])
 
-        # map change and map_restart
+        # map change and fast_restart
         for phase, tag, since in (('phase2', 'stale1', map_changed), ('phase3', 'stale2', restarted)):
             start_index = lines.index(phase + ' start') if phase + ' start' in lines else len(lines)
             check(f'old level got callbacks ({tag})', any(l.startswith(tag + ' msg ') for l in lines[:start_index]))
