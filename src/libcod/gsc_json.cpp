@@ -1253,7 +1253,7 @@ static int json_async_spawn(json_async_job *job, void *(*worker)(void *))
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	int rc = pthread_create(&thread, &attr, worker, job);
+	int rc = Sys_CreatePthread(&thread, &attr, worker, job);
 	pthread_attr_destroy(&attr);
 
 	return rc == 0 ? 1 : 0;

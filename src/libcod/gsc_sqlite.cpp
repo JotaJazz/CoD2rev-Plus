@@ -166,16 +166,19 @@ void *async_sqlite_query_handler(void*)
 }
 
 bool async_sqlite_query_initialized = false;
-void async_sqlite_query_initialize()
+bool async_sqlite_query_initialize()
 {
 	threadid_t tinfo;
 
 	if (async_sqlite_query_initialized)
-		return;
+		return true;
 
-	Sys_CreateNewThread(async_sqlite_query_handler, &tinfo, NULL);
+	if (!Sys_CreateNewThread(async_sqlite_query_handler, &tinfo, NULL))
+		return false;
+
 	async_sqlite_query_initialized = true;
 	Com_Printf("async_sqlite_query_initialize() thread initialized.\n");
+	return true;
 }
 
 static sqlite_db_store *sqlite_find_store(sqlite3 *db)
@@ -245,7 +248,14 @@ static void async_sqlite_create_task(const char *function, scr_entref_t *entref,
 		return;
 	}
 
-	async_sqlite_query_initialize();
+	// without the worker the task would never run
+	if (!async_sqlite_query_initialize())
+	{
+		stackError("%s() failed to start the query thread", function);
+		stackPushUndefined();
+		return;
+	}
+
 	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 
@@ -472,7 +482,6 @@ void sqlite_db_store_cleanup();
 
 void gsc_async_sqlite_checkdone()
 {
-	async_sqlite_query_initialize();
 	async_sqlite_task *task;
 
 	// one at a time: a callback may create tasks or call this again
@@ -769,7 +778,6 @@ void gsc_sqlite_databases_count()
 
 void gsc_sqlite_tasks_count()
 {
-	async_sqlite_query_initialize();
 	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 

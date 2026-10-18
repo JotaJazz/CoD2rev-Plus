@@ -150,7 +150,7 @@ static bool Http_StartThread(void *(*func)(void *), void *arg)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	pthread_attr_setstacksize(&attr, HTTP_THREAD_STACK);
-	int r = pthread_create(&thread, &attr, func, arg);
+	int r = Sys_CreatePthread(&thread, &attr, func, arg);
 	pthread_attr_destroy(&attr);
 
 	return r == 0;
