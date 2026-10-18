@@ -95,11 +95,11 @@ O servidor precisa dos ficheiros do jogo original (a pasta `main` com os seus `.
 2. Ter um `server.cfg` em `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) configura as opções habituais e lista as restantes variáveis que o servidor regista com o seu valor predefinido (comentários em inglês).
 3. Executar `iniciar_cod2rev.bat`.
 
-O lançador inicia o servidor na porta `28970`, para não colidir com o cliente do jogo que usa a `28960` no mesmo PC, e carrega o mapa `mp_toujane`. Por predefinição inicia em modo LAN (`dedicated 1`, LAN ou IP direto); execute `iniciar_cod2rev.bat internet` para anunciar o servidor na lista pública (`dedicated 2`).
+O lançador inicia o servidor na porta `28960` e carrega o mapa `mp_toujane`. Se o jogo também correr neste PC, inicie primeiro o servidor: o jogo também usa a `28960`, e um servidor iniciado depois passa para a porta livre seguinte. Por predefinição inicia em modo LAN (`dedicated 1`, LAN ou IP direto); execute `iniciar_cod2rev.bat internet` para anunciar o servidor na lista pública (`dedicated 2`). Os lançadores definem os seus valores antes de `+exec server.cfg`, por isso o `server.cfg` pode alterá-los.
 
 ### Autorização de chaves
 
-O servidor consulta `cod2master.activision.com` para validar a chave de cada cliente que não esteja na rede local. Com `sv_cracked 1` continua a fazer a consulta, mas aceita o cliente seja qual for a resposta. Os lançadores ativam-no; retire-o da linha de comandos se quiser que seja exigida uma chave válida.
+O servidor consulta `cod2master.activision.com` para validar a chave de cada cliente que não esteja na rede local. Com `sv_cracked 1` continua a fazer a consulta, mas aceita o cliente seja qual for a resposta. Os lançadores só o ativam em modo LAN; em modo internet é exigida uma chave válida, a menos que o `server.cfg` o ative.
 
 ### Linux
 

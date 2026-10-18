@@ -95,11 +95,11 @@ The server needs the original game files (the `main` folder with its `.iwd` file
 2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) sets the usual options and lists every other variable the server registers with its default value.
 3. Run `iniciar_cod2rev.bat`.
 
-The launcher starts the server on port `28970`, to avoid clashing with the game client that uses `28960` on the same PC, and loads the map `mp_toujane`. By default it starts in LAN mode (`dedicated 1`, LAN or direct IP); run `iniciar_cod2rev.bat internet` to announce the server on the public list (`dedicated 2`).
+The launcher starts the server on port `28960` and loads the map `mp_toujane`. If the game also runs on this PC, start the server first: the game uses `28960` too, and a server started after it moves to the next free port. By default it starts in LAN mode (`dedicated 1`, LAN or direct IP); run `iniciar_cod2rev.bat internet` to announce the server on the public list (`dedicated 2`). The launchers set their values before `+exec server.cfg`, so `server.cfg` can change them.
 
 ### Key authorization
 
-The server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The launchers turn it on; remove it from the command line if you want a valid key to be required.
+The server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The launchers only turn it on in LAN mode; in internet mode a valid key is required unless `server.cfg` turns it on.
 
 ### Linux
 

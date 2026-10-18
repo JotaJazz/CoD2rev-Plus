@@ -95,11 +95,11 @@ Le serveur a besoin des fichiers du jeu d'origine (le dossier `main` avec ses fi
 2. Avoir un `server.cfg` dans `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) règle les options habituelles et liste toutes les autres variables enregistrées par le serveur avec leur valeur par défaut (commentaires en anglais).
 3. Lancer `iniciar_cod2rev.bat`.
 
-Le lanceur démarre le serveur sur le port `28970`, pour ne pas entrer en conflit avec le client du jeu qui utilise le `28960` sur le même PC, et charge la carte `mp_toujane`. Par défaut, il démarre en mode réseau local (`dedicated 1`, réseau local ou IP directe) ; lancez `iniciar_cod2rev.bat internet` pour annoncer le serveur dans la liste publique (`dedicated 2`).
+Le lanceur démarre le serveur sur le port `28960` et charge la carte `mp_toujane`. Si le jeu tourne aussi sur ce PC, démarrez d'abord le serveur : le jeu utilise aussi le `28960`, et un serveur démarré après lui passe au port libre suivant. Par défaut, il démarre en mode réseau local (`dedicated 1`, réseau local ou IP directe) ; lancez `iniciar_cod2rev.bat internet` pour annoncer le serveur dans la liste publique (`dedicated 2`). Les lanceurs fixent leurs valeurs avant `+exec server.cfg`, donc `server.cfg` peut les changer.
 
 ### Autorisation des clés
 
-Le serveur interroge `cod2master.activision.com` pour valider la clé de chaque client qui n'est pas sur le réseau local. Avec `sv_cracked 1`, il envoie toujours la requête, mais accepte le client quelle que soit la réponse. Les lanceurs l'activent ; retirez-le de la ligne de commande si vous voulez qu'une clé valide soit exigée.
+Le serveur interroge `cod2master.activision.com` pour valider la clé de chaque client qui n'est pas sur le réseau local. Avec `sv_cracked 1`, il envoie toujours la requête, mais accepte le client quelle que soit la réponse. Les lanceurs ne l'activent qu'en mode réseau local ; en mode internet, une clé valide est exigée sauf si `server.cfg` l'active.
 
 ### Linux
 

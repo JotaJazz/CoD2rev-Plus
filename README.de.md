@@ -95,11 +95,11 @@ Der Server braucht die Dateien des Originalspiels (den Ordner `main` mit seinen 
 2. Eine `server.cfg` in `main` bereithalten. [`scripts/server.cfg.example`](scripts/server.cfg.example) setzt die üblichen Optionen und listet alle übrigen Variablen, die der Server registriert, mit ihrem Standardwert auf (Kommentare auf Englisch).
 3. `iniciar_cod2rev.bat` ausführen.
 
-Der Starter startet den Server auf Port `28970`, damit er nicht mit dem Spielclient kollidiert, der auf demselben PC `28960` benutzt, und lädt die Karte `mp_toujane`. Standardmäßig startet er im LAN-Modus (`dedicated 1`, LAN oder direkte IP); mit `iniciar_cod2rev.bat internet` wird der Server in der öffentlichen Liste angekündigt (`dedicated 2`).
+Der Starter startet den Server auf Port `28960` und lädt die Karte `mp_toujane`. Läuft das Spiel auf demselben PC, starten Sie zuerst den Server: Das Spiel benutzt ebenfalls `28960`, und ein danach gestarteter Server weicht auf den nächsten freien Port aus. Standardmäßig startet er im LAN-Modus (`dedicated 1`, LAN oder direkte IP); mit `iniciar_cod2rev.bat internet` wird der Server in der öffentlichen Liste angekündigt (`dedicated 2`). Die Starter setzen ihre Werte vor `+exec server.cfg`, sodass `server.cfg` sie ändern kann.
 
 ### Schlüsselautorisierung
 
-Der Server fragt bei `cod2master.activision.com` an, um den Schlüssel jedes Clients zu prüfen, der sich nicht im lokalen Netz befindet. Mit `sv_cracked 1` schickt er die Anfrage weiterhin, akzeptiert den Client aber unabhängig von der Antwort. Die Startskripte schalten das ein; entfernen Sie es aus der Befehlszeile, wenn ein gültiger Schlüssel verlangt werden soll.
+Der Server fragt bei `cod2master.activision.com` an, um den Schlüssel jedes Clients zu prüfen, der sich nicht im lokalen Netz befindet. Mit `sv_cracked 1` schickt er die Anfrage weiterhin, akzeptiert den Client aber unabhängig von der Antwort. Die Startskripte schalten das nur im LAN-Modus ein; im Internet-Modus wird ein gültiger Schlüssel verlangt, außer `server.cfg` schaltet es ein.
 
 ### Linux
 

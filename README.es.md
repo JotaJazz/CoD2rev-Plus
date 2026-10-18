@@ -95,11 +95,11 @@ El servidor necesita los archivos del juego original (la carpeta `main` con sus 
 2. Tener un `server.cfg` en `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) configura las opciones habituales y lista el resto de variables que registra el servidor con su valor por defecto (comentarios en inglés).
 3. Ejecutar `iniciar_cod2rev.bat`.
 
-El lanzador arranca el servidor en el puerto `28970`, para no chocar con el cliente del juego que usa el `28960` en el mismo PC, y carga el mapa `mp_toujane`. Por defecto arranca en modo LAN (`dedicated 1`, LAN o IP directa); ejecuta `iniciar_cod2rev.bat internet` para anunciar el servidor en la lista pública (`dedicated 2`).
+El lanzador arranca el servidor en el puerto `28960` y carga el mapa `mp_toujane`. Si el juego también corre en este PC, arranca primero el servidor: el juego también usa el `28960`, y un servidor arrancado después pasa al siguiente puerto libre. Por defecto arranca en modo LAN (`dedicated 1`, LAN o IP directa); ejecuta `iniciar_cod2rev.bat internet` para anunciar el servidor en la lista pública (`dedicated 2`). Los lanzadores fijan sus valores antes de `+exec server.cfg`, así que `server.cfg` puede cambiarlos.
 
 ### Autorización de claves
 
-El servidor consulta `cod2master.activision.com` para validar la clave de cada cliente que no esté en la red local. Con `sv_cracked 1` sigue haciendo la consulta, pero acepta al cliente sea cual sea la respuesta. Los lanzadores lo activan; quítalo de la línea de comandos si quieres que se exija una clave válida.
+El servidor consulta `cod2master.activision.com` para validar la clave de cada cliente que no esté en la red local. Con `sv_cracked 1` sigue haciendo la consulta, pero acepta al cliente sea cual sea la respuesta. Los lanzadores solo lo activan en modo LAN; en modo internet se exige una clave válida salvo que `server.cfg` lo active.
 
 ### Linux
 
