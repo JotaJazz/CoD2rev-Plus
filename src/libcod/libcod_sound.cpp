@@ -557,6 +557,15 @@ void gsc_utils_savespeexfile()
 	}
 
 	// as the other save functions: no files the server loads itself
+	// Windows drops trailing dots and spaces, which would hide the extension
+	size_t pathLen = strlen(path);
+	if (pathLen && (path[pathLen - 1] == '.' || path[pathLen - 1] == ' '))
+	{
+		stackError("gsc_utils_savespeexfile() the file name must not end in a dot or a space");
+		stackPushUndefined();
+		return;
+	}
+
 	const char *ext = strrchr(path, '.');
 	if (ext && (!Q_stricmp(ext, ".iwd") || !Q_stricmp(ext, ".cfg") || !Q_stricmp(ext, ".gsc") || !Q_stricmp(ext, ".so") || !Q_stricmp(ext, ".dll")))
 	{
