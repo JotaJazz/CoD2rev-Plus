@@ -80,6 +80,8 @@ Jeder Push auf `master`, der den Code ändert, baut beide Versionen in GitHub Ac
 | `WITH_LIBCOD` | `true` | Bindet die Skript-Erweiterungen von libcod ein (Bots, Spieler, Entitäten, Waffen, Hilfsfunktionen usw.). |
 | `WITH_SQLITE` | `true` | Skriptfunktionen für SQLite. |
 | `WITH_MYSQL` | `false` | Skriptfunktionen für MySQL. Benötigt die MySQL-Client-Bibliothek. |
+| `WITH_SPEEX` | `true` | `loadSoundFile`, `playSoundFile` und die übrigen Soundfunktionen, mit Speex (`src/libcod/speex`). |
+| `WITH_HTTP` | `true` | `httpFetch` und `webSocket*`, mit Mbed TLS (`src/libcod/mbedtls`) für `https://` und `wss://`. |
 
 `make clean` löscht die Binärdatei und die Objekte.
 

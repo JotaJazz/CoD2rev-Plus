@@ -7,6 +7,10 @@ PROTOCOL=115
 
 CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
 LFLAGS=-no-pie
+# Cheap protection against buffer overflows. The reversed code casts between
+# types and relies on signed overflow wrapping, which -fno-strict-aliasing and
+# -fwrapv keep safe if the optimization level is ever raised.
+CFLAGS+=-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-strict-aliasing -fwrapv
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
@@ -18,6 +22,8 @@ LFLAGS+=-m32
 # on file systems with large inode numbers (Windows drives under WSL, big XFS volumes).
 CFLAGS+=-D_FILE_OFFSET_BITS=64
 LLIBS=-lm -lpthread -lstdc++ -ldl
+# Read-only relocations, so an overflow cannot redirect calls through the GOT.
+LFLAGS+=-Wl,-z,relro,-z,now
 endif
 
 # Setup binary names.

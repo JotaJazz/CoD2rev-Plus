@@ -80,6 +80,8 @@ make
 | `WITH_LIBCOD` | `true` | Включает скриптовые расширения libcod (боты, игроки, сущности, оружие, утилиты и т. д.). |
 | `WITH_SQLITE` | `true` | Скриптовые функции для SQLite. |
 | `WITH_MYSQL` | `false` | Скриптовые функции для MySQL. Требуется клиентская библиотека MySQL. |
+| `WITH_SPEEX` | `true` | `loadSoundFile`, `playSoundFile` и остальные звуковые функции, на Speex (`src/libcod/speex`). |
+| `WITH_HTTP` | `true` | `httpFetch` и `webSocket*`, на Mbed TLS (`src/libcod/mbedtls`) для `https://` и `wss://`. |
 
 `make clean` удаляет бинарный файл и объектные файлы.
 

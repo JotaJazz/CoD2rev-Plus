@@ -80,6 +80,8 @@ Every push to `master` that changes the code builds both versions on GitHub Acti
 | `WITH_LIBCOD` | `true` | Includes the libcod script extensions (bots, players, entities, weapons, utilities, etc.). |
 | `WITH_SQLITE` | `true` | Script functions for SQLite. |
 | `WITH_MYSQL` | `false` | Script functions for MySQL. Requires the MySQL client library. |
+| `WITH_SPEEX` | `true` | `loadSoundFile`, `playSoundFile` and the other sound functions, with Speex (`src/libcod/speex`). |
+| `WITH_HTTP` | `true` | `httpFetch` and `webSocket*`, with Mbed TLS (`src/libcod/mbedtls`) for `https://` and `wss://`. |
 
 `make clean` removes the binary and the objects.
 

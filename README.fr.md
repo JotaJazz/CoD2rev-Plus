@@ -80,6 +80,8 @@ Chaque push sur `master` qui modifie le code compile les deux versions dans GitH
 | `WITH_LIBCOD` | `true` | Inclut les extensions de script de libcod (bots, joueurs, entités, armes, utilitaires, etc.). |
 | `WITH_SQLITE` | `true` | Fonctions de script pour SQLite. |
 | `WITH_MYSQL` | `false` | Fonctions de script pour MySQL. Nécessite la bibliothèque cliente MySQL. |
+| `WITH_SPEEX` | `true` | `loadSoundFile`, `playSoundFile` et les autres fonctions de son, avec Speex (`src/libcod/speex`). |
+| `WITH_HTTP` | `true` | `httpFetch` et `webSocket*`, avec Mbed TLS (`src/libcod/mbedtls`) pour `https://` et `wss://`. |
 
 `make clean` supprime le binaire et les objets.
 
