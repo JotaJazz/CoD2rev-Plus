@@ -7,7 +7,9 @@ Besides the queries, a minimal client (cod2client.py) connects, receives the
 gamestate, enters the game and sends commands, one of them in a fragmented
 message. The game folder is only read: logs and configs go to a temporary home
 folder. The server runs in LAN mode (dedicated 1), so nothing is sent to the
-master servers. Exits with 0 when every check passes.
+master servers; a second run in internet mode (dedicated 2) heartbeats to a fake
+master on 127.0.0.1 instead of the real ones. Exits with 0 when every check
+passes.
 """
 import argparse, os, random, re, secrets, signal, socket, string, subprocess, sys, tempfile, time, zipfile
 
@@ -185,6 +187,122 @@ def check_client(port, protocol, password, game_log, check):
     rcon(port, password, 'removeip 127.0.*.*')
 
 
+class FakeMaster:
+    """A UDP socket on 127.0.0.1 standing in for a master server: it keeps
+    what the server sends and can query the server from the master's port."""
+
+    def __init__(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('127.0.0.1', 0))
+        self.port = self.sock.getsockname()[1]
+        self.packets = []
+
+    def receive(self, condition, seconds):
+        """Waits until a packet from the server satisfies condition(text) and returns it."""
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            self.sock.settimeout(max(0.05, deadline - time.time()))
+            try:
+                data, addr = self.sock.recvfrom(65535)
+            except OSError:
+                continue
+            if not data.startswith(PREFIX):
+                continue
+            text = data[len(PREFIX):].decode('latin-1')
+            self.packets.append((addr, text))
+            if condition(text):
+                return addr, text
+        return None
+
+    def send(self, port, command):
+        self.sock.sendto(PREFIX + command.encode(), ('127.0.0.1', port))
+
+    def close(self):
+        self.sock.close()
+
+
+def check_master(args, check):
+    """Internet mode (dedicated 2) against a fake master on 127.0.0.1: the
+    heartbeats, the status sent on its own, the replies to the master's
+    queries and the flatline on quit. The real masters and the authorize
+    server are left empty or pointed at an unused local port, so nothing
+    leaves the machine."""
+    port = free_port()
+    password = secrets.token_hex(8)
+    master = FakeMaster()
+    unused = free_port()
+    hostname = 'cod2rev master test'
+    server = None
+    with tempfile.TemporaryDirectory(prefix='cod2rev_master_') as home:
+        log_path = os.path.join(home, 'server.log')
+        try:
+            with open(log_path, 'wb') as log:
+                server = subprocess.Popen(
+                    [args.binary,
+                     '+set', 'fs_basepath', os.path.abspath(args.game_dir),
+                     '+set', 'fs_homepath', home,
+                     '+set', 'dedicated', '2',
+                     '+set', 'net_port', str(port),
+                     '+set', 'sv_hostname', hostname,
+                     '+set', 'rcon_password', password,
+                     '+set', 'sv_master1', f'127.0.0.1:{master.port}',
+                     '+set', 'sv_master2', '',
+                     '+set', 'sv_master3', '',
+                     '+set', 'sv_master4', '',
+                     '+set', 'sv_master5', '',
+                     '+set', 'sv_authorizeServer', '127.0.0.1',
+                     '+set', 'sv_authorizePort', str(unused),
+                     '+set', 'g_gametype', 'tdm',
+                     '+map', args.map],
+                    stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+
+            beat = master.receive(lambda t: t.startswith('heartbeat '), args.timeout)
+            check('heartbeat sent to sv_master1 (host:port)', beat is not None and beat[1] == 'heartbeat COD-2\n',
+                  repr(beat[1]) if beat else 'nothing received')
+            if not beat:
+                return
+            server_addr = beat[0]
+            check('heartbeat comes from net_port', server_addr[1] == port, f'from port {server_addr[1]}')
+
+            status = master.receive(lambda t: t.startswith('statusResponse'), 10)
+            check('status sent to the master on its own', status is not None and f'\\mapname\\{args.map}' in status[1])
+
+            master.send(port, 'getinfo mastercheck')
+            info = master.receive(lambda t: t.startswith('infoResponse'), 5)
+            check('master getinfo reply', info is not None and '\\challenge\\mastercheck' in info[1]
+                  and f'\\hostname\\{hostname}' in info[1])
+
+            master.send(port, 'getstatus mastercheck')
+            status = master.receive(lambda t: t.startswith('statusResponse') and 'mastercheck' in t, 5)
+            check('master getstatus reply', status is not None and '\\sv_maxclients\\' in status[1])
+
+            # "heartbeat" sends one at once instead of after HEARTBEAT_MSEC
+            rcon(port, password, 'heartbeat')
+            check('heartbeat command sends one now', master.receive(lambda t: t.startswith('heartbeat '), 5) is not None)
+
+            rcon(port, password, 'quit')
+            flat = master.receive(lambda t: t.startswith('heartbeat '), 10)
+            check('flatline heartbeat on quit', flat is not None and flat[1] == 'heartbeat flatline\n',
+                  repr(flat[1]) if flat else 'nothing received')
+            try:
+                server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                pass
+            check('server quit', server.poll() is not None)
+
+            log_text = open(log_path, encoding='latin-1').read()
+            others = sorted(set(re.findall(r'Sending heartbeat to (\S+)', log_text)) - {f'127.0.0.1:{master.port}'})
+            check('no heartbeat to any other master', not others, ', '.join(others))
+        finally:
+            master.close()
+            if server and server.poll() is None:
+                server.terminate()
+                try:
+                    server.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    server.kill()
+
+
 def check_console_log(path, check):
     """logfileName, logfileRotate and logTimestamps: the previous log is kept
     as .1, and every line of the new one starts with the date and time."""
@@ -316,6 +434,8 @@ def main():
                     server.wait(timeout=10)
                 except subprocess.TimeoutExpired:
                     server.kill()
+
+    check_master(args, check)
 
     print('\n' + ('FAILED: ' + ', '.join(failures) if failures else 'All checks passed'))
     return 1 if failures else 0
