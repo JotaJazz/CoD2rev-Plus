@@ -49,6 +49,21 @@ typedef int net_socket_t;
 #define NET_WAIT_SLICE 100
 #define NET_WS_MAX_FRAME (1024 * 1024)
 #define NET_WS_MAX_HANDSHAKE 16384
+#define NET_CA_RELOAD 3600000
+
+// A parsed CA list, shared by the connections that trust it. It is only read
+// once published in net_ca, so the handshakes of several workers can use it.
+struct NetCaList
+{
+	mbedtls_x509_crt crt;
+	std::string file;   // sv_httpCaFile, empty for the system's list
+	int64_t loaded;
+	int refs;           // net_ca_mutex
+};
+
+static pthread_mutex_t net_ca_mutex = PTHREAD_MUTEX_INITIALIZER;
+// net_ca_mutex: the latest list, which holds a reference of its own
+static NetCaList *net_ca;
 
 struct NetConn
 {
@@ -57,7 +72,7 @@ struct NetConn
 	const volatile int *cancel;
 	mbedtls_ssl_context ssl;
 	mbedtls_ssl_config conf;
-	mbedtls_x509_crt ca;
+	NetCaList *ca;
 	mbedtls_entropy_context entropy;
 	mbedtls_ctr_drbg_context drbg;
 };
@@ -295,6 +310,75 @@ static void Net_LoadSystemCAs(mbedtls_x509_crt *ca)
 #endif
 }
 
+static void Net_ReleaseCa(NetCaList *ca)
+{
+	if ( !ca )
+		return;
+
+	pthread_mutex_lock(&net_ca_mutex);
+	bool last = --ca->refs == 0;
+	pthread_mutex_unlock(&net_ca_mutex);
+
+	if ( last )
+	{
+		mbedtls_x509_crt_free(&ca->crt);
+		delete ca;
+	}
+}
+
+// the list for file, parsed again when sv_httpCaFile changes or after an hour
+static NetCaList *Net_AcquireCa(const std::string &file, std::string *error)
+{
+	int64_t now = NetHttp_Milliseconds();
+	NetCaList *ca;
+
+	pthread_mutex_lock(&net_ca_mutex);
+	ca = net_ca;
+	if ( ca && ca->file == file && now - ca->loaded < NET_CA_RELOAD )
+	{
+		ca->refs++;
+		pthread_mutex_unlock(&net_ca_mutex);
+		return ca;
+	}
+	pthread_mutex_unlock(&net_ca_mutex);
+
+	// parsed outside the lock; when two workers both parse, the later list is kept
+	ca = new NetCaList;
+	mbedtls_x509_crt_init(&ca->crt);
+	ca->file = file;
+	ca->loaded = now;
+	ca->refs = 1;
+
+	if ( !file.empty() )
+	{
+		if ( mbedtls_x509_crt_parse_file(&ca->crt, file.c_str()) < 0 )
+		{
+			*error = "TLS: cannot read the CA file in sv_httpCaFile";
+			Net_ReleaseCa(ca);
+			return NULL;
+		}
+	}
+	else
+		Net_LoadSystemCAs(&ca->crt);
+
+	// an empty chain has version 0
+	if ( ca->crt.version == 0 )
+	{
+		*error = "TLS: no CA certificates found, set sv_httpCaFile";
+		Net_ReleaseCa(ca);
+		return NULL;
+	}
+
+	pthread_mutex_lock(&net_ca_mutex);
+	NetCaList *old = net_ca;
+	net_ca = ca;
+	ca->refs++;
+	pthread_mutex_unlock(&net_ca_mutex);
+
+	Net_ReleaseCa(old);
+	return ca;
+}
+
 static void Net_Close(NetConn *c)
 {
 	if ( !c )
@@ -304,10 +388,11 @@ static void Net_Close(NetConn *c)
 	{
 		mbedtls_ssl_free(&c->ssl);
 		mbedtls_ssl_config_free(&c->conf);
-		mbedtls_x509_crt_free(&c->ca);
 		mbedtls_ctr_drbg_free(&c->drbg);
 		mbedtls_entropy_free(&c->entropy);
 	}
+	// after the configuration that points to it
+	Net_ReleaseCa(c->ca);
 	if ( c->fd != NET_INVALID_SOCKET )
 		net_closesocket(c->fd);
 	delete c;
@@ -321,7 +406,6 @@ static bool Net_StartTls(NetConn *c, const NetUrl *url, const NetTlsOptions *tls
 	c->tls = true;
 	mbedtls_ssl_init(&c->ssl);
 	mbedtls_ssl_config_init(&c->conf);
-	mbedtls_x509_crt_init(&c->ca);
 	mbedtls_entropy_init(&c->entropy);
 	mbedtls_ctr_drbg_init(&c->drbg);
 
@@ -341,26 +425,12 @@ static bool Net_StartTls(NetConn *c, const NetUrl *url, const NetTlsOptions *tls
 		mbedtls_ssl_conf_authmode(&c->conf, MBEDTLS_SSL_VERIFY_NONE);
 	else
 	{
-		if ( !tls->caFile.empty() )
-		{
-			if ( mbedtls_x509_crt_parse_file(&c->ca, tls->caFile.c_str()) < 0 )
-			{
-				*error = "TLS: cannot read the CA file in sv_httpCaFile";
-				return false;
-			}
-		}
-		else
-			Net_LoadSystemCAs(&c->ca);
-
-		// an empty chain has version 0
-		if ( c->ca.version == 0 )
-		{
-			*error = "TLS: no CA certificates found, set sv_httpCaFile";
+		c->ca = Net_AcquireCa(tls->caFile, error);
+		if ( !c->ca )
 			return false;
-		}
 
 		mbedtls_ssl_conf_authmode(&c->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
-		mbedtls_ssl_conf_ca_chain(&c->conf, &c->ca, NULL);
+		mbedtls_ssl_conf_ca_chain(&c->conf, &c->ca->crt, NULL);
 	}
 
 	mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->drbg);
@@ -419,6 +489,7 @@ static NetConn *Net_Open(const NetUrl *url, const NetTlsOptions *tls, int64_t de
 	NetConn *c = new NetConn;
 	c->fd = NET_INVALID_SOCKET;
 	c->tls = false;
+	c->ca = NULL;
 	c->cancel = cancel;
 
 	// the connection and the TLS handshake each have at most NET_CONNECT_TIMEOUT
