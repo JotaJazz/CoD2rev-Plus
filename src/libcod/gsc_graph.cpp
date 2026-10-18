@@ -2730,6 +2730,16 @@ void gsc_graph_save()
 		return;
 	}
 
+	// Windows drops a trailing '.' or ' ' from a file name and reads "name:stream"
+	// as an NTFS stream, so "x.cfg." or "x.cfg:a" would get past the extension check
+	size_t pathLen = strlen(path);
+	if ( !pathLen || path[pathLen - 1] == '.' || path[pathLen - 1] == ' ' || strchr(path, ':') )
+	{
+		stackError("gsc_graph_save() refuses the path '%s'", path);
+		stackPushBool(qfalse);
+		return;
+	}
+
 	// the file is written under fs_homepath/<mod>; don't let it replace files
 	// the server loads from there
 	const char *ext = strrchr(path, '.');
@@ -2838,8 +2848,9 @@ void gsc_graph_save()
 /*
  * graphLoad(<relative path>, [persist]) -> new graph id, or undefined. Reads a
  * G2G1 file through the engine FS and validates magic, version, node cap, exact
- * file size, crc32 and every edge id before building anything - on any failure
- * it returns undefined and creates no graph (never a partial load).
+ * file size, crc32 and every origin, edge id and edge cost before building
+ * anything - on any failure it returns undefined and creates no graph (never a
+ * partial load).
  */
 void gsc_graph_load()
 {
@@ -3023,6 +3034,17 @@ void gsc_graph_load()
 		memcpy(&removed, p, 4);
 		p += 4;
 		node.removed = removed != 0;
+
+		// The crc only proves the file is intact, not that a script or tool
+		// wrote sane values: a NaN or infinite origin breaks every distance
+		if ( !( fabsf(node.origin[0]) < FLT_MAX ) || !( fabsf(node.origin[1]) < FLT_MAX ) || !( fabsf(node.origin[2]) < FLT_MAX ) )
+		{
+			free(buffer);
+			stackError("gsc_graph_load() '%s' node %u has a non-finite origin - load aborted", path, i);
+			stackPushUndefined();
+			return;
+		}
+
 		graph.nodes.push_back(node);
 	}
 
@@ -3056,6 +3078,16 @@ void gsc_graph_load()
 		{
 			free(buffer);
 			stackError("gsc_graph_load() '%s' edge %u touches a removed node - load aborted", path, e);
+			stackPushUndefined();
+			return;
+		}
+
+		// A* and the precompute take FLT_MAX as unreached, and a negative or NaN
+		// cost breaks their ordering
+		if ( !( cost >= 0 && cost < FLT_MAX ) )
+		{
+			free(buffer);
+			stackError("gsc_graph_load() '%s' edge %u has an invalid cost - load aborted", path, e);
 			stackPushUndefined();
 			return;
 		}
