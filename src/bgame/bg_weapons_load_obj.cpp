@@ -508,7 +508,7 @@ void BG_LoadPlayerAnimTypes()
 
 	if ( len < 0 )
 	{
-		Com_Error(ERR_DROP, "Couldn't load file ", globalTypesFilename);
+		Com_Error(ERR_DROP, "Couldn't load file %s", globalTypesFilename);
 	}
 
 	if ( len >= sizeof(buf) )

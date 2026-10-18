@@ -109,14 +109,14 @@ int ClientNumberFromString( gentity_t *to, char *s )
 		idnum = atoi( s );
 		if ( idnum < 0 || idnum >= level.maxclients )
 		{
-			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_BADCLIENTSLOT\"", 101, idnum));
+			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_BADCLIENTSLOT\"", 101));
 			return -1;
 		}
 
 		cl = &level.clients[idnum];
 		if ( cl->sess.connected != CON_CONNECTED )
 		{
-			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CLIENTNOTACTIVE\"", 101, idnum));
+			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CLIENTNOTACTIVE\"", 101));
 			return -1;
 		}
 		return idnum;
@@ -137,7 +137,7 @@ int ClientNumberFromString( gentity_t *to, char *s )
 		}
 	}
 
-	SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USERNOTONSERVER\"", 101, s));
+	SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USERNOTONSERVER\"", 101));
 	return -1;
 }
 

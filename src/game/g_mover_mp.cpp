@@ -412,7 +412,7 @@ void trigger_use_shared( gentity_t *self )
 
 		if ( i == MAX_HINTSTRINGS )
 		{
-			Com_Error(ERR_DROP, "Too many different hintstring key values on trigger_use entities.", MAX_HINTSTRINGS);
+			Com_Error(ERR_DROP, "Too many different hintstring key values on trigger_use entities (max %i).", MAX_HINTSTRINGS);
 		}
 	}
 }
