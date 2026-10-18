@@ -570,6 +570,13 @@ void Sys_InstallCrashHandler( void )
   // the first backtrace loads libgcc, which must not happen inside the handler
   backtrace( &frame, 1 );
 
+  // nor may the time zone be read there: that allocates, and a crash in
+  // malloc holds its lock
+  time_t now = time( NULL );
+  struct tm tm;
+  tzset();
+  localtime_r( &now, &tm );
+
   // a stack overflow leaves no room for the handler on the normal stack
   stack.ss_sp = altStack;
   stack.ss_size = sizeof( altStack );

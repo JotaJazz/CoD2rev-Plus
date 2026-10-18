@@ -1973,8 +1973,10 @@ static void SV_ApplyLibcodEntityState( int clientNum, entityState_t *es )
 	for ( int i = 0; i < MAX_EVENTS; i++ )
 	{
 		int target = libcodEntities[es->number].fxOnTag[i].target;
+		// an archived state for the killcam can be older than the effect
+		unsigned int age = es->eventSequence - libcodEntities[es->number].fxOnTag[i].sequence;
 
-		if ( target && target - 1 != clientNum && es->eventSequence - libcodEntities[es->number].fxOnTag[i].sequence <= MAX_EVENTS
+		if ( target && target - 1 != clientNum && age >= 1 && age <= MAX_EVENTS
 		        && es->events[i] == EV_PLAY_FX_ON_TAG )
 		{
 			es->events[i] = EV_NONE;

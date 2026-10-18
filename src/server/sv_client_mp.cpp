@@ -1144,37 +1144,42 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	{
 		return; // The client acked and is downloading with ftp/http
 	}
-	// CVE-2006-2082
-	// validate the download against the list of iwd files
-	if ( !FS_VerifyIwd( cl->downloadName ) )
+	// An open file passed these checks already, they are not redone for
+	// every block
+	if ( !cl->download )
 	{
-		// will drop the client and leave it hanging on the other side. good for him
-		SV_DropClient( cl, "illegal download request" );
-		return;
-	}
+		// CVE-2006-2082
+		// validate the download against the list of iwd files
+		if ( !FS_VerifyIwd( cl->downloadName ) )
+		{
+			// will drop the client and leave it hanging on the other side. good for him
+			SV_DropClient( cl, "illegal download request" );
+			return;
+		}
 
-	// The stock iwds are never sent, and neither are the _svr_ ones, which hold
-	// what only the server should have. FS_iwIwd takes the name without the
-	// extension; with it, it never matched and every stock iwd could be fetched.
-	// Checked before the www redirect so it applies there too.
-	I_strncpyz(downloadBase, cl->downloadName, sizeof(downloadBase));
-	ext = strrchr(downloadBase, '.');
-	if ( ext && !I_stricmp(ext, ".iwd") )
-	{
-		*ext = 0;
-	}
-	I_strlwr(downloadBase);
+		// The stock iwds are never sent, and neither are the _svr_ ones, which hold
+		// what only the server should have. FS_iwIwd takes the name without the
+		// extension; with it, it never matched and every stock iwd could be fetched.
+		// Checked before the www redirect so it applies there too.
+		I_strncpyz(downloadBase, cl->downloadName, sizeof(downloadBase));
+		ext = strrchr(downloadBase, '.');
+		if ( ext && !I_stricmp(ext, ".iwd") )
+		{
+			*ext = 0;
+		}
+		I_strlwr(downloadBase);
 
-	if ( FS_iwIwd(downloadBase, BASEGAME) || strstr(downloadBase, "_svr_") )
-	{
-		Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
-		Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
-		MSG_WriteByte( msg, svc_download );
-		MSG_WriteShort( msg, 0 ); // client is expecting block zero
-		MSG_WriteLong( msg, -1 ); // illegal file size
-		MSG_WriteString( msg, errorMessage );
-		*cl->downloadName = 0;
-		return;
+		if ( FS_iwIwd(downloadBase, BASEGAME) || strstr(downloadBase, "_svr_") )
+		{
+			Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
+			Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
+			MSG_WriteByte( msg, svc_download );
+			MSG_WriteShort( msg, 0 ); // client is expecting block zero
+			MSG_WriteLong( msg, -1 ); // illegal file size
+			MSG_WriteString( msg, errorMessage );
+			*cl->downloadName = 0;
+			return;
+		}
 	}
 
 #ifdef LIBCOD
@@ -2360,6 +2365,12 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 	return qtrue;       // continue procesing
 }
 
+// The command itself, not a chat line that happens to contain the word
+static qboolean SV_IsNextDownloadCommand( const char *command )
+{
+	return !Q_strncmp( command, "nextdl", 6 ) && ( command[6] == ' ' || command[6] == 0 );
+}
+
 /*
 ===================
 SV_ExecuteClientMessage
@@ -2396,7 +2407,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	// don't drop as long as previous command was a nextdl, after a dl is done, downloadName is set back to ""
 	// but we still need to read the next message to move to next download or send gamestate
 	// I don't like this hack though, it must have been working fine at some point, suspecting the fix is somewhere else
-	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !strstr(cl->lastClientCommandString, "nextdl")
+	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !SV_IsNextDownloadCommand(cl->lastClientCommandString)
 	        && !cl->downloadingWWW && !cl->clientDownloadingWWW )
 	{
 		if ( (cl->serverId & 0xF0) == (sv_serverId_value & 0xF0) )   // TTimo - use a comparison here to catch multiple map_restart

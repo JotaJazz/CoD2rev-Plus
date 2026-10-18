@@ -66,8 +66,12 @@ int Sys_Milliseconds (void)
 	// showed up as a frame hitch, so measure game time with the monotonic clock.
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 
-	if (!sys_timeBase)
+	// the monotonic clock can start at 0 seconds, so 0 can't mean unset
+	static qboolean initialized = qfalse;
+
+	if (!initialized)
 	{
+		initialized = qtrue;
 		sys_timeBase = ts.tv_sec;
 		return ts.tv_nsec/1000000;
 	}
