@@ -42,7 +42,7 @@ SV_MapExists
 qboolean SV_MapExists( const char *name )
 {
 	// a longer name can exceed the os path length, which is a fatal error
-	if ( strlen(name) > MAX_QPATH )
+	if ( strlen(name) >= MAX_QPATH )
 	{
 		Com_Printf("SV_MapExists: map name is too long\n");
 		return qfalse;

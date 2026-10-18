@@ -1003,7 +1003,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 
 		SV_Cmd_ArgvBuffer(3, arg3, sizeof(arg3));
 
-		if ( strlen(arg3) > MAX_QPATH )
+		if ( strlen(arg3) >= MAX_QPATH )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;
@@ -1072,7 +1072,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 	{
 		// special case for map changes, we want to reset the nextmap setting
 		// this allows a player to change maps, but not upset the map rotation
-		if ( strlen(arg2) > MAX_QPATH )
+		if ( strlen(arg2) >= MAX_QPATH )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;

@@ -2690,6 +2690,9 @@ char *FS_GetMapBaseName(const char *mapname)
 		}
 	}
 
+	if ( len >= sizeof(basename) )
+		len = sizeof(basename) - 1;
+
 	Com_Memcpy(basename, (char *)mapname, len);
 	basename[len] = 0;
 
