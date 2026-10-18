@@ -235,16 +235,37 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 		return;
 	}
 	int i;
+	MYSQL **connections = new MYSQL *[connection_count];
+	// connect them all first: the workers must never get a failed handle
+	for(i = 0; i < connection_count; i++)
+	{
+		connections[i] = mysql_init(NULL);
+		if(connections[i] != NULL)
+		{
+			bool reconnect = true;
+			mysql_options(connections[i], MYSQL_OPT_RECONNECT, &reconnect);
+			if(mysql_real_connect(connections[i], host, user, pass, db, port, NULL, 0) != NULL)
+				continue;
+		}
+		char error[COD2_MAX_STRINGLENGTH];
+		I_strncpyz(error, connections[i] != NULL ? mysql_error(connections[i]) : "out of memory", sizeof(error));
+		for(int j = 0; j <= i; j++)
+		{
+			if(connections[j] != NULL)
+				mysql_close(connections[j]);
+		}
+		delete[] connections;
+		stackError("gsc_mysql_async_initializer() connection %d failed: %s", i, error);
+		stackPushUndefined();
+		return;
+	}
 	stackPushArray();
 	mysql_async_connection *current = first_async_connection;
 	for(i = 0; i < connection_count; i++)
 	{
 		mysql_async_connection *newconnection = new mysql_async_connection;
 		newconnection->next = NULL;
-		newconnection->connection = mysql_init(NULL);
-		newconnection->connection = mysql_real_connect((MYSQL*)newconnection->connection, host, user, pass, db, port, NULL, 0);
-		bool reconnect = true;
-		mysql_options(newconnection->connection, MYSQL_OPT_RECONNECT, &reconnect);
+		newconnection->connection = connections[i];
 		newconnection->task = NULL;
 		if(current == NULL)
 		{
@@ -262,6 +283,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 		stackPushInt64((intptr_t)newconnection->connection);
 		stackPushArrayLast();
 	}
+	delete[] connections;
 	threadid_t async_handler;
 	Sys_CreateNewThread(mysql_async_query_handler, &async_handler, NULL);
 }
@@ -299,9 +321,24 @@ void gsc_mysql_real_connect()
 		return;
 	}
 
-	mysql = (intptr_t)mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0);
+	if(mysql == 0)
+	{
+		stackError("gsc_mysql_real_connect() mysql handle is null");
+		stackPushUndefined();
+		return;
+	}
+
+	// options go before connecting, and a failed connect returns NULL
+	// rather than the handle, which has to be closed
 	bool reconnect = true;
-	mysql_options((MYSQL*)mysql, MYSQL_OPT_RECONNECT, &reconnect);
+	mysql_options((MYSQL *)mysql, MYSQL_OPT_RECONNECT, &reconnect);
+	if(mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0) == NULL)
+	{
+		Com_Printf("gsc_mysql_real_connect() failed: %s\n", mysql_error((MYSQL *)mysql));
+		mysql_close((MYSQL *)mysql);
+		stackPushInt64(0);
+		return;
+	}
 	if(cod_mysql_connection == NULL)
 		cod_mysql_connection = (MYSQL*) mysql;
 	stackPushInt64(mysql);
