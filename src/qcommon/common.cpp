@@ -29,6 +29,7 @@ dvar_t *ui_errorMessage;
 dvar_t *ui_errorTitle;
 
 static fileHandle_t logfile;
+static qboolean logfileFailed;
 static char logfileOpenName[MAX_QPATH];
 
 int com_frameTime;
@@ -777,10 +778,18 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 			logfile = 0;
 		}
 
-		if ( !logfile && !opening_qconsole)
+		// after a failed open, try again only once logfile or logfileName
+		// changes: retrying on every print would rotate the old logs every time
+		if ( logfileFailed && strcmp( logfileOpenName, Com_LogfileName() ) )
+		{
+			logfileFailed = qfalse;
+		}
+
+		if ( !logfile && !logfileFailed && !opening_qconsole )
 		{
 			struct tm *newtime;
 			time_t aclock;
+			int error;
 
 			opening_qconsole = qtrue;
 
@@ -789,8 +798,19 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 
 			I_strncpyz( logfileOpenName, Com_LogfileName(), sizeof( logfileOpenName ) );
 			FS_RotateHomeFile( logfileOpenName, com_logfileRotate->current.integer );
+			errno = 0;
 			logfile = FS_FOpenTextFileWrite( logfileOpenName );
-			Com_Printf( "logfile %s opened on %s\n", logfileOpenName, asctime( newtime ) );
+			error = errno;
+
+			if ( logfile )
+			{
+				Com_Printf( "logfile %s opened on %s\n", logfileOpenName, asctime( newtime ) );
+			}
+			else
+			{
+				logfileFailed = qtrue;
+				Com_Printf( "WARNING: couldn't open logfile %s: %s\n", logfileOpenName, error ? strerror( error ) : "unknown error" );
+			}
 
 			opening_qconsole = qfalse;
 		}
@@ -802,6 +822,11 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 			if ( com_logfile->current.integer > 1 )
 				FS_Flush(logfile);
 		}
+	}
+	else if ( !com_logfile || !com_logfile->current.integer )
+	{
+		// logfile 0: setting it again tries once more
+		logfileFailed = qfalse;
 	}
 }
 
