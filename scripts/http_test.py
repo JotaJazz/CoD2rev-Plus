@@ -55,7 +55,62 @@ main()
 	logprint("HTTPTEST start\n");
 	httpTests();
 	wsTests();
+	floodTests();
 	stale("stale1", "phase1 done");
+}
+
+floodTests()
+{
+	level.burst_count = 0;
+	level.burst_max = 0;
+	level.burst_frame = 0;
+	level.burst_time = -1;
+	id = webSocketConnect(level.ht_ws + "/burst", "", ::floodNothing, ::burstMessage, ::floodClose, ::floodError, 0, 0);
+	for(i = 0; level.burst_count < 200 && i < 200; i++)
+		wait 0.05;
+	log("burst count=" + level.burst_count + " max=" + level.burst_max);
+	webSocketClose(id);
+	wait 0.5;
+
+	level.flood_count = 0;
+	id = webSocketConnect(level.ht_ws + "/flood", "", ::floodNothing, ::floodMessage, ::floodClose, ::floodError, 0, 0);
+	wait 3;
+	log("flood count=" + level.flood_count);
+	webSocketClose(id);
+	wait 0.5;
+}
+
+floodNothing()
+{
+}
+
+floodClose(closedByRemote, fullyDisconnected)
+{
+}
+
+floodError(error)
+{
+	log("flood error " + error);
+}
+
+// counts the messages each frame delivers
+burstMessage(text)
+{
+	t = getTime();
+	if(t != level.burst_time)
+	{
+		level.burst_time = t;
+		level.burst_frame = 0;
+	}
+	level.burst_frame++;
+	if(level.burst_frame > level.burst_max)
+		level.burst_max = level.burst_frame;
+	level.burst_count++;
+}
+
+floodMessage(text)
+{
+	level.flood_count++;
 }
 
 log(text)
@@ -115,6 +170,9 @@ httpTests()
 	fetch("notfound", level.ht_http + "/404", "GET", "", "", 10);
 	fetch("redirect", level.ht_http + "/redirect", "GET", "", "", 10);
 	fetch("eof", level.ht_http + "/eof", "GET", "", "", 10);
+	raw = strTok("nulheader ctlheader manyheaders folded hexlength samelength twolengths continue endless", " ");
+	for(i = 0; i < raw.size; i++)
+		fetch(raw[i], level.ht_http + "/" + raw[i], "GET", "", "", 10);
 	fetch("head", level.ht_http + "/json", "HEAD", "", "", 10);
 	fetch("auth", "http://user:secret@" + getSubStr(level.ht_http, 7) + "/auth", "GET", "", "", 10);
 	fetch("invalid", "ftp://example.com/", "GET", "", "", 10);
@@ -367,6 +425,20 @@ class State:
 
 STATE = State()
 
+# responses written as they are, for the parser's checks
+RAW_RESPONSES = {
+    '/nulheader': b'HTTP/1.1 200 OK\r\nX-A\0b: 1\r\nX-A\0c: 2\r\nContent-Length: 2\r\n\r\nok',
+    '/ctlheader': b'HTTP/1.1 200 OK\r\nX\x01A: 1\r\nContent-Length: 2\r\n\r\nok',
+    '/manyheaders': b'HTTP/1.1 200 OK\r\n' + b''.join(b'X-H%d: %d\r\n' % (i, i) for i in range(150))
+                    + b'Content-Length: 2\r\n\r\nok',
+    '/folded': b'HTTP/1.1 200 OK\r\nX-Test: one\r\n two\r\nContent-Length: 2\r\n\r\nok',
+    '/hexlength': b'HTTP/1.1 200 OK\r\nContent-Length: 0x2\r\n\r\nok',
+    '/samelength': b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Length: 2\r\n\r\nok',
+    '/twolengths': b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Length: 1\r\n\r\nok',
+    '/continue': b'HTTP/1.1 100 Continue\r\n\r\n' * 3 + b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok',
+    '/endless': b'HTTP/1.1 100 Continue\r\n\r\n' * 20 + b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok',
+}
+
 
 class HttpHandler(http.server.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
@@ -427,6 +499,9 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                 self.reply(404, b'nope')
             elif path == '/redirect':
                 self.reply(302, b'', [('Location', '/json')])
+            elif path in RAW_RESPONSES:
+                self.wfile.write(RAW_RESPONSES[path])
+                self.close_connection = True
             elif path == '/eof':
                 self.send_response(200)
                 self.send_header('Connection', 'close')
@@ -549,6 +624,12 @@ class WsHandler(socketserver.BaseRequestHandler):
                 self.sock.sendall(ws_frame(1, b'tick%d' % i))
                 time.sleep(0.2)
             return
+        if self.path == '/burst':
+            self.sock.sendall(b''.join(ws_frame(1, b'b%d' % i) for i in range(200)))
+        elif self.path == '/flood':
+            frame = ws_frame(1, b'f' * 60000)
+            for i in range(100):
+                self.sock.sendall(frame)
 
         send = lambda op, payload, fin=True: self.sock.sendall(ws_frame(op, payload, fin))
         while True:
@@ -790,6 +871,15 @@ def main():
         expect('notfound', r'^done 404 .* body=nope$')
         expect('redirect', r'^done 302 .* loc=/json ')
         expect('eof', r'^done 200 .* body=until-close$')
+        expect('nulheader', r'^error ms=\d+ Invalid response$')
+        expect('ctlheader', r'^error ms=\d+ Invalid response$')
+        expect('manyheaders', r'^error ms=\d+ Response headers too large$')
+        expect('folded', r'^done 200 len=2 .* xt=one two .* body=ok$')
+        expect('hexlength', r'^error ms=\d+ Invalid response$')
+        expect('samelength', r'^done 200 len=2 .* body=ok$')
+        expect('twolengths', r'^error ms=\d+ Invalid response$')
+        expect('continue', r'^done 200 len=2 .* body=ok$')
+        expect('endless', r'^error ms=\d+ Too many interim responses$')
         expect('head', r'^done 200 len=0 ct=application/json')
         expect('auth', r'^done 200 .* body=Basic ' + re.escape(base64.b64encode(b'user:secret').decode()) + '$')
         expect('invalid', r'^error ms=\d+ Invalid URL$')
@@ -846,6 +936,15 @@ def main():
         check('17th websocket refused', 'cap 17 after 0' in lines
               and any('no free websocket client slots' in e for e in errors), '; '.join(errors))
         check('slot reused', events('reuse') == ['1 open', '2 close 0 1'], '; '.join(events('reuse')))
+        burst = next((l for l in lines if l.startswith('burst count=')), '')
+        m = re.match(r'burst count=(\d+) max=(\d+)$', burst)
+        check('ws burst delivered at most 64 per frame', m is not None and m.group(1) == '200'
+              and 1 <= int(m.group(2)) <= 64, burst)
+        flood = next((l for l in lines if l.startswith('flood count=')), '')
+        m = re.match(r'flood count=(\d+)$', flood)
+        check('ws flood dropped over 1 MB queued', m is not None and 0 < int(m.group(1)) < 100
+              and re.search(r'webSocket ws://[^ ]*/flood: dropped \d+ messages', console) is not None, flood)
+        check('ws flood had no errors', not [l for l in lines if l.startswith('flood error')])
 
         # map change and map_restart
         for phase, tag, since in (('phase2', 'stale1', map_changed), ('phase3', 'stale2', restarted)):
