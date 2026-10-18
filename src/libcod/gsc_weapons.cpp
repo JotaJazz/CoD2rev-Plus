@@ -20,6 +20,8 @@ void gsc_weapons_getweaponmaxammo()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -47,6 +49,8 @@ void gsc_weapons_getweaponclipsize()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -74,6 +78,8 @@ void gsc_weapons_getweapondamage()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -101,6 +107,8 @@ void gsc_weapons_getweaponmeleedamage()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -128,6 +136,8 @@ void gsc_weapons_getweaponfiretime()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -155,6 +165,8 @@ void gsc_weapons_getweaponmeleetime()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -182,6 +194,8 @@ void gsc_weapons_getweaponreloadtime()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -209,6 +223,8 @@ void gsc_weapons_getweaponreloademptytime()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -236,6 +252,8 @@ void gsc_weapons_getweaponcookable()
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("i", &id))
 	{
@@ -264,6 +282,8 @@ void gsc_weapons_setweapondamage()
 	if (stackGetParams("si", &name, &damage))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &damage))
 	{
@@ -294,6 +314,8 @@ void gsc_weapons_setweaponmaxammo()
 	if (stackGetParams("si", &name, &ammo))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &ammo))
 	{
@@ -324,6 +346,8 @@ void gsc_weapons_setweaponclipsize()
 	if (stackGetParams("si", &name, &clipSize))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &clipSize))
 	{
@@ -354,6 +378,8 @@ void gsc_weapons_setweaponmeleedamage()
 	if (stackGetParams("si", &name, &damage))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &damage))
 	{
@@ -384,6 +410,8 @@ void gsc_weapons_setweaponfiretime()
 	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
@@ -414,6 +442,8 @@ void gsc_weapons_setweaponmeleetime()
 	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
@@ -444,6 +474,8 @@ void gsc_weapons_setweaponreloadtime()
 	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
@@ -474,6 +506,8 @@ void gsc_weapons_setweaponreloademptytime()
 	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
@@ -500,11 +534,12 @@ void gsc_weapons_setweaponcookable()
 	int id;
 	const char *name;
 	int cookable;
-	int iTime;
 
-	if (stackGetParams("si", &name, &iTime))
+	if (stackGetParams("si", &name, &cookable))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("ii", &id, &cookable))
 	{
@@ -529,7 +564,7 @@ void gsc_weapons_setweaponcookable()
 const char *hitlocs[] = { "none", "helmet", "head", "neck", "torso_upper", "torso_lower", "right_arm_upper", "right_arm_lower", "right_hand", "left_arm_upper", "left_arm_lower", "left_hand", "right_leg_upper", "right_leg_lower", "right_foot", "left_leg_upper", "left_leg_lower", "left_foot", "gun" };
 int getHitLocOffset(const char *hitloc)
 {
-	int offset = 0;
+	int offset = -1;
 
 	for (int i = 0; i < int( sizeof(hitlocs) / sizeof(hitlocs[0]) ); i++)
 	{
@@ -552,6 +587,8 @@ void gsc_weapons_getweaponhitlocmultiplier()
 	if (stackGetParams("ss", &name, &hitloc))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("is", &id, &hitloc))
 	{
@@ -569,6 +606,12 @@ void gsc_weapons_getweaponhitlocmultiplier()
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
 	int offset = getHitLocOffset(hitloc);
+	if (offset < 0)
+	{
+		stackError("gsc_weapons_getweaponhitlocmultiplier() unknown hit location '%s'", hitloc);
+		stackPushUndefined();
+		return;
+	}
 
 	stackPushFloat(weapon->locationDamageMultipliers[offset]);
 }
@@ -583,6 +626,8 @@ void gsc_weapons_setweaponhitlocmultiplier()
 	if (stackGetParams("ssf", &name, &hitloc, &multiplier))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if ( ! stackGetParams("isf", &id, &hitloc, &multiplier))
 	{
@@ -600,6 +645,12 @@ void gsc_weapons_setweaponhitlocmultiplier()
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
 	int offset = getHitLocOffset(hitloc);
+	if (offset < 0)
+	{
+		stackError("gsc_weapons_setweaponhitlocmultiplier() unknown hit location '%s'", hitloc);
+		stackPushUndefined();
+		return;
+	}
 
 	weapon->locationDamageMultipliers[offset] = multiplier;
 	stackPushBool(qtrue);
@@ -631,6 +682,8 @@ static WeaponDef *gsc_weapons_getdef(const char *function)
 	if (stackGetParams("s", &name))
 	{
 		id = BG_FindWeaponIndexForName(name);
+		if (!id)
+			id = -1; // unknown name, not weapon "none"
 	}
 	else if (!stackGetParams("i", &id))
 	{

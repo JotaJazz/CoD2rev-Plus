@@ -17,6 +17,7 @@ void gsc_entity_getweaponitemclipammo(scr_entref_t id);
 void gsc_entity_setweaponitemclipammo(scr_entref_t id);
 void gsc_entity_getitemquantity(scr_entref_t id);
 void gsc_entity_setitemquantity(scr_entref_t id);
+void gsc_entity_restoreitemquantities();
 void gsc_entity_gettagorigin(scr_entref_t id);
 void gsc_entity_gettagangles(scr_entref_t id);
 void gsc_entity_hastag(scr_entref_t id);

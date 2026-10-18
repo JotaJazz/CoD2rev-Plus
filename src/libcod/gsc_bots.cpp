@@ -13,7 +13,7 @@ void gsc_bots_set_walkdir(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_set_walkdir() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -66,7 +66,7 @@ void gsc_bots_set_lean(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_set_lean() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -87,9 +87,9 @@ void gsc_bots_set_lean(scr_entref_t id)
 	if (strcmp(lean, "none") == 0)
 		bot_buttons[id.entnum] &= ~(BUTTON_LEANLEFT | BUTTON_LEANRIGHT);
 	else if (strcmp(lean, "left") == 0)
-		bot_buttons[id.entnum] |= BUTTON_LEANLEFT;
+		bot_buttons[id.entnum] = (bot_buttons[id.entnum] & ~BUTTON_LEANRIGHT) | BUTTON_LEANLEFT;
 	else if (strcmp(lean, "right") == 0)
-		bot_buttons[id.entnum] |= BUTTON_LEANRIGHT;
+		bot_buttons[id.entnum] = (bot_buttons[id.entnum] & ~BUTTON_LEANLEFT) | BUTTON_LEANRIGHT;
 	else
 	{
 		stackError("gsc_bots_set_lean() invalid argument '%s'. Valid arguments are: 'right' 'left'", lean);
@@ -111,7 +111,7 @@ void gsc_bots_set_stance(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_set_stance() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -132,9 +132,9 @@ void gsc_bots_set_stance(scr_entref_t id)
 	if (strcmp(stance, "stand") == 0)
 		bot_buttons[id.entnum] &= ~(BUTTON_CROUCH | BUTTON_PRONE | BUTTON_JUMP);
 	else if (strcmp(stance, "crouch") == 0)
-		bot_buttons[id.entnum] |= BUTTON_CROUCH;
+		bot_buttons[id.entnum] = (bot_buttons[id.entnum] & ~BUTTON_PRONE) | BUTTON_CROUCH;
 	else if (strcmp(stance, "prone") == 0)
-		bot_buttons[id.entnum] |= BUTTON_PRONE;
+		bot_buttons[id.entnum] = (bot_buttons[id.entnum] & ~BUTTON_CROUCH) | BUTTON_PRONE;
 	else if (strcmp(stance, "jump") == 0)
 		bot_buttons[id.entnum] |= BUTTON_JUMP;
 	else
@@ -158,7 +158,7 @@ void gsc_bots_thrownade(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_thrownade() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -195,7 +195,7 @@ void gsc_bots_fireweapon(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_fireweapon() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -232,7 +232,7 @@ void gsc_bots_meleeweapon(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_meleeweapon() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -269,7 +269,7 @@ void gsc_bots_reloadweapon(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_reloadweapon() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -306,7 +306,7 @@ void gsc_bots_adsaim(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_adsaim() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -343,7 +343,7 @@ void gsc_bots_switchtoweaponid(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_bots_switchtoweaponid() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -379,7 +379,7 @@ static void gsc_bots_set_button(scr_entref_t id, const char *name, int button)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	if (id.classnum != CLASS_NUM_ENTITY || id.entnum >= MAX_CLIENTS)
 	{
 		stackError("%s() entity %i is not a player", name, id.entnum);
 		stackPushUndefined();

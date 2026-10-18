@@ -145,6 +145,9 @@ void InitLibcodCallbacks()
 		buttonCallbacks[i].handle = GScr_LoadScriptAndLabel("maps/mp/gametypes/_callbacksetup", buttonCallbacks[i].name, 0);
 
 	Libcod_ClearDroppingBullets();
+#if LIBCOD_COMPILE_ENTITY == 1
+	gsc_entity_restoreitemquantities();
+#endif
 
 	// objective indexes belong to the map
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -719,6 +722,10 @@ void Libcod_ResetClient(int clientNum)
 		libcodEntities[i].notSolidMask[word] &= ~bit;
 	}
 
+	// nor is the next player muted by those who muted the old one
+	for (int i = 0; svs.clients && i < sv_maxclients->current.integer; i++)
+		svs.clients[i].muteList[clientNum] = false;
+
 	memset(client, 0, sizeof(*client));
 	client->generation = generation + 1;
 	client->bulletDrag = 0.01f;
@@ -769,6 +776,11 @@ void SV_BotUserMove_libcod(client_t *client)
 		ucmd.weapon = (byte)(bot_weapon[num] & 0xFF);
 	else
 		ucmd.weapon = (byte)(ps->weapon & 0xFF);
+
+	// as SV_UserMove does for real clients
+	if (!BG_IsWeaponValid(ps, ucmd.weapon))
+		ucmd.weapon = ps->weapon;
+	ucmd.offHandIndex = ps->offHandIndex;
 
 	if (ent->client == NULL)
 		return;

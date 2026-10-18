@@ -13,7 +13,7 @@ void gsc_entity_setalive(scr_entref_t id)
 		return;
 	}
 
-	gentity_t *entity = &g_entities[id.entnum];
+	gentity_t *entity = GetEntity(id);
 
 	entity->takedamage = isAlive;
 	stackPushBool(qtrue);
@@ -30,7 +30,7 @@ void gsc_entity_setbounds(scr_entref_t id)
 		return;
 	}
 
-	gentity_t *entity = &g_entities[id.entnum];
+	gentity_t *entity = GetEntity(id);
 
 	vec3_t mins = {-height, -width, -width};
 	vec3_t maxs = {width, width, height};
@@ -243,6 +243,19 @@ void gsc_entity_getitemquantity(scr_entref_t id)
 		stackPushInt(item->quantity);
 }
 
+// bg_itemlist outlives the map, so the stock quantities are restored on the
+// next level load
+static int *itemQuantities;
+
+void gsc_entity_restoreitemquantities()
+{
+	if (!itemQuantities)
+		return;
+
+	for (int i = 0; i <= bg_numItems; i++)
+		bg_itemlist[i].quantity = itemQuantities[i];
+}
+
 void gsc_entity_setitemquantity(scr_entref_t id)
 {
 	int quantity;
@@ -257,6 +270,12 @@ void gsc_entity_setitemquantity(scr_entref_t id)
 	const gitem_t *item = gsc_entity_getitem(id, "gsc_entity_setitemquantity", IT_AMMO, IT_HEALTH);
 	if (item)
 	{
+		if (!itemQuantities)
+		{
+			itemQuantities = (int *)malloc((bg_numItems + 1) * sizeof(int));
+			for (int i = 0; i <= bg_numItems; i++)
+				itemQuantities[i] = bg_itemlist[i].quantity;
+		}
 		bg_itemlist[item - bg_itemlist].quantity = quantity;
 		stackPushBool(qtrue);
 	}
