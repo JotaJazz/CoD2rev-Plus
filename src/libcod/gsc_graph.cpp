@@ -220,19 +220,32 @@ static float edgeDistance(const vec3_t a, const vec3_t b)
 	return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
-// Standard bit-serial CRC-32 (poly 0xEDB88320) for the save-file integrity check.
+// Standard table-driven CRC-32 (poly 0xEDB88320) for the save-file integrity check.
 static unsigned int graphCrc32(const unsigned char *data, size_t len)
 {
+	static unsigned int table[256];
+	static bool tableBuilt = false;
 	unsigned int crc = 0xFFFFFFFF;
 	size_t i;
-	int k;
+
+	if ( !tableBuilt )
+	{
+		for ( i = 0; i < 256; i++ )
+		{
+			unsigned int c = (unsigned int)i;
+			int k;
+
+			for ( k = 0; k < 8; k++ )
+				c = (c >> 1) ^ (0xEDB88320 & (0 - (c & 1)));
+
+			table[i] = c;
+		}
+
+		tableBuilt = true;
+	}
 
 	for ( i = 0; i < len; i++ )
-	{
-		crc ^= data[i];
-		for ( k = 0; k < 8; k++ )
-			crc = (crc >> 1) ^ (0xEDB88320 & (0 - (crc & 1)));
-	}
+		crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >> 8);
 
 	return ~crc;
 }
@@ -2059,6 +2072,14 @@ void gsc_graph_precompute_paths_to_node()
 	}
 
 	n = graph->nodes.size();
+
+	// Every change to the graph drops the cache, so an entry that exists is current
+	pc = findPrecompute(graph, goal, skipNodeTypes, skipEdgeTypes);
+	if ( pc && pc->costToGoal.size() == n && pc->nextHop.size() == n )
+	{
+		stackPushBool(qtrue);
+		return;
+	}
 
 	// Reverse adjacency with costs: for each node, the (predecessor, cost) of
 	// every edge pointing into it, honouring the edge-type skip mask. GraphHeapEntry
