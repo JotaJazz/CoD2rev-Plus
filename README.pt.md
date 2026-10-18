@@ -28,7 +28,7 @@ Este repositório é um fork de [voron00/CoD2rev_Server](https://github.com/voro
 - **Compilação para Windows e Linux:** compilação com MinGW para Windows, `make` para Linux de 32 bits, versão do jogo (1.0 ou 1.3) escolhida ao compilar, compilações automáticas em cada push, lançadores e um `server.cfg` de exemplo.
 - **Segurança e estabilidade:** a entrada de rede que derrubava o servidor ou sobrescrevia a sua memória é agora validada; o rcon bloqueia IPs após palavras-passe erradas; os downloads já não entregam os ficheiros originais do jogo; os banimentos por IP são aplicados; e uma falha deixa um relatório em `crash.log`.
 - **Compatibilidade:** mensagens grandes de clientes 1.3, clientes da Game Pass, servidores master como `host:porta`, `dedicated 1`, ficheiros do jogo em unidades do Windows no WSL, um relógio de jogo estável e bots que voltam após uma mudança de mapa.
-- **Administração:** palavras-passe fora do log, nome, rotação e carimbos de tempo do log, rate e snapshots forçados, servidor de autorização de CD key configurável e mensagens de kick e timeout opcionais.
+- **Administração:** palavras-passe fora do log, nome, rotação e carimbos de tempo do log, rate e snapshots forçados, servidor de autorização de CD key configurável, mensagens de kick e timeout opcionais, um encerramento limpo com SIGTERM e uma unidade do systemd.
 - **Scripting (libcod):** a maioria das funções e callbacks de script do [zk_libcod](https://github.com/ibuddieat/zk_libcod), com os mesmos nomes: erros de script com ficheiro e linha, botões premidos, comandos rcon, controlo de jogadores e armas, ferramentas de administração, grafos de waypoints com A\*, o que cada jogador vê, ouve e com o que colide, física, JSON, clientes HTTP e WebSocket, sons pelo chat de voz e mais, corrigindo vários dos seus erros pelo caminho.
 - **Mod de bots:** `mods/bots`, bots que se orientam por grafos de waypoints, usam a mira, granadas e faca, e jogam os objetivos de SD e CTF.
 - **Testes:** um smoke test com um cliente mínimo que lê os snapshots do servidor, e um teste de bots que jogam mapas reais.
@@ -104,6 +104,8 @@ O servidor consulta `cod2master.activision.com` para validar a chave de cada cli
 ### Linux
 
 Copie `cod2rev_lnxded` e `scripts/linux/iniciar_cod2rev.sh` para a pasta do jogo, junto a `main`, com um `server.cfg` em `main`. Execute `./iniciar_cod2rev.sh` para o modo LAN ou `./iniciar_cod2rev.sh internet` para anunciar o servidor na lista pública. Usa a porta `28960` e carrega o mapa `mp_toujane`.
+
+`scripts/linux/cod2rev@.service` executa servidores com o systemd, um por instância: `systemctl enable --now cod2rev@public` executa o `public.cfg` com a sua própria pasta em `/var/lib/cod2rev/public`, reinicia o servidor se ele falhar e para-o de forma limpa com SIGTERM (mensagem final, heartbeat flatline e logs fechados). Os comentários do ficheiro explicam como instalá-lo.
 
 `run_bin.sh` é o script de testes do projeto original: inicia `bin/cod2rev_lnxded` em modo de desenvolvimento com cheats ativados e bots de teste. Serve de exemplo de parâmetros, não de configuração para um servidor real.
 

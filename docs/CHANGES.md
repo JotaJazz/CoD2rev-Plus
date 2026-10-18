@@ -10,6 +10,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Simpler builds:** `make` builds the 32-bit Linux binary directly, `make windows` cross-compiles for Windows, and GitHub Actions builds every variant on each push.
 - **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers; `scripts/gen_server_cfg.py` regenerates it from the source.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode. Both use port `28960`, and they set `logfile 2` (and `sv_cracked 1` in LAN mode only) before `+exec server.cfg`, so `server.cfg` can change them; they used to set them after it, overriding the admin's config, and turned on `sv_cracked` in internet mode too.
+- **systemd unit:** `scripts/linux/cod2rev@.service` runs one server per instance (`cod2rev@public` execs `public.cfg`) with its own `fs_homepath` in `/var/lib/cod2rev/<instance>`, as an unprivileged user, with `net_strictPort 1`, a restart after a crash and a clean stop with SIGTERM. The port, `dedicated` and the map can be set per instance in `/etc/cod2rev/<instance>.env`.
 
 ## Security and stability
 

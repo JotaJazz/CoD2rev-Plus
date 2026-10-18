@@ -28,7 +28,7 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Builds for Windows and Linux:** a MinGW build for Windows, `make` for 32-bit Linux, the game version (1.0 or 1.3) chosen at build time, automated builds on every push, launchers and an example `server.cfg`.
 - **Security and stability:** network input that crashed the server or overwrote its memory is now bounds-checked; rcon locks out IPs after wrong passwords; downloads can't fetch the stock game files; IP bans are enforced; and a crash leaves a report in `crash.log`.
 - **Compatibility:** large messages from 1.3 clients, Game Pass clients, master servers given as `host:port`, `dedicated 1`, game files on Windows drives under WSL, a steady game clock, and bots that come back after a map change.
-- **Administration:** passwords kept out of the log, log naming, rotation and timestamps, a forced rate and snapshot rate, a configurable CD key authorization server and optional kick and timeout messages.
+- **Administration:** passwords kept out of the log, log naming, rotation and timestamps, a forced rate and snapshot rate, a configurable CD key authorization server, optional kick and timeout messages, a clean shutdown on SIGTERM and a systemd unit.
 - **Scripting (libcod):** most of [zk_libcod](https://github.com/ibuddieat/zk_libcod)'s script functions and callbacks, with the same names: script errors with file and line, button presses, rcon commands, player and weapon control, admin tools, waypoint graphs with A\*, what each player sees, hears and collides with, physics, JSON, HTTP and WebSocket clients, sounds through voice chat and more, fixing several of its bugs on the way.
 - **Bots mod:** `mods/bots`, bots that find their way over waypoint graphs, use sights, grenades and knives, and play the SD and CTF objectives.
 - **Tests:** a smoke test with a minimal client that reads the server's snapshots, and a bots test that play real maps.
@@ -104,6 +104,8 @@ The server queries `cod2master.activision.com` to validate the key of every clie
 ### Linux
 
 Copy `cod2rev_lnxded` and `scripts/linux/iniciar_cod2rev.sh` into the game folder, next to `main`, with a `server.cfg` in `main`. Run `./iniciar_cod2rev.sh` for LAN mode or `./iniciar_cod2rev.sh internet` to announce the server on the public list. It uses port `28960` and loads the map `mp_toujane`.
+
+`scripts/linux/cod2rev@.service` runs servers under systemd, one per instance: `systemctl enable --now cod2rev@public` runs `public.cfg` with its own home folder in `/var/lib/cod2rev/public`, restarts the server if it crashes and stops it cleanly with SIGTERM (final message, flatline heartbeat, logs closed). The comments in the file explain how to install it.
 
 `run_bin.sh` is the original project's test script: it starts `bin/cod2rev_lnxded` in developer mode with cheats enabled and test bots. It is useful as an example of parameters, not as a configuration for a real server.
 

@@ -1,0 +1,42 @@
+# systemd unit for CoD2rev servers, one per instance. The instance name is the
+# config the server runs: "cod2rev@public" execs public.cfg, looked up in the
+# instance's home folder (/var/lib/cod2rev/public/main) and then in the game's
+# main folder.
+#
+#   cp cod2rev@.service /etc/systemd/system/
+#   useradd --system --home-dir /var/lib/cod2rev --shell /usr/sbin/nologin cod2rev
+#   systemctl enable --now cod2rev@public
+#   journalctl -u cod2rev@public -f
+#
+# Change /opt/cod2 below to the folder with cod2rev_lnxded and "main". A second
+# server needs its own port: put NET_PORT=28961 in /etc/cod2rev/<instance>.env,
+# which can also change DEDICATED (1 LAN, 2 internet) and MAP.
+
+[Unit]
+Description=CoD2rev server %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# an unprivileged user; never run the server as root
+User=cod2rev
+Group=cod2rev
+Environment=NET_PORT=28960 DEDICATED=2 MAP=mp_toujane
+EnvironmentFile=-/etc/cod2rev/%i.env
+# each instance keeps its logs, configs and crash.log in its own home folder
+StateDirectory=cod2rev/%i
+WorkingDirectory=/opt/cod2
+# net_strictPort: a busy port is an error, not a server on another port
+ExecStart=/opt/cod2/cod2rev_lnxded +set fs_basepath /opt/cod2 +set fs_homepath /var/lib/cod2rev/%i +set dedicated ${DEDICATED} +set net_port ${NET_PORT} +set net_strictPort 1 +exec %i.cfg +map ${MAP}
+# SIGTERM quits like the quit command: final message, flatline heartbeat, logs closed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
