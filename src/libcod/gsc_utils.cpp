@@ -777,7 +777,8 @@ void gsc_G_FindConfigstringIndexOriginal()
 		return;
 	}
 
-	if (min < 0 || max >= MAX_CONFIGSTRINGS)
+	// the search covers min + 1 to min + max - 1
+	if (min < 0 || max < 1 || max > MAX_CONFIGSTRINGS - min)
 	{
 		stackError("gsc_G_FindConfigstringIndexOriginal() configstring index is out of range");
 		stackPushUndefined();
@@ -799,7 +800,8 @@ void gsc_G_FindConfigstringIndex()
 		return;
 	}
 
-	if (min < 0 || max >= MAX_CONFIGSTRINGS)
+	// the search covers min + 1 to min + max - 1
+	if (min < 0 || max < 1 || max > MAX_CONFIGSTRINGS - min)
 	{
 		stackError("gsc_G_FindConfigstringIndex() configstring index is out of range");
 		stackPushUndefined();
