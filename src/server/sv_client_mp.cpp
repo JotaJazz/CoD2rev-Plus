@@ -463,7 +463,7 @@ void SV_GetChallenge( netadr_t from )
 		Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", sv_authorizeServer->current.string,
 		            svs.authorizeAddress.ip[0], svs.authorizeAddress.ip[1],
 		            svs.authorizeAddress.ip[2], svs.authorizeAddress.ip[3],
-		            BigShort( svs.authorizeAddress.port ) );
+		            (unsigned short)BigShort( svs.authorizeAddress.port ) );
 	}
 
 	// if they have been challenging for a long time and we

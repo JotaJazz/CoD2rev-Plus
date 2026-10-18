@@ -1002,7 +1002,7 @@ static bool SV_ResolveMaster_libcod( int index, netadr_t *adr )
 
 		Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", master->current.string,
 		            adr->ip[0], adr->ip[1], adr->ip[2], adr->ip[3],
-		            BigShort( adr->port ) );
+		            (unsigned short)BigShort( adr->port ) );
 	}
 
 	return true;
