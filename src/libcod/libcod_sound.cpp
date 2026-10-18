@@ -329,6 +329,15 @@ void Libcod_RunSounds()
 				break;
 			}
 
+			// a full queue would drop the packet: the rest waits for the
+			// next frame
+			if (svs.clients[i].voicePacketCount >= MAX_VOICE_PACKETS)
+			{
+				if (lc->soundPending > MAX_VOICE_PACKETS)
+					lc->soundPending = MAX_VOICE_PACKETS;
+				break;
+			}
+
 			VoicePacket_t packet;
 			packet.dataSize = sound->packets[lc->soundPacket].size;
 			memcpy(packet.data, sound->packets[lc->soundPacket].data, packet.dataSize);
