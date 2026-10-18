@@ -51,6 +51,8 @@
 #define WS_CLOSE_WAIT 1000
 #define WS_MAX_QUEUED_BYTES (1024 * 1024)
 #define WS_MAX_EVENTS 1024
+#define WS_MAX_INCOMING_BYTES (1024 * 1024)
+#define WS_EVENTS_PER_FRAME 64
 
 static dvar_t *sv_httpAllowedHosts;
 static dvar_t *sv_httpCaFile;
@@ -71,14 +73,19 @@ struct http_job_t
 	int onDone;
 	int onError;
 	int64_t deadline;
+	bool timedOut;
 	http_job_t *next;
 	// http_mutex
 	int refs;
 	bool finished;
 };
 
-// main thread
+// main thread: in progress, newest first
 static http_job_t *http_jobs;
+// main thread: finished or timed out, oldest first, waiting for their callbacks
+static http_job_t *http_ready;
+// main thread: the job whose callback is running
+static http_job_t *http_delivering;
 // http_mutex: workers still running, cancelled ones included
 static int http_running;
 
@@ -122,6 +129,7 @@ struct ws_conn_t
 	std::deque<std::string> outgoing;
 	size_t outgoingBytes;
 	std::deque<ws_event_t> events;
+	size_t incomingBytes;
 	int droppedMessages;
 };
 
@@ -246,6 +254,7 @@ void gsc_http_fetch()
 	job->onDone = onDone;
 	job->onError = onError;
 	job->deadline = NetHttp_Milliseconds() + job->req.timeoutMs;
+	job->timedOut = false;
 	job->refs = 1;
 	job->finished = true;
 
@@ -326,10 +335,9 @@ static void Http_Deliver(http_job_t *job, const char *timeoutError)
 
 static void Http_RunFrame()
 {
-	std::vector<http_job_t *> done;
-	std::vector<http_job_t *> timedOut;
 	int64_t now = NetHttp_Milliseconds();
 	http_job_t **link = &http_jobs;
+	http_job_t *ready = NULL;
 
 	// The callbacks may start new requests, so the list is sorted out first
 	// and the new requests wait for the next frame.
@@ -341,33 +349,44 @@ static void Http_RunFrame()
 		bool finished = job->finished;
 		pthread_mutex_unlock(&http_mutex);
 
-		if ( finished )
-			done.push_back(job);
-		else if ( job->deadline && now >= job->deadline )
+		if ( !finished && job->deadline && now >= job->deadline )
 		{
 			// the worker stops on its own; its result is thrown away
 			__atomic_store_n(&job->cancel, 1, __ATOMIC_RELEASE);
-			timedOut.push_back(job);
+			job->timedOut = true;
 		}
-		else
+		else if ( !finished )
 		{
 			link = &job->next;
 			continue;
 		}
 
+		// http_jobs is newest first, so this puts the oldest first
 		*link = job->next;
+		job->next = ready;
+		ready = job;
 	}
 
-	// oldest first, as they were started
-	for ( size_t i = done.size(); i-- > 0; )
+	link = &http_ready;
+	while ( *link )
+		link = &(*link)->next;
+	*link = ready;
+
+	// One at a time, each released after its callback: an error that leaves a
+	// callback with a longjmp leaves the others to gsc_http_cleanup_on_level_load.
+	while ( http_ready )
 	{
-		Http_Deliver(done[i], NULL);
-		Http_ReleaseJob(done[i]);
-	}
-	for ( size_t i = timedOut.size(); i-- > 0; )
-	{
-		Http_Deliver(timedOut[i], "Timeout");
-		Http_ReleaseJob(timedOut[i]);
+		http_job_t *job = http_ready;
+		http_ready = job->next;
+
+		http_delivering = job;
+		Http_Deliver(job, job->timedOut ? "Timeout" : NULL);
+		// a level load from the callback has released it already
+		if ( http_delivering == job )
+		{
+			http_delivering = NULL;
+			Http_ReleaseJob(job);
+		}
 	}
 }
 
@@ -385,11 +404,15 @@ static void Ws_Push(ws_conn_t *ws, int type, const std::string &text = "", bool 
 	ev.fullyDisconnected = fullyDisconnected;
 
 	pthread_mutex_lock(&http_mutex);
-	// a server that floods us loses messages, not memory
-	if ( type == WS_EVENT_MESSAGE && ws->events.size() >= WS_MAX_EVENTS )
+	// messages the script hasn't taken yet are kept up to a count and a size, the rest are dropped
+	if ( type == WS_EVENT_MESSAGE && ( ws->events.size() >= WS_MAX_EVENTS || ws->incomingBytes + text.size() > WS_MAX_INCOMING_BYTES ) )
 		ws->droppedMessages++;
 	else
+	{
 		ws->events.push_back(ev);
+		if ( type == WS_EVENT_MESSAGE )
+			ws->incomingBytes += text.size();
+	}
 	pthread_mutex_unlock(&http_mutex);
 }
 
@@ -680,6 +703,7 @@ void gsc_websocket_connect()
 	ws->refs = 2;
 	ws->connected = false;
 	ws->outgoingBytes = 0;
+	ws->incomingBytes = 0;
 	ws->droppedMessages = 0;
 
 	if ( !Http_StartThread(Ws_Worker, ws) )
@@ -815,14 +839,12 @@ static void Ws_RunFrame()
 	for ( int i = 0; i < MAX_WEBSOCKETS; i++ )
 	{
 		ws_conn_t *ws = ws_slots[i];
-		std::deque<ws_event_t> events;
 		int dropped;
 
 		if ( !ws )
 			continue;
 
 		pthread_mutex_lock(&http_mutex);
-		events.swap(ws->events);
 		dropped = ws->droppedMessages;
 		ws->droppedMessages = 0;
 		pthread_mutex_unlock(&http_mutex);
@@ -830,21 +852,45 @@ static void Ws_RunFrame()
 		if ( dropped )
 			Com_Printf("webSocket %s: dropped %d messages, the script can't keep up\n", ws->logUrl.c_str(), dropped);
 
-		for ( size_t j = 0; j < events.size(); j++ )
+		// a few per frame, so a flood can't stall the frame; the rest wait in the queue
+		for ( int j = 0; j < WS_EVENTS_PER_FRAME; j++ )
 		{
-			if ( events[j].type == WS_EVENT_FINISHED )
+			ws_event_t ev;
+
+			pthread_mutex_lock(&http_mutex);
+			bool have = !ws->events.empty();
+			if ( have )
 			{
-				// the slot is free again; the callbacks above may not have reused it
-				if ( ws_slots[i] == ws )
-					ws_slots[i] = NULL;
+				ws_event_t &front = ws->events.front();
+				ev.type = front.type;
+				ev.text.swap(front.text);
+				ev.closedByRemote = front.closedByRemote;
+				ev.fullyDisconnected = front.fullyDisconnected;
+				ws->events.pop_front();
+				if ( ev.type == WS_EVENT_MESSAGE )
+					ws->incomingBytes -= ev.text.size();
+			}
+			pthread_mutex_unlock(&http_mutex);
+
+			if ( !have )
+				break;
+
+			if ( ev.type == WS_EVENT_FINISHED )
+			{
+				// the slot is free again
+				ws_slots[i] = NULL;
 				Ws_Release(ws);
 				break;
 			}
 
-			if ( events[j].type == WS_EVENT_LOG )
-				Com_Printf("webSocket %s: %s\n", ws->logUrl.c_str(), events[j].text.c_str());
+			if ( ev.type == WS_EVENT_LOG )
+				Com_Printf("webSocket %s: %s\n", ws->logUrl.c_str(), ev.text.c_str());
 			else
-				Ws_Deliver(ws, &events[j]);
+				Ws_Deliver(ws, &ev);
+
+			// a level load from the callback has let the connection go
+			if ( ws_slots[i] != ws )
+				break;
 		}
 	}
 }
@@ -852,7 +898,7 @@ static void Ws_RunFrame()
 // Called at the start of every game frame, from Scr_RunFrameCallbacks.
 void gsc_http_frame()
 {
-	if ( http_jobs )
+	if ( http_jobs || http_ready )
 		Http_RunFrame();
 	Ws_RunFrame();
 }
@@ -868,6 +914,19 @@ void gsc_http_cleanup_on_level_load()
 		http_jobs = job->next;
 		__atomic_store_n(&job->cancel, 1, __ATOMIC_RELEASE);
 		Http_ReleaseJob(job);
+	}
+
+	while ( http_ready )
+	{
+		http_job_t *job = http_ready;
+		http_ready = job->next;
+		Http_ReleaseJob(job);
+	}
+
+	if ( http_delivering )
+	{
+		Http_ReleaseJob(http_delivering);
+		http_delivering = NULL;
 	}
 
 	for ( int i = 0; i < MAX_WEBSOCKETS; i++ )
