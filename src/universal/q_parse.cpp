@@ -340,9 +340,10 @@ void Com_ScriptError( const char *msg, ... )
 	pi = &parse->parseInfo[parse->parseInfoNum];
 
 	Q_vsnprintf(string, sizeof(string), msg, va);
+	va_end(va);
 
 	if ( parse->parseInfoNum )
-		Com_Error(ERR_DROP, "File %s, line %i: %s", pi->errorPrefix, pi->parseFile, pi->lines, string);
+		Com_Error(ERR_DROP, "%sFile %s, line %i: %s", pi->errorPrefix, pi->parseFile, pi->lines, string);
 	else
 		Com_Error(ERR_DROP, "%s", string);
 }
