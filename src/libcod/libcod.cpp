@@ -177,6 +177,16 @@ void Libcod_InitLevel()
 #endif
 }
 
+// Called from G_ShutdownGame while the level's script objects still exist,
+// so pending async tasks can drop the references they hold. A map change
+// reinitializes the variable system, after which those ids mean nothing.
+void Libcod_ShutdownLevel()
+{
+#if LIBCOD_COMPILE_EXEC == 1
+	gsc_exec_async_shutdown_level();
+#endif
+}
+
 // position is "file:line", or NULL outside developer mode, where the
 // engine has no positions
 void Scr_QueueErrorCallback(const char *message, const char *position)

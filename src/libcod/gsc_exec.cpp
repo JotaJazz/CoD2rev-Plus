@@ -39,6 +39,41 @@ struct exec_async_task
 
 exec_async_task *first_exec_async_task = NULL;
 
+// The task holds a reference to an object argument until it is delivered
+// or dropped, so the script can't free it in between
+static void exec_async_release_argument(exec_async_task *task)
+{
+	if (task->hasargument && task->valueType == OBJECT_VALUE && task->objectValue)
+	{
+		RemoveRefToObject(task->objectValue);
+		task->objectValue = 0;
+	}
+}
+
+static void exec_async_free_task(exec_async_task *task)
+{
+	exec_outputline *output = task->output;
+
+	while (output != NULL)
+	{
+		exec_outputline *next = output->next;
+		delete output;
+		output = next;
+	}
+
+	exec_async_release_argument(task);
+
+	if (task->next != NULL)
+		task->next->prev = task->prev;
+
+	if (task->prev != NULL)
+		task->prev->next = task->next;
+	else
+		first_exec_async_task = task->next;
+
+	delete task;
+}
+
 void gsc_exec()
 {
 	const char *command;
@@ -62,7 +97,7 @@ void gsc_exec()
 		return;
 	}
 
-	char c;
+	int c;
 	int curpos = 0;
 	char content[COD2_MAX_STRINGLENGTH];
 
@@ -102,6 +137,7 @@ void *exec_async(void *input_c)
 	if (fp == NULL)
 	{
 		task->error = true;
+		task->done = true;
 		return NULL;
 	}
 
@@ -111,7 +147,7 @@ void *exec_async(void *input_c)
 		task->output = output;
 		output->next = NULL;
 
-		char c;
+		int c;
 		int curpos = 0;
 
 		while ((c = getc(fp)) != EOF)
@@ -211,6 +247,7 @@ void gsc_exec_async_create()
 	{
 		newtask->valueType = OBJECT_VALUE;
 		newtask->objectValue = valueObject;
+		AddRefToObject(valueObject);
 	}
 	else
 		newtask->hasargument = false;
@@ -224,6 +261,7 @@ void gsc_exec_async_create()
 
 	if (!Sys_CreateNewThread(exec_async, &exec_doer, newtask))
 	{
+		exec_async_free_task(newtask);
 		stackError("gsc_exec_async_create() error creating exec async handler thread!");
 		stackPushUndefined();
 		return;
@@ -302,6 +340,7 @@ void gsc_exec_async_create_nosave()
 	{
 		newtask->valueType = OBJECT_VALUE;
 		newtask->objectValue = valueObject;
+		AddRefToObject(valueObject);
 	}
 	else
 		newtask->hasargument = false;
@@ -315,6 +354,7 @@ void gsc_exec_async_create_nosave()
 
 	if (!Sys_CreateNewThread(exec_async, &exec_doer, newtask))
 	{
+		exec_async_free_task(newtask);
 		stackError("gsc_exec_async_create_nosave() error creating exec async handler thread!");
 		stackPushUndefined();
 		return;
@@ -358,7 +398,10 @@ void gsc_exec_async_checkdone()
 						break;
 
 					case OBJECT_VALUE:
-						stackPushObject(task->objectValue);
+						if (task->objectValue)
+							stackPushObject(task->objectValue);
+						else
+							stackPushUndefined();
 						break;
 
 					default:
@@ -368,33 +411,26 @@ void gsc_exec_async_checkdone()
 				}
 
 				stackPushArray();
-				exec_outputline *output = task->output;
 
-				while (output != NULL)
+				for (exec_outputline *output = task->output; output != NULL; output = output->next)
 				{
-					exec_outputline *next = output->next;
 					stackPushString(output->content);
 					stackPushArrayLast();
-					delete output;
-					output = next;
 				}
 
 				short ret = Scr_ExecThread(task->callback, task->save + task->hasargument);
 				Scr_FreeThread(ret);
 			}
 
-			//free task
-			if (task->next != NULL)
-				task->next->prev = task->prev;
-
-			if (task->prev != NULL)
-				task->prev->next = task->next;
-			else
-				first_exec_async_task = task->next;
-
-			delete task;
+			exec_async_free_task(task);
 		}
 	}
+}
+
+void gsc_exec_async_shutdown_level()
+{
+	for (exec_async_task *task = first_exec_async_task; task != NULL; task = task->next)
+		exec_async_release_argument(task);
 }
 
 #endif

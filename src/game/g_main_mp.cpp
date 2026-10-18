@@ -601,6 +601,10 @@ void G_ShutdownGame( qboolean freeScripts )
 		SV_FreeClientScriptPers();
 	}
 
+#ifdef LIBCOD
+	Libcod_ShutdownLevel();
+#endif
+
 	Scr_ShutdownSystem(level.savePersist == qfalse);
 
 	if ( freeScripts )

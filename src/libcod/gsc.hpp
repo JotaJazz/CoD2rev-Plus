@@ -167,6 +167,7 @@ bool ContainsMapCommand(const char *text);
 void SV_ExecuteRemoteCommand(netadr_t from, const char *command);
 void InitLibcodCallbacks();
 void Libcod_InitLevel();
+void Libcod_ShutdownLevel();
 extern unsigned int libcodLevelGeneration;
 void Scr_QueueErrorCallback(const char *message, const char *position);
 void Scr_RunFrameCallbacks();
