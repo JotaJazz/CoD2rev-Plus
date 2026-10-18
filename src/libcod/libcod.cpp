@@ -185,6 +185,9 @@ void Libcod_ShutdownLevel()
 #if LIBCOD_COMPILE_EXEC == 1
 	gsc_exec_async_shutdown_level();
 #endif
+#if LIBCOD_COMPILE_SQLITE == 1
+	gsc_async_sqlite_shutdown_level();
+#endif
 }
 
 // position is "file:line", or NULL outside developer mode, where the

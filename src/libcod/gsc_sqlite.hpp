@@ -19,4 +19,6 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid);
 
 void gsc_async_sqlite_checkdone();
 
+void gsc_async_sqlite_shutdown_level();
+
 #endif
