@@ -4728,7 +4728,7 @@ void Scr_GetWeaponModel()
 	{
 		if ( I_stricmp(pszWeaponName, "none") )
 		{
-			Com_Printf(va("unknown weapon '%s' in getWeaponModel\n", pszWeaponName));
+			Com_Printf("unknown weapon '%s' in getWeaponModel\n", pszWeaponName);
 		}
 	}
 

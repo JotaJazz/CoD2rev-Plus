@@ -1401,7 +1401,7 @@ void Com_Init( char* commandLine )
 	jmp_buf* abortframe = (jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR);
 
 	if (setjmp(*abortframe))
-		Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
+		Sys_Error("Error during Initialization:\n%s\n", com_errorMessage);
 
 	Com_Init_Try_Block_Function(commandLine);
 }

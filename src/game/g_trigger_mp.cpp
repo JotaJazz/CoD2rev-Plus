@@ -136,8 +136,8 @@ void SP_trigger_disk( gentity_t *ent )
 
 	if ( !G_SpawnFloat("radius", "", &radius) )
 	{
-		Com_Error(ERR_DROP, va("radius not specified for trigger_radius at (%g %g %g)",
-		                       ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+		Com_Error(ERR_DROP, "radius not specified for trigger_radius at (%g %g %g)",
+		                    ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]);
 	}
 
 	ent->handler = ENT_HANDLER_TRIGGER_MULTIPLE;
@@ -172,14 +172,14 @@ void SP_trigger_radius( gentity_t *ent )
 	{
 		if ( !G_SpawnFloat("radius", "", &radius) )
 		{
-			Com_Error(ERR_DROP, va("radius not specified for trigger_radius at (%g %g %g)",
-			                       ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+			Com_Error(ERR_DROP, "radius not specified for trigger_radius at (%g %g %g)",
+			                    ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]);
 		}
 
 		if ( !G_SpawnFloat("height", "", &height) )
 		{
-			Com_Error(ERR_DROP, va("height not specified for trigger_radius at (%g %g %g)",
-			                       ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+			Com_Error(ERR_DROP, "height not specified for trigger_radius at (%g %g %g)",
+			                    ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]);
 		}
 	}
 	else

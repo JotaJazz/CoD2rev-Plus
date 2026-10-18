@@ -1216,8 +1216,8 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 
 	if (impureIwd)
 	{
-		Com_Error(ERR_DROP, va("EXE_UNPURECLIENTDETECTED\x15\n%s",
-		                       impureIwd->iwdFilename));
+		Com_Error(ERR_DROP, "EXE_UNPURECLIENTDETECTED\x15\n%s",
+		                    impureIwd->iwdFilename);
 	}
 
 	if (wasSkipped)

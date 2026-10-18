@@ -594,7 +594,7 @@ int G_FindConfigstringIndex( const char *name, int start, int max, qboolean crea
 
 	if ( i >= max )
 	{
-		Com_Error(ERR_DROP, va("G_FindConfigstringIndex: overflow (%d): %s", start, name));
+		Com_Error(ERR_DROP, "G_FindConfigstringIndex: overflow (%d): %s", start, name);
 	}
 
 	SV_SetConfigstring( start + i, name );
