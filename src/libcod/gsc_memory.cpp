@@ -146,7 +146,12 @@ void gsc_binarybuffer_write()
 	case 'i':
 	{
 		int tmp_int;
-		stackGetParamInt(2, &tmp_int);
+		if (!stackGetParamInt(2, &tmp_int))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		*(int *)(bb->address + bb->pos) = tmp_int;
 		bb->pos += sizeof(int);
 		break;
@@ -154,7 +159,12 @@ void gsc_binarybuffer_write()
 	case 'f':
 	{
 		float tmp_float;
-		stackGetParamFloat(2, &tmp_float);
+		if (!stackGetParamFloat(2, &tmp_float))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		*(float *)(bb->address + bb->pos) = tmp_float;
 		bb->pos += sizeof(float);
 		break;
@@ -162,7 +172,12 @@ void gsc_binarybuffer_write()
 	case 'd':
 	{
 		float tmp_float;
-		stackGetParamFloat(2, &tmp_float);
+		if (!stackGetParamFloat(2, &tmp_float))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		*(double *)(bb->address + bb->pos) = (double)tmp_float;
 		bb->pos += sizeof(vec2_t);
 		break;
@@ -170,7 +185,12 @@ void gsc_binarybuffer_write()
 	case 's':
 	{
 		const char *tmp_str;
-		stackGetParamString(2, &tmp_str);
+		if (!stackGetParamString(2, &tmp_str))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		char *copy = (char *)malloc(strlen(tmp_str) + 1);
 		strcpy(copy, tmp_str);
 		bb->strings->push_back(copy);
@@ -181,7 +201,12 @@ void gsc_binarybuffer_write()
 	case 'c':
 	{
 		const char *tmp_str;
-		stackGetParamString(2, &tmp_str);
+		if (!stackGetParamString(2, &tmp_str))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		*(char *)(bb->address + bb->pos) = tmp_str[0];
 		bb->pos += sizeof(char);
 		break;
@@ -189,7 +214,12 @@ void gsc_binarybuffer_write()
 	case 'v':
 	{
 		float tmp_vector[3];
-		stackGetParamVector(2, tmp_vector);
+		if (!stackGetParamVector(2, tmp_vector))
+		{
+			stackError("gsc_binarybuffer_write() value is undefined or has a wrong type for '%c'", type[0]);
+			stackPushUndefined();
+			return;
+		}
 		*(float *)(bb->address + bb->pos + 0) = tmp_vector[0];
 		*(float *)(bb->address + bb->pos + 4) = tmp_vector[1];
 		*(float *)(bb->address + bb->pos + 8) = tmp_vector[2];
