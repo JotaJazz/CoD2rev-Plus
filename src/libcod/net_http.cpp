@@ -1080,6 +1080,41 @@ static bool Net_TooLarge(std::string *error, size_t size)
 	return false;
 }
 
+// digits only; repeated headers, joined with commas, must agree
+static bool Net_ParseContentLength(const std::string &text, uint64_t *size)
+{
+	size_t pos = 0;
+	bool have = false;
+
+	for ( ;; )
+	{
+		size_t comma = text.find(',', pos);
+		std::string part = Net_Trim(text.substr(pos, comma == std::string::npos ? std::string::npos : comma - pos));
+		uint64_t value = 0;
+
+		if ( part.empty() )
+			return false;
+		for ( size_t i = 0; i < part.size(); i++ )
+		{
+			if ( !isdigit((unsigned char)part[i]) )
+				return false;
+			unsigned int digit = part[i] - '0';
+			if ( value > ( (uint64_t)-1 - digit ) / 10 )
+				return false;
+			value = value * 10 + digit;
+		}
+
+		if ( have && value != *size )
+			return false;
+		*size = value;
+		have = true;
+
+		if ( comma == std::string::npos )
+			return true;
+		pos = comma + 1;
+	}
+}
+
 static bool Net_ReadChunked(NetReader *r, std::string *body, std::string *error)
 {
 	for ( ;; )
@@ -1198,15 +1233,14 @@ bool NetHttp_Fetch(const NetHttpRequest *req, const volatile int *cancel, NetHtt
 			ok = Net_ReadChunked(&reader, &res->body, &res->error);
 		else if ( length )
 		{
-			char *end;
-			double size = strtod(length->c_str(), &end);
-			if ( end == length->c_str() || size < 0 )
+			uint64_t size;
+			if ( !Net_ParseContentLength(*length, &size) )
 			{
 				res->error = "Invalid response";
 				ok = false;
 			}
 			else if ( size > NET_HTTP_MAX_STRING )
-				ok = Net_TooLarge(&res->error, (size_t)( size > 4e9 ? 4e9 : size ));
+				ok = Net_TooLarge(&res->error, (size_t)( size > 4000000000u ? 4000000000u : size ));
 			else
 			{
 				while ( ok && reader.buf.size() < (size_t)size )
