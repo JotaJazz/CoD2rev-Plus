@@ -1400,15 +1400,17 @@ int main ( int argc, char* argv[] )
   // search paths that cannot exist. fs_cdpath can still be set on the command line.
 
   // merge the command line, this is kinda silly
+  // An empty argument is kept as "", as the Windows command line keeps it,
+  // or +set sv_master2 "" would set nothing
   for (len = 1, i = 1; i < argc; i++)
-    len += strlen(argv[i]) + 1;
+    len += strlen(argv[i]) + 3;
   cmdline = (char *)Z_Malloc(len);
   *cmdline = 0;
   for (i = 1; i < argc; i++)
   {
     if (i > 1)
       strcat(cmdline, " ");
-    strcat(cmdline, argv[i]);
+    strcat(cmdline, argv[i][0] ? argv[i] : "\"\"");
   }
 
   // bk000306 - clear queues

@@ -27,6 +27,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
   - `sv_master2` is preset to `master.cod2x.me`, the CoD2x community master.
   - The `host:port` format in `sv_master1`–`sv_master5` now works.
   - A DNS failure is retried instead of clearing the master.
+  - On Linux, `+set sv_master2 ""` on the command line now clears the master. The empty argument used to vanish, so `set` changed nothing and the server kept sending heartbeats to it.
 - **Overflow fix for Game Pass clients:** sending the system info to a client using protocol 119 could overflow a buffer and crash the server.
 - **Large messages from 1.3 clients:** fragmented messages sent by 1.3 clients were misread and dropped; they are now read in the 1.3 format.
 - **`dedicated` is honoured:** `+set dedicated 1` was ignored and every server announced itself to the master servers. Now `1` keeps the server off the public list and `2`, the default, announces it.
@@ -62,7 +63,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 
 - **Test client that reads snapshots:** `scripts/cod2snap.py` parses everything the server sends to a client (gamestate, server commands, snapshots with the playerstate, entities and client states, in 1.0 and 1.3), and `cod2client.read_frames()` returns one frame per snapshot, so tests can check what one client receives.
 - **HTTP and WebSocket test:** `scripts/http_test.py` runs local HTTP, HTTPS, WS and WSS servers, makes a test mod call `httpFetch` and `webSocket*` against them, and checks the results, the certificate checks, the limits, malformed responses, WebSocket floods, that the server keeps answering during a slow request and that a map change or `map_restart` drops the old level's requests and connections.
-- **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages.
+- **Smoke test:** `scripts/smoke_test.py` starts the Linux server against a real game folder and checks that it loads a map, answers queries and lets a minimal client (`scripts/cod2client.py`) connect, receive the gamestate, enter the game and send commands, including in fragmented messages. A second run in internet mode (`dedicated 2`) heartbeats to a fake master on `127.0.0.1` and checks the heartbeats, the status sent on its own, the replies to the master's queries and the flatline on quit, with the real masters cleared so nothing leaves the machine.
 
 ## New variables
 
