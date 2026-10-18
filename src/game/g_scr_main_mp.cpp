@@ -4827,7 +4827,7 @@ void GScr_MakeDvarServerInfo()
 	}
 
 	CleanDvarValue(dvarValue, outString, sizeof(outString));
-	Dvar_RegisterString(dvarName, dvarValue, DVAR_CODINFO | DVAR_EXTERNAL);
+	Dvar_RegisterString(dvarName, outString, DVAR_CODINFO | DVAR_EXTERNAL);
 }
 
 /*
@@ -5060,7 +5060,7 @@ void GScr_SetDvar()
 		Scr_Error(va("Dvar %s has an invalid dvar name", dvarName));
 	}
 
-	Dvar_SetFromStringByName(dvarName, dvarValue);
+	Dvar_SetFromStringByName(dvarName, outString);
 
 	if ( Scr_GetNumParam() < 3 )
 	{
