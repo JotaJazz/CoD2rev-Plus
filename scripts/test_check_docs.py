@@ -3,7 +3,8 @@
 
     python3 -m unittest discover -s scripts -p 'test_*.py'
 
-The samples use placeholder names and documentation addresses only.
+The samples use placeholder names and documentation addresses, except one
+private address that must trigger the IP check.
 """
 import os, tempfile, textwrap, unittest
 
@@ -45,15 +46,26 @@ class CheckDocsTest(unittest.TestCase):
         self.assertEqual(found[0][0], 2)
         self.assertIn('missing.md', found[0][1])
 
-    def test_link_anchor_is_ignored(self):
-        self.write('docs/a.md', '')
-        self.assertEqual(self.check('docs/b.md', '[a](a.md#section) [b](#local)\n'), [])
+    def test_link_anchor_to_existing_heading(self):
+        self.write('docs/a.md', '# Title\n\n## Doc-sync rules\n\n## Doc-sync rules\n')
+        text = '## Local part\n\n[a](a.md#doc-sync-rules) [b](a.md#doc-sync-rules-1) [c](#local-part)\n'
+        self.assertEqual(self.check('docs/b.md', text), [])
+
+    def test_link_anchor_to_missing_heading(self):
+        self.write('docs/a.md', '# Title\n')
+        found = self.messages('docs/b.md', '[a](a.md#gone) [b](#nowhere)\n')
+        self.assertEqual(len(found), 2)
+
+    def test_headings_in_code_blocks_are_not_anchors(self):
+        self.write('docs/a.md', '```\n# not a heading\n```\n')
+        self.assertEqual(len(self.check('docs/b.md', '[a](a.md#not-a-heading)\n')), 1)
 
     def test_external_links_are_ignored(self):
         self.assertEqual(self.check('a.md', '[x](https://example.com/a.md) [m](mailto:a@example.com)\n'), [])
 
     def test_links_in_code_blocks_are_ignored(self):
         self.assertEqual(self.check('a.md', '```\n[a](missing.md)\n```\n'), [])
+        self.assertEqual(self.check('a.md', '~~~\n[a](missing.md)\n~~~\n'), [])
 
     # paths in backticks
 
@@ -68,6 +80,9 @@ class CheckDocsTest(unittest.TestCase):
     def test_backtick_path_with_line_number(self):
         self.assertEqual(self.check('a.md', '`src/server/sv_main_mp.cpp:120`\n'), [])
 
+    def test_path_followed_by_punctuation(self):
+        self.assertEqual(self.check('a.md', '```\nSV_X   src/server/sv_main_mp.cpp: notes\n```\n'), [])
+
     def test_backtick_placeholders_and_globs_are_ignored(self):
         text = '`src/libcod/*.cpp` `scripts/<name>.py` `src/{a,b}` `bin/cod2rev_lnxded` `obj/x`\n'
         self.assertEqual(self.check('a.md', text), [])
@@ -78,24 +93,33 @@ class CheckDocsTest(unittest.TestCase):
     def test_backtick_text_that_is_not_a_repo_path(self):
         self.assertEqual(self.check('a.md', '`maps/mp/bots/_bots.gsc` `a/b` `make PROTOCOL=118`\n'), [])
 
-    def test_backtick_paths_in_code_blocks_are_checked(self):
-        found = self.messages('a.md', '```\npython3 scripts/gone.py\n```\n')
-        self.assertEqual(found, [])
-        found = self.messages('a.md', '```\n`scripts/gone.py`\n```\n')
-        self.assertEqual(len(found), 1)
+    def test_paths_in_commands_are_checked(self):
+        self.assertEqual(len(self.check('a.md', '`python3 scripts/gone.py <game>`\n')), 1)
+        self.assertEqual(len(self.check('a.md', '```bash\npython3 scripts/gone.py /path/to/CoD2\n```\n')), 1)
+        self.assertEqual(self.check('a.md', '`python3 scripts/smoke_test.py --binary <bin>`\n'), [])
+
+    def test_command_words_that_are_not_paths(self):
+        self.assertEqual(self.check('a.md', '```\nmake OBJ_ROOT=x/obj CFLAGS="-m32 -DX=1"\n```\n'), [])
 
     # personal data
 
     def test_home_and_mnt_paths(self):
-        found = self.messages('a.md', 'in /home/alice/x and /mnt/e/Games\n')
+        found = self.messages('a.md', 'in /home/alice/x and /mnt/x/Games\n')
         self.assertEqual(len(found), 2)
 
     def test_placeholder_paths_are_allowed(self):
         self.assertEqual(self.check('a.md', '/home/<user>/x /mnt/<drive>/Games <drive>:\\Games\n'), [])
 
     def test_windows_drive_path(self):
-        found = self.messages('a.md', 'installed in D:\\Games\\CoD2\n')
-        self.assertEqual(len(found), 1)
+        found = self.messages('a.md', 'installed in Q:\\Games\\x and Q:/Users/x\n')
+        self.assertEqual(len(found), 2)
+
+    def test_wsl_share_path(self):
+        self.assertEqual(len(self.check('a.md', 'open \\\\wsl$\\Ubuntu\\x\n')), 1)
+
+    def test_email_addresses(self):
+        self.assertEqual(len(self.check('a.md', 'mail alice@mail.test\n')), 1)
+        self.assertEqual(self.check('a.md', 'a@example.com noreply@anthropic.com x@users.noreply.github.com\n'), [])
 
     def test_ip_addresses(self):
         found = self.messages('a.md', 'server at 10.20.30.40:28960\n')
@@ -125,6 +149,17 @@ class CheckDocsTest(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertEqual(found[0][0], 3)
 
+    def test_memory_counts_every_bullet_style(self):
+        found = self.check(self.MEMORY, '# Memory\n\n## 2026-10-01 — a\n\n* 1\n+ 2\n1. 3\n- 4\n')
+        self.assertEqual(len(found), 1)
+
+    def test_memory_ignores_code_blocks(self):
+        text = '# Memory\n\n```\n## YYYY-MM-DD — topic\n- 1\n```\n\n## 2026-10-01 — a\n\n- 1\n'
+        self.assertEqual(self.check(self.MEMORY, text), [])
+
+    def test_memory_stage_date_must_exist(self):
+        self.assertEqual(len(self.check(self.MEMORY, '# Memory\n\n## 2026-13-40 — a\n\n- 1\n')), 1)
+
     def test_memory_stage_heading_format(self):
         found = self.messages(self.MEMORY, '# Memory\n\n## October 1 — a\n\n- 1\n')
         self.assertEqual(len(found), 1)
@@ -138,6 +173,14 @@ class CheckDocsTest(unittest.TestCase):
         self.assertEqual(self.check('docs/other.md', '## 2026-10-01 — a\n\n- 1\n- 2\n- 3\n- 4\n'), [])
 
     # which files are scanned
+
+    def test_file_that_is_not_utf8(self):
+        path = os.path.join(self.root, 'bad.md')
+        with open(path, 'wb') as f:
+            f.write(b'caf\xe9\n')
+        found = check_docs.check_file(self.root, 'bad.md')
+        self.assertEqual(len(found), 1)
+        self.assertIn('UTF-8', found[0][1])
 
     def test_doc_files_skip_local_and_vendored(self):
         for rel in ('README.md', 'AGENTS.md', 'docs/a.md', 'docs/superpowers/plan.md',

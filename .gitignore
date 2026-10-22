@@ -41,3 +41,6 @@ bin/**
 main/**
 obj/**
 obj_test/**__pycache__/
+
+# Python
+__pycache__/
