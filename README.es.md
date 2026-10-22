@@ -151,8 +151,8 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 | `src/libcod` | Extensiones de script de libcod, con SQLite y las cabeceras de MySQL. |
 | `src/win32`, `src/unix` | Código específico de cada plataforma. |
 | `src/zlib` | Copia de zlib. |
-| `test` | Material de la ingeniería inversa: base de datos de IDA, tablas de offsets y cargador de pruebas. |
-| `scripts` | Lanzadores para Windows y Linux, el `server.cfg` de ejemplo y su generador, el instalador de los bots, la prueba de humo con su cliente mínimo, y la prueba de los bots. |
+| `docs` | Documentación técnica para colaboradores y agentes de IA (índice en [docs/README.md](docs/README.md)) y la lista de cambios. |
+| `scripts` | Lanzadores para Windows y Linux, el `server.cfg` de ejemplo y su generador, el instalador de los bots, la prueba de humo con su cliente mínimo, la prueba de los bots, la prueba de HTTP y WebSocket, y el verificador de la documentación. |
 | `mods/bots` | El mod de scripts de los bots sencillos. |
 
 ## Licencia

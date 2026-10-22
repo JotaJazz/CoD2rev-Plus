@@ -151,8 +151,8 @@ Ein auf der Kommandozeile angegebenes `CFLAGS` ersetzt das des Makefiles, daher 
 | `src/libcod` | Skript-Erweiterungen von libcod, mit SQLite und den MySQL-Headern. |
 | `src/win32`, `src/unix` | Plattformspezifischer Code. |
 | `src/zlib` | Kopie von zlib. |
-| `test` | Material aus dem Reverse Engineering: IDA-Datenbank, Offset-Tabellen und Test-Loader. |
-| `scripts` | Startskripte für Windows und Linux, die Beispiel-`server.cfg` und ihr Generator, das Installationsskript der Bots der Funktionstest mit seinem minimalen Client sowie der Bots-Test. |
+| `docs` | Technische Dokumentation für Mitwirkende und KI-Agenten (Index in [docs/README.md](docs/README.md)) und die Änderungsliste. |
+| `scripts` | Startskripte für Windows und Linux, die Beispiel-`server.cfg` und ihr Generator, das Installationsskript der Bots, der Funktionstest mit seinem minimalen Client, der Bots-Test, der HTTP- und WebSocket-Test sowie die Prüfung der Dokumentation. |
 | `mods/bots` | Die Skript-Mod der einfachen Bots. |
 
 ## Lizenz

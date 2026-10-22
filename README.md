@@ -151,8 +151,8 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 | `src/libcod` | libcod script extensions, with SQLite and the MySQL headers. |
 | `src/win32`, `src/unix` | Platform-specific code. |
 | `src/zlib` | Copy of zlib. |
-| `test` | Reverse-engineering material: IDA database, offset tables and test loader. |
-| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, the smoke test with its minimal client, and the bots test. |
+| `docs` | Technical documentation for contributors and AI agents (index in [docs/README.md](docs/README.md)) and the change list. |
+| `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, the smoke test with its minimal client, the bots test, the HTTP and WebSocket test, and the documentation checker. |
 | `mods/bots` | The simple bots script mod. |
 
 ## License
