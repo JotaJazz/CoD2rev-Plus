@@ -1,0 +1,76 @@
+# libcod
+
+The fork's script extensions, in `src/libcod`, built when `WITH_LIBCOD=true`
+(the default). Origin: libcod for the stock binaries, extended with a port of
+[zk_libcod](https://github.com/ibuddieat/zk_libcod) (MIT). zk_libcod hooks the
+stock 1.3 binary through `LD_PRELOAD`; here the same behaviour is written
+directly into our functions. The user-facing list is in
+[../CHANGES.md](../CHANGES.md).
+
+## Files
+
+| File | Contents |
+|---|---|
+| `src/libcod/gsc.cpp` | Builtin tables (`scriptFunctions`, `scriptMethods`), `Scr_GetCustomFunction`/`Scr_GetCustomMethod` |
+| `src/libcod/libcod.cpp` | Callbacks (`InitLibcodCallbacks`), per-client/per-entity state, level init, bot movement (`SV_BotUserMove_libcod`), engine helpers |
+| `src/libcod/libcod_client.h` | `libcodClient_t`, `libcodEntity_t` |
+| `src/libcod/gsc_player.cpp`, `gsc_entity.cpp`, `gsc_weapons.cpp`, `gsc_level.cpp`, `gsc_utils.cpp` | Player, entity, weapon, level and utility builtins |
+| `src/libcod/gsc_bots.cpp` | Bot control builtins |
+| `src/libcod/gsc_graph.cpp` | Waypoint graphs and A\* (`graph*`) |
+| `src/libcod/libcod_physics.cpp` | Script model gravity/bounce, bullet drop |
+| `src/libcod/libcod_sound.cpp` | WAV loading and Speex sounds sent as voice packets |
+| `src/libcod/gsc_json.cpp` | JSON (yyjson) |
+| `src/libcod/net_http.cpp`, `gsc_http.cpp` | HTTP/HTTPS client and WebSocket (Mbed TLS) |
+| `src/libcod/gsc_sqlite.cpp`, `gsc_exec.cpp`, `gsc_mysql.cpp` | SQLite, `exec`/`exec_async`, MySQL (off by default) |
+| `src/libcod/gsc_memory.cpp` | Raw memory builtins |
+
+## How it attaches to the engine
+
+- Builtins: `Scr_GetFunction`/`Scr_GetMethod` in `src/game/g_scr_main_mp.cpp`
+  ask libcod first (`Scr_GetCustomFunction`, `Scr_GetCustomMethod`).
+- Callbacks: `InitLibcodCallbacks` looks up the `CodeCallback_*` functions
+  in `maps/mp/gametypes/_callbacksetup` only (`CodeCallback_PlayerCommand`,
+  `CodeCallback_RemoteCommand`, `CodeCallback_Error`, button callbacks…);
+  a mod that wants them overrides that file.
+- State reset: `SV_FreeClient` calls `Libcod_ResetClient`; `G_FreeEntity`
+  calls `Libcod_FreeEntity`; `G_InitGame` calls `Libcod_InitLevel` on every
+  level start, including `map_restart`, and bumps `libcodLevelGeneration`.
+- Per-player visibility: `SV_BuildClientSnapshot` builds an entity state per
+  recipient (hide, fx, objectives, collision team).
+
+## State rules
+
+- Per-client state lives in `libcodClients[MAX_CLIENTS]`, per-entity state in
+  `libcodEntities[MAX_GENTITIES]` (types in `src/libcod/libcod_client.h`,
+  arrays in `src/libcod/libcod.cpp`). Add new fields there, never as statics
+  in a `gsc_*.cpp`, so the resets above clear them.
+- `libcodClient_t.generation` counts players in a slot: anything that
+  outlives a player checks it (today, bullets in flight in
+  `src/libcod/libcod_physics.cpp`).
+- Async work (SQLite, exec, HTTP, WebSocket) keeps references to the script
+  values it will pass to its callback, and checks `libcodLevelGeneration`
+  before running it. Never use `scrVarPub.levelId` for this: a freed level
+  id is often reused.
+- Player events reach other clients through two copies
+  (`BG_PlayerStateToEntityState` and a second loop in
+  `src/game/g_active_mp.cpp`); a filter must cover both.
+
+## VM facts
+
+- Type names: zk_libcod names them after the 1.3 binary. Its `VAR_OBJECT` is our
+  `VAR_POINTER`, its `VAR_STRUCT` is our `VAR_OBJECT`; our enum also has
+  `VAR_INT64`.
+- Callback arguments: the last value pushed is the first parameter.
+- A runtime error ends the script thread. Outside developer mode, execution
+  continues with `undefined`, which can cascade.
+- `CodeCallback_Error(critical, function, message, position)` gets the
+  position only with `developer` set (`developer 2` does not abort);
+  `developer_script` is not enough. `critical` is always 0: errors that stop
+  the map never reach the callback.
+- Map commands (`map`, `map_restart`…) run from a script with
+  `cmd_executestring` or `processRemoteCommand` are deferred until the script
+  returns: changing the map frees the VM the script is running in.
+
+## Not ported on purpose
+
+See [ADR 0003](adr/0003-zk-libcod-names.md).

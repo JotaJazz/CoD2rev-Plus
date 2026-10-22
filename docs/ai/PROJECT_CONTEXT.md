@@ -1,0 +1,47 @@
+# Project context
+
+## Identity
+
+CoD2rev-Plus: a fork of
+[voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), the
+reverse-engineered source of the Call of Duty 2 multiplayer dedicated server
+(1.0 and 1.3). Maintained by one person for running their own servers, with
+an AI assistant; AGPL-3.0.
+
+## Goal
+
+A dedicated server that stock CoD2 clients join unchanged, more robust than
+the original binaries, with a script layer (libcod) rich enough for modern
+server mods.
+
+## Non-goals
+
+- A game client or any client-side change; client prediction stays intact.
+- Reverse-engineering the engine: that happens upstream. The fork reverses
+  only what a fix or feature needs (for example the client calls of `LISTEN_SERVER`).
+- Distributing game files (iwds, stock scripts).
+- Sending changes back upstream.
+- Protocols or features that need a modified client (CoD2x API).
+
+## Principles
+
+- Compatibility with stock clients first.
+- Reversed code mirrors the binary; fork features live in `src/libcod`.
+- Everything is verified on the real server: builds for both platforms and
+  versions, tests against a real game folder.
+- One self-contained binary: vendored libraries; on Linux only libc, libm,
+  pthread, libdl and libstdc++ at run time.
+- Script-facing names follow zk_libcod.
+
+## Stack
+
+C++ (C-style, Quake 3 code base), 32-bit x86, GNU Make, gcc-multilib on Linux,
+MinGW-w64 for Windows; GSC for the bots mod; Python 3 (standard library) for
+tools and tests; GitHub Actions for builds.
+
+## Constraints
+
+- 32-bit only: the engine's structures and network formats assume it.
+- Fixed engine limits (`MAX_CLIENTS` 64, `MAX_GENTITIES` 1024) and wire formats.
+- Tests need a CoD2 install, which is not in the repository.
+- Protocol 119 (Game Pass) cannot be tested.
