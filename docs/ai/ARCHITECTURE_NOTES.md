@@ -33,5 +33,5 @@ Normative summary. Details: [../architecture/boundaries.md](../architecture/boun
 | Vendored, statically built libraries | [0002](../architecture/adr/0002-vendored-libraries.md) |
 | zk_libcod names as the script API | [0003](../architecture/adr/0003-zk-libcod-names.md) |
 | Upstream merges, no copying incompatible code | [0004](../architecture/adr/0004-upstream-and-references.md) |
-| READMEs summarize, CHANGES.md details | [0005](../architecture/adr/0005-readme-and-changes.md) |
+| READMEs summarize, CHANGES.md details; README front page | [0005](../architecture/adr/0005-readme-and-changes.md), [0007](../architecture/adr/0007-readme-front-page.md) |
 | Documentation as a continuity system | [0006](../architecture/adr/0006-ai-documentation-layer.md) |

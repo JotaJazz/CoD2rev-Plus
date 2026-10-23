@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-22 — README front page
+
+- The six READMEs now open with what the server is for, "What it does today", how to run it and a section for contributors; build, running, testing and layout fold into `<details>`, with Notice and License at the end ([ADR 0007](../architecture/adr/0007-readme-front-page.md)), following OpenCoD2-Plus.
+- "How to run" promises a Releases page that does not exist yet: publishing releases is open.
+
 ## 2026-10-22 — documentation system
 
 - Project map, conventions, engine facts and open leads moved from a local `CLAUDE.md` and the assistant's private memory into `AGENTS.md` and `docs/` ([ADR 0006](../architecture/adr/0006-ai-documentation-layer.md)).

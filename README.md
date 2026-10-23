@@ -11,19 +11,11 @@
 
 [Español](README.es.md) · **English** · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
-Reverse-engineered source code of the **Call of Duty 2** dedicated server (versions 1.0 and 1.3).
-It fixes several bugs in the original binaries and lets developers extend the server's functionality.
+**Your own Call of Duty 2 server, still.** CoD2rev-Plus is the Call of Duty 2 multiplayer dedicated server rebuilt from its source, for versions 1.0 and 1.3, on Windows and Linux. Players join it with the game they already have, and it fixes many bugs of the original server and adds what server admins and modders have been missing.
 
-This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), which is where all the reverse-engineering work was done. This fork only adds the changes described in [Changes in this fork](#changes-in-this-fork).
+It is a fork of [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), where the reverse-engineering of the server was done.
 
-## Transparency
-
-- **Who maintains this:** I'm JotaJazz. I like old games, and that is why this fork exists: I want to keep being able to run a CoD2 server on my own machines.
-- **How the work is done:** I work with [Claude Code](https://claude.com/claude-code), Anthropic's coding assistant. The changes in this fork, including this README and its translations, are written with its help. Commits made this way carry a `Co-Authored-By: Claude` line in their message, so they can be identified in the history with `git log`.
-- **Relationship with the original:** this fork pulls changes from the original repository when there are any, but does not send its own back. It will probably drift away from it over time.
-- **What it is not:** it is not an official project and is not affiliated with Activision, Infinity Ward or the author of the original repository. It contains no game files.
-
-## Changes in this fork
+## What it does today
 
 - **Builds for Windows and Linux:** a MinGW build for Windows, `make` for 32-bit Linux, the game version (1.0 or 1.3) chosen at build time, automated builds on every push, launchers and an example `server.cfg`.
 - **Security and stability:** network input that crashed the server or overwrote its memory is now bounds-checked; rcon locks out IPs after wrong passwords; downloads can't fetch the stock game files; IP bans are enforced; and a crash leaves a report in `crash.log`.
@@ -33,7 +25,33 @@ This repository is a fork of [voron00/CoD2rev_Server](https://github.com/voron00
 - **Bots mod:** `mods/bots`, bots that find their way over waypoint graphs, use sights, grenades and knives, and play the SD and CTF objectives.
 - **Tests:** a smoke test with a minimal client that reads the server's snapshots, and a bots test that play real maps.
 
-Every change in detail, with its functions, variables and fixes, is in [docs/CHANGES.md](docs/CHANGES.md) (in English).
+It also runs the local games of [OpenCoD2-Plus](https://github.com/JotaJazz/OpenCoD2-Plus), a rebuilt CoD2 client. Every change in detail, with its functions, variables and fixes, is in [docs/CHANGES.md](docs/CHANGES.md).
+
+> [!NOTE]
+> **Still being improved.** If something breaks or behaves differently from the original server, please report it in the [issues](https://github.com/JotaJazz/CoD2rev-Plus/issues).
+
+> [!IMPORTANT]
+> **No game files are included.** This repository is source code only. The server needs the `main` folder with the `.iwd` files from a copy of Call of Duty 2 that **you own**.
+
+## How to run
+
+Ready-to-run builds will be published on the **Releases** page. Until then, build the server (see [Building](#building)) and copy it into your Call of Duty 2 folder, next to `main`, with a `server.cfg` in `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) is a good start).
+
+**Windows:** copy `cod2rev_win32.exe` and [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat), then run:
+
+```bat
+iniciar_cod2rev.bat            :: LAN or direct IP
+iniciar_cod2rev.bat internet   :: also on the public server list
+```
+
+**Linux:** copy `cod2rev_lnxded` and [`scripts/linux/iniciar_cod2rev.sh`](scripts/linux/iniciar_cod2rev.sh), then run:
+
+```sh
+./iniciar_cod2rev.sh            # LAN or direct IP
+./iniciar_cod2rev.sh internet   # also on the public server list
+```
+
+Both start on port `28960` with the map `mp_toujane`. If the game also runs on the same PC, start the server first: the game uses `28960` too. More options, CD key checks and systemd are in [Running](#running).
 
 ## Game versions
 
@@ -41,39 +59,38 @@ Every change in detail, with its functions, variables and fixes, is in [docs/CHA
 - **The 1.0 build also accepts other versions by direct IP.** With libcod, which is enabled by default, it accepts connections using protocols 115 to 119, which includes 1.3 (protocol 118) and the Game Pass version (protocol 119). Direct IP connections to this build have been tested, including with a CoD2x 1.4.x client.
 - **The 1.3 build only accepts protocol 118 clients.** It has been started on Linux and Windows, where it loads a map and answers as 1.3, and the Linux build has been played on with a CoD2x 1.4 client. [CoD2x](https://github.com/callofduty2x/CoD2x) 1.4 clients also connect with protocol 118, and their server browser only lists servers that report protocol 118 or 120, so this is the build they can see.
 
+## For contributors
+
+Every kind of help counts: running a server and reporting what goes wrong, testing on other systems, mods that use the new script functions, or code. The technical documentation, in English, starts at [docs/README.md](docs/README.md); [AGENTS.md](AGENTS.md) is the entry point for AI coding agents.
+
 ## Building
 
 The output goes to `bin/` and intermediate objects to `obj/`.
-
-### Windows (cross-compiled from Linux with MinGW)
-
-Requires the 32-bit MinGW-w64 compiler (`i686-w64-mingw32`).
-
-```bash
-make windows
-```
-
-Produces `bin/cod2rev_win32.exe`.
 
 ### Linux
 
 The server is a 32-bit x86 binary. On a 64-bit system you need GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
 
 ```bash
-make
+make                 # 1.0 -> bin/cod2rev_lnxded
+make PROTOCOL=118    # 1.3, same name
 ```
 
-Produces `bin/cod2rev_lnxded`.
+### Windows (cross-compiled from Linux with MinGW)
 
-### Game version
+Requires the 32-bit MinGW-w64 compiler with POSIX threads (on Debian and Ubuntu, `gcc-mingw-w64-i686-posix` and `g++-mingw-w64-i686-posix`):
 
-Add `PROTOCOL=118` to the `make` command to build the server as 1.3; without it, or with `PROTOCOL=115`, it is built as 1.0. Each platform and version keeps its own objects under `obj/`, so you can switch between them without `make clean`. The automated builds publish both versions for each platform.
+```bash
+make windows                 # 1.0 -> bin/cod2rev_win32.exe
+make windows PROTOCOL=118    # 1.3, same name
+```
 
-### Automated builds
+<details>
+<summary><b>Game version, automated builds and Makefile options</b></summary>
 
-Every push to `master` that changes the code builds both versions on GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). The resulting binaries can be downloaded as artifacts from the repository's [Actions](https://github.com/JotaJazz/CoD2rev-Plus/actions) tab.
+Without `PROTOCOL`, or with `PROTOCOL=115`, the server is built as 1.0. Each platform and version keeps its own objects under `obj/`, so you can switch between them without `make clean`; both versions write the same file name, and `BIN_DIR=<folder>` builds into another folder to keep both.
 
-### Makefile options
+Every push to `master` that changes the code builds both versions for both platforms on GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). The resulting binaries can be downloaded as artifacts from the repository's [Actions](https://github.com/JotaJazz/CoD2rev-Plus/actions) tab.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -85,31 +102,27 @@ Every push to `master` that changes the code builds both versions on GitHub Acti
 
 `make clean` removes the binary and the objects.
 
+</details>
+
 ## Running
 
-The server needs the original game files (the `main` folder with its `.iwd` files), which are not in this repository. You need your own copy of Call of Duty 2.
+<details>
+<summary><b>Launchers, CD key authorization and systemd</b></summary>
 
-### Windows
+The launchers start in LAN mode by default (`dedicated 1`: LAN or direct IP); with `internet` they announce the server on the public list (`dedicated 2`). They set their values before `+exec server.cfg`, so `server.cfg` can change them. If the game is already running on the same PC, a server started after it moves to the next free port.
 
-1. Copy `cod2rev_win32.exe` and `scripts/windows/iniciar_cod2rev.bat` into the game folder, next to `main`.
-2. Have a `server.cfg` in `main`. [`scripts/server.cfg.example`](scripts/server.cfg.example) sets the usual options and lists every other variable the server registers with its default value.
-3. Run `iniciar_cod2rev.bat`.
+**Key authorization:** the server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The launchers only turn it on in LAN mode; in internet mode a valid key is required unless `server.cfg` turns it on.
 
-The launcher starts the server on port `28960` and loads the map `mp_toujane`. If the game also runs on this PC, start the server first: the game uses `28960` too, and a server started after it moves to the next free port. By default it starts in LAN mode (`dedicated 1`, LAN or direct IP); run `iniciar_cod2rev.bat internet` to announce the server on the public list (`dedicated 2`). The launchers set their values before `+exec server.cfg`, so `server.cfg` can change them.
-
-### Key authorization
-
-The server queries `cod2master.activision.com` to validate the key of every client that is not on the local network. With `sv_cracked 1` it still sends the query, but accepts the client whatever the answer is. The launchers only turn it on in LAN mode; in internet mode a valid key is required unless `server.cfg` turns it on.
-
-### Linux
-
-Copy `cod2rev_lnxded` and `scripts/linux/iniciar_cod2rev.sh` into the game folder, next to `main`, with a `server.cfg` in `main`. Run `./iniciar_cod2rev.sh` for LAN mode or `./iniciar_cod2rev.sh internet` to announce the server on the public list. It uses port `28960` and loads the map `mp_toujane`.
-
-`scripts/linux/cod2rev@.service` runs servers under systemd, one per instance: `systemctl enable --now cod2rev@public` runs `public.cfg` with its own home folder in `/var/lib/cod2rev/public`, restarts the server if it crashes and stops it cleanly with SIGTERM (final message, flatline heartbeat, logs closed). The comments in the file explain how to install it.
+**systemd:** `scripts/linux/cod2rev@.service` runs servers under systemd, one per instance: `systemctl enable --now cod2rev@public` runs `public.cfg` with its own home folder in `/var/lib/cod2rev/public`, restarts the server if it crashes and stops it cleanly with SIGTERM (final message, flatline heartbeat, logs closed). The comments in the file explain how to install it.
 
 `run_bin.sh` is the original project's test script: it starts `bin/cod2rev_lnxded` in developer mode with cheats enabled and test bots. It is useful as an example of parameters, not as a configuration for a real server.
 
+</details>
+
 ## Testing
+
+<details>
+<summary><b>The test scripts</b></summary>
 
 `scripts/smoke_test.py` needs a built server and a game folder:
 
@@ -128,6 +141,8 @@ python3 scripts/bots_test.py /path/to/CoD2 --map mp_carentan
 
 With `--gametype sd` or `--gametype ctf` it checks instead that the bots plant the bomb or pick up the enemy flag. `--bombmode 1` plays SD in single bomb mode, with one bomb site. `--corrupt-cache` starts from a damaged waypoint file, which the bots must replace with a new graph.
 
+`scripts/http_test.py` checks `httpFetch` and `webSocket*` against local HTTP, HTTPS, WS and WSS servers, and `scripts/check_docs.py` checks the documentation's links and paths.
+
 To look for memory errors, build the server with AddressSanitizer in a separate folder and pass that binary with `--binary`:
 
 ```bash
@@ -138,7 +153,12 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 
 `CFLAGS` given on the command line replaces the Makefile's, so `-m32` and `-D_FILE_OFFSET_BITS=64` must be repeated. Running that build for a while with the bots mod and a short `sv_mapRotation` also covers map changes and gameplay.
 
+</details>
+
 ## Repository layout
+
+<details>
+<summary><b>What is where</b></summary>
 
 | Path | Contents |
 | --- | --- |
@@ -148,16 +168,35 @@ make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
 | `src/qcommon`, `src/universal` | Shared code: commands, variables (dvars), file system, networking. |
 | `src/xanim` | Models and animations. |
 | `src/stringed` | Localized strings. |
-| `src/libcod` | libcod script extensions, with SQLite and the MySQL headers. |
+| `src/libcod` | libcod script extensions, with the libraries they use: SQLite, yyjson, Speex, Mbed TLS and the MySQL headers. |
 | `src/win32`, `src/unix` | Platform-specific code. |
 | `src/zlib` | Copy of zlib. |
 | `docs` | Technical documentation for contributors and AI agents (index in [docs/README.md](docs/README.md)) and the change list. |
 | `scripts` | Launchers for Windows and Linux, the example `server.cfg` and its generator, the bots installer, the smoke test with its minimal client, the bots test, the HTTP and WebSocket test, and the documentation checker. |
 | `mods/bots` | The simple bots script mod. |
 
+</details>
+
+## Transparency
+
+- **Who maintains this:** I'm JotaJazz. I like old games, and that is why this fork exists: I want to keep being able to run a CoD2 server on my own machines.
+- **How the work is done:** I work with [Claude Code](https://claude.com/claude-code), Anthropic's coding assistant. The changes in this fork, including this README and its translations, are written with its help. Commits made this way carry a `Co-Authored-By: Claude` line in their message, so they can be identified in the history with `git log`.
+- **Relationship with the original:** this fork pulls changes from the original repository when there are any, but does not send its own back. It will probably drift away from it over time.
+- **What it is not:** it is not an official project and is not affiliated with Activision, Infinity Ward or the author of the original repository. It contains no game files.
+
+## Notice
+
+This is an independent, source-level reconstruction of the Call of Duty 2 dedicated server. It is not affiliated with, authorized by, sponsored by, or endorsed by Activision Publishing, Inc., Infinity Ward, or any of their affiliates.
+
+"Call of Duty" and "Call of Duty 2" are trademarks of Activision Publishing, Inc. They are used in this repository only for identification and interoperability, to describe what the code reconstructs. No claim is made to those marks.
+
+This project does not provide or help obtain copyrighted game data. To use it with real game content, you must supply data files from a copy of Call of Duty 2 that you legally own.
+
+If you are a rights holder and believe something here should not be distributed, please open an issue or contact the maintainer and it will be addressed promptly.
+
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE), the same as the original project.
+[GNU Affero General Public License v3.0](LICENSE), the same as the original project. The vendored libraries keep their own licenses: SQLite (public domain), Mbed TLS (Apache-2.0, `src/libcod/mbedtls/LICENSE`), yyjson (MIT), Speex (BSD, `src/libcod/speex/COPYING`) and zlib (zlib license).
 
 ## Credits
 

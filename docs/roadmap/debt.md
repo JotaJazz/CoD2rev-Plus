@@ -44,6 +44,7 @@ entry in the commit that resolves it and record the stage in
 | MySQL async functions | No 32-bit MySQL client in the default toolchain |
 | soundalias functions | See [ADR 0003](../architecture/adr/0003-zk-libcod-names.md) |
 | CPU profile with 20 bots | Not measured yet |
+| Releases page | The READMEs' "How to run" points to it; CI already builds the four binaries as artifacts |
 
 ## Accepted simplifications
 

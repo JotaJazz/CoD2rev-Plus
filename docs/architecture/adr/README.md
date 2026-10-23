@@ -11,8 +11,9 @@ folder existed, with the date the decision was made.
 | [0002](0002-vendored-libraries.md) | Libraries vendored and compiled into the binary | Accepted |
 | [0003](0003-zk-libcod-names.md) | zk_libcod port keeps its names; what is left out | Accepted |
 | [0004](0004-upstream-and-references.md) | Pull from upstream, never copy incompatible code | Accepted |
-| [0005](0005-readme-and-changes.md) | READMEs summarize, `docs/CHANGES.md` details | Accepted |
+| [0005](0005-readme-and-changes.md) | READMEs summarize, `docs/CHANGES.md` details | Superseded by 0007 |
 | [0006](0006-ai-documentation-layer.md) | Documentation as a continuity system | Accepted |
+| [0007](0007-readme-front-page.md) | README front page | Accepted |
 
 ## Template
 

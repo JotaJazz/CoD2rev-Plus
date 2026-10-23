@@ -1,6 +1,6 @@
 # Changes in CoD2rev-Plus
 
-Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), in detail: the functions, variables and fixes behind each milestone that the [README](../README.md#changes-in-this-fork) summarizes. The script functions marked as coming from [zk_libcod](https://github.com/ibuddieat/zk_libcod) keep its names and arguments, so scripts written for it run here.
+Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server), in detail: the functions, variables and fixes behind each milestone that the [README](../README.md#what-it-does-today) summarizes. The script functions marked as coming from [zk_libcod](https://github.com/ibuddieat/zk_libcod) keep its names and arguments, so scripts written for it run here.
 
 ## Building and running
 

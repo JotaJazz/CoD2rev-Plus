@@ -1,6 +1,6 @@
 # 0005. READMEs summarize, docs/CHANGES.md details
 
-- Status: Accepted
+- Status: Superseded by 0007
 - Date: 2026-10-17
 
 ## Context
