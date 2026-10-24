@@ -5,9 +5,10 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
-## 2026-10-23 — eye speed while jumping
+## 2026-10-23 — eye bob
 
 - `BG_GetSpeed` used the 3D velocity, so the shot origin (`G_GetPlayerViewOrigin`) bobbed while jumping or falling; 1.3's game (`0x4fde06`) and client (`0x4cfa44`) use x and y only. Found while porting the client's view in OpenCoD2-Plus, which had the same bug.
+- `BG_GetBobCycle` divided as integers, so the server's eye never bobbed at all and the `BG_GetSpeed` bug hid behind it; 1.3 (`0x4fddb6`) divides by `255.0f`. OpenCoD2-Plus's server eye test checks both through libcod's `getViewOrigin` (the stock `getEye` is the origin plus 40).
 
 ## 2026-10-22 — README front page
 

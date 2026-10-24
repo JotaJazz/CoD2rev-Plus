@@ -38,7 +38,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Game files on Windows drives:** the Linux build could not see the game files on file systems with large inode numbers, such as Windows drives under WSL. It is now built with 64-bit file offsets.
 - **Steady game clock on Linux:** the server measured time with the wall clock, so every clock correction (NTP, virtual machine time sync) froze the game for a moment. It now uses the monotonic clock.
 - **Bots after a map change:** after a map change, bots stayed connected but out of the game, holding their slots, so the bots mod kept adding more until the server was full. They now come back into the game as soon as the new map loads.
-- **Eye position while jumping:** `BG_GetSpeed` returned the velocity's full length, so a jump or a fall counted as moving and the eye the server shoots from bobbed in the air. As in 1.3 (`0x4fde06`), it now takes the horizontal speed only.
+- **Eye bob:** the eye the server shoots from never bobbed: `BG_GetBobCycle` divided the cycle by 255 as integers, so it was always a whole turn; as in 1.3 (`0x4fddb6`) it divides as a float, and a walking player's eye now bobs. `BG_GetSpeed` returned the velocity's full length, so a jump or a fall counted as moving; as in 1.3 (`0x4fde06`), it takes the horizontal speed only, so the eye does not bob in the air.
 - **Fewer stalls and a cleaner startup:** the master server name is resolved once instead of on every authorization timeout, and the server no longer warns about every `+set` on the command line.
 
 ## Administration
