@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 5: mod folders
+
+- `fs_callbacks`, `fs_gametypes`, `fs_mapScriptDirectories`, `fs_replaceStockMaps`, `loc_loadLocalizedMods` ported; every `_callbacksetup` lookup (stock and libcod) goes through `Libcod_CallbacksScript`.
+- `fs_replaceStockMaps 0` changes manymaps: a stock map's library iwd used to be linked when coming from a custom map. `loc_loadLocalizedMods` only touches the loaded lists (`sv_iwds`, `sv_iwdNames`); the referenced lists already held every non-main iwd.
+- Tested in the harness except `fs_replaceStockMaps` (needs a manymaps library with a custom map).
+
 ## 2026-10-24 — zk_libcod batch 4: load and network
 
 - `sv_isLookingAtOnDemand`, `sv_fastDownloadSpeed` and `sv_minimizeSysteminfo` ported. The minimized dvars are found by name and only moved if they have `DVAR_SYSTEMINFO` here (`sv_cheats` is `DVAR_INIT` only); turning the dvar off restores the flags on the next map.

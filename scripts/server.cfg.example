@@ -118,6 +118,11 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set scr_json_async_max_jobs 64              // int, 1 to 1024: JSON jobs that can run in the background at once
 // set sv_master1 "cod2master.activision.com"  // string: first master server
 // set fs_library ""                           // string: folder used by the libcod manymaps map download
+// set fs_callbacks ""                         // string: script with the CodeCallback_* functions; empty = maps/mp/gametypes/_callbacksetup
+// set fs_gametypes ""                         // string: folder of the gametype scripts; empty = maps/mp/gametypes
+// set fs_mapScriptDirectories 0               // int, 0 to 2: where a map's main is: 0 maps/mp/<map>, 1 maps/mp/<map>/<map>, 2 that first
+// set fs_replaceStockMaps 0                   // bool: let manymaps replace a stock map with a library iwd of the same name
+// set loc_loadLocalizedMods 0                 // bool: list the mod's localized iwds for pure clients too
 // set g_playerCollision 1                     // bool: players collide with each other
 // set g_playerEject 1                         // bool: push apart players stuck inside each other
 // set sv_downloadMessage ""                   // string: if set, downloads are refused and this text is shown instead
