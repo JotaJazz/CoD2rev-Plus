@@ -46,6 +46,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 
 ## Administration
 
+- **More admin switches (from zk_libcod, same names):** `g_corpseHit 0` makes bullets hit a corpse as the surface under it instead of with blood, `g_spectateBots 0` keeps spectators from following bots, `g_logPickup 0` leaves the `Weapon;` and `Item;` pickup lines out of the game log, `sv_botKickMessages 0` hides the message for kicked bots, `sv_noAuthorize 1` lets players in without asking the CD key authorization server (they get GUID 0), and `sv_authorizeTimeout` sets how long a connecting player waits for that server (5000 ms, as before). `sv_limitLocalRcon 1` rate-limits rcon from LAN addresses too; unlike zk_libcod it is off by default, as LAN addresses were never limited here. zk_libcod's `sv_disconnectMessages` and `sv_botReconnectMode` are not needed: the disconnect message is already not shown, and bots already come back after a map change (`sv_kickbots` drops them instead).
 - **Passwords kept out of the log:** `rcon_password` and `sv_privatePassword` are shown as `********` in the console log.
 - **Logging and admin settings:** the console log can be renamed (`logfileName`), keep the logs of previous runs (`logfileRotate`) and start each line with the date and time (`logTimestamps`). Accepted rcon commands can be left out of the log (`sv_logRcon`), the CD key authorization server can be changed (`sv_authorizeServer`, `sv_authorizePort`), the server can impose a rate and snapshot rate on every client (`g_forceRate`, `g_forceSnaps`), and the messages announcing a kick or a timeout can be turned off (`sv_kickMessages`, `sv_timeoutMessages`). The names are the same as in zk_libcod, so its configs keep working.
 - **Long-running servers restart between maps:** the server time only goes back to 0 when the server shuts down, and the engine forces that at about day 21.7, in the middle of whatever match is running. After about day 18.6 the server now does it on the next map change instead, so players are disconnected between maps; the forced restart remains for a map that never changes. Commands sent over rcon that shut the server down (`killserver`, or a map change that restarts it) also get their reply now: it used to be sent to an empty address.
@@ -109,6 +110,13 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `g_noMoverBlockage` | `0` | 0–1 | `1` lets movers (script brush models, models, origins) go on when an entity blocks them. |
 | `g_spawnMapWeapons` | `1` | 0–1 | `0` neither spawns nor precaches the map's weapons; `CodeCallback_MapWeaponsLoad` gets them. |
 | `g_spawnMapTurrets` | `1` | 0–1 | `0` neither spawns nor precaches the map's turrets; `CodeCallback_MapTurretsLoad` gets them. |
+| `g_corpseHit` | `1` | 0–1 | `0` makes bullets hit a corpse as the surface under it instead of with blood. |
+| `g_spectateBots` | `1` | 0–1 | `0` keeps spectators from following bots. |
+| `g_logPickup` | `1` | 0–1 | `0` leaves weapon and item pickups out of the game log. |
+| `sv_botKickMessages` | `1` | 0–1 | `0` hides the message for kicked bots. |
+| `sv_noAuthorize` | `0` | 0–1 | `1` skips the CD key authorization server; players get GUID 0. |
+| `sv_authorizeTimeout` | `5000` | 0–1200000 | Milliseconds a connecting player waits for the authorization server. |
+| `sv_limitLocalRcon` | `0` | 0–1 | `1` applies the rcon rate limit to LAN addresses too. |
 | `g_bulletDrop` | `0` | 0–1 | `1` lets `enableBulletDrop` give a player's bullets travel time and drop. |
 | `g_bulletDropMaxTime` | `10000` | 50–60000 | Milliseconds a dropping bullet flies before it is dropped. |
 | `sv_httpAllowedHosts` | `""` | — | Hosts `httpFetch` and `webSocketConnect` may reach, separated by spaces or commas; `*.example.com` allows its subdomains. Empty allows every host. |

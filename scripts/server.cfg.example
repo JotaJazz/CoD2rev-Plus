@@ -125,6 +125,13 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_cracked 0                            // bool: accept clients whatever the key authorization server answers
 // set sv_kickbots 0                           // bool: drop bots when the map restarts or changes
 // set logErrors 0                             // bool: write script runtime errors to the log without developer mode
+// set g_corpseHit 1                           // bool: bullets hit corpses with blood; 0 = as the surface under them
+// set g_spectateBots 1                        // bool: let spectators follow bots
+// set g_logPickup 1                           // bool: write weapon and item pickups to the game log
+// set sv_botKickMessages 1                    // bool: tell everyone when a bot is kicked
+// set sv_noAuthorize 0                        // bool: skip the CD key authorization server (players get GUID 0)
+// set sv_authorizeTimeout <set at startup>    // int, 0 to 1200000: milliseconds a connecting player waits for the authorization server
+// set sv_limitLocalRcon 0                     // bool: apply the rcon rate limit to LAN addresses too
 // set sv_libcodUnsafe 0                       // bool, command line only: let scripts use the libcod functions that reach the shell, raw memory, any file or any address
 // set jump_bounceEnable 0                     // bool, needs sv_cheats 1: keep speed when landing on slopes (bouncing)
 // set g_mantleBlockEnable 1                   // bool

@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 3: admin switches
+
+- `g_corpseHit`, `g_spectateBots`, `g_logPickup`, `sv_botKickMessages`, `sv_noAuthorize`, `sv_authorizeTimeout`, `sv_limitLocalRcon` ported. `sv_limitLocalRcon` defaults to 0 here (zk: 1) so LAN rcon tools keep working as before.
+- Not ported: `sv_disconnectMessages` (voron00 already hides that message) and `sv_botReconnectMode` (bots come back after a map change since 2026-10-17; `sv_kickbots` is mode 1).
+- `sv_botKickMessages` checked with a real client in the harness; the others are one-line conditions.
+
 ## 2026-10-24 — zk_libcod batch 2: callbacks
 
 - Nine zk_libcod callbacks in `src/libcod/libcod_callbacks.cpp`, hooked with one call each in `BG_AddPredictableEventToPlayerstate`, `G_AddEvent`, `Scr_Notify`, `VM_Notify`, `G_MoverPush`, `G_CallSpawn`, `Scr_LoadGameType`, `Com_DPrintf` and the four rate limit sites. Notify arguments are kept as `VariableValue`s with `AddRefToValue`, which covers every type; zk copies a few types by hand.
