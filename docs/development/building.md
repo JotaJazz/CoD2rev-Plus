@@ -21,7 +21,8 @@ This page covers what a contributor needs on top.
 - `-D LIBCOD` and the `LIBCOD_COMPILE_*` switches are on by default (see the
   README's Makefile options). Code differs between `#ifdef LIBCOD` and the
   stock path, and between `PROTOCOL_VERSION` 115 and 118: check both sides of
-  an `#if`.
+  an `#if`. `make WITH_LIBCOD=false` uses the same `obj/` folder, so delete
+  `obj/cod2rev_lnxded_115` before and after it, or stale objects fail to link.
 - Hardening flags are on in every Makefile build: `-fstack-protector-strong`,
   `-D_FORTIFY_SOURCE=2`, `-fno-strict-aliasing`, `-fwrapv`, full RELRO on
   Linux. The reversed code relies on `-fno-strict-aliasing` and `-fwrapv`. A

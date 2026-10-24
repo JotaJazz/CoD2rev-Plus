@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 1: precache limits
+
+- `g_safePrecache`, `g_reservedModels`, `logErrors`, `error()` and the `execute*` aliases ported from zk_libcod. The stand-ins take model and effect index 1, set in `Libcod_SpawnServerConfigstrings` right after `SV_SpawnServer` empties the configstrings; the precache dvars are latched and registered again there.
+- `logErrors` prints only the message: without developer the VM keeps no source positions (zk notes its lookup tables can be stale then).
+- `make WITH_LIBCOD=false` shares `obj/` with the default build; mixing them fails to link until the folder is removed.
+
 ## 2026-10-24 — fprintln is stock
 
 - `fprintln` writing each argument followed by `,` and no newline matches the stock game: OpenCoD2-Plus reversed the same function from the 1.3 client, in its `g_scr_main_mp.c`, with the same body. Gap closed, nothing changed.
