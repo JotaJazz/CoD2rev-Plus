@@ -1,7 +1,7 @@
 # System summary
 
 Live snapshot. Last updated: 2026-10-24 (branches `r5-unsafe-builtins` →
-`r4-max-dvars` → `r2-time-wrap-restart` → `r3-milliseconds-wrap`, stacked on
+`r4-max-dvars` → `r2-time-wrap-restart` → `r3-milliseconds-wrap` → `bots-graph-node-cap`, stacked on
 `master`, not merged yet).
 
 ## Tree

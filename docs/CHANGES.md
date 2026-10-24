@@ -71,6 +71,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 ## Bots mod
 
 - **Simple bots:** `mods/bots` is a small script mod whose bots navigate each map over a waypoint graph built with the libcod `graph*` functions: the first time a map is played the graph is generated from all its spawn points at once and saved as `waypoints/<map>_v2.graph` in the mod folder, and later loads read it. With nobody in sight they follow what they last saw or heard shooting, patrol towards the enemy side, and only after 20 s without contact head for the nearest enemy. They aim down the sight at range, throw grenades at mid range, knife up close and reload between fights. In SD and CTF each life a bot draws a role: attackers plant the bomb or hunt, defenders guard a bomb site or hunt, and once the bomb is planted the defenders go to defuse it while the planters guard it; in CTF bots steal and bring home the enemy flag, or defend their own, chase its carrier and return it when it is dropped (SD in dual bomb mode is played without objectives). `scripts/install_bots.py` installs it; `bots_count`, `bots_skill` and `bots_debug` control them.
+- **Whole graph on `mp_brecourt`:** the waypoint graph of `mp_brecourt` needs 15014 nodes, so the old cap of 8192 stopped the graph at about half of the map. `sv_graphMaxNodes` now defaults to 16384; the other stock maps need between 1377 and 3788.
 
 ## Testing tools
 
@@ -109,4 +110,4 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `sv_graphAstarMaxIterations` | `0` | 0–100000 | Maximum nodes one `graphFindPath` expands. `0` means no limit. |
 | `sv_graphAstarWeight` | `1` | 1–2 | A\* heuristic weight. Above `1`, paths are found faster but can be longer. |
 | `sv_graphMaxGraphs` | `8` | 1–64 | Maximum number of graphs at once. |
-| `sv_graphMaxNodes` | `8192` | 64–65535 | Maximum nodes in one graph. |
+| `sv_graphMaxNodes` | `16384` | 64–65535 | Maximum nodes in one graph. |

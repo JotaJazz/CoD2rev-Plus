@@ -136,7 +136,7 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_graphAstarMaxIterations 0            // int, 0 to 100000: maximum nodes expanded by one graphFindPath; 0 = no limit
 // set sv_graphAstarWeight 1.0                 // float, 1.0 to 2.0: A* heuristic weight; above 1 finds paths faster but less short
 // set sv_graphMaxGraphs 8                     // int, 1 to 64: maximum number of graphs scripts can create
-// set sv_graphMaxNodes 8192                   // int, 64 to 65535: maximum nodes in one graph
+// set sv_graphMaxNodes 16384                  // int, 64 to 65535: maximum nodes in one graph
 
 // --- Game rules ---
 // mapname                                     // string, read-only: map currently loaded

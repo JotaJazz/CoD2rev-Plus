@@ -25,7 +25,6 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 | Item | Notes |
 |---|---|
 | Rare cascade of script errors when a bot joins a freed slot during a grenade kill (about 1 in 60 runs) | Not located; rerun with `+set developer 2` so `CodeCallback_Error` gets file and line |
-| `mp_brecourt` graph hits the 8192-node cap (`sv_graphMaxNodes`) | Raise the cap or thin the grid |
 | SD reloads the graph every round; graphs are not kept across `map_restart` | Cache in libcod by map name |
 | Multi-floor cells in the graph builder | 1–2 days of work |
 | HQ objectives not played | Only dm, tdm, sd, ctf have roles |

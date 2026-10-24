@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — graph node cap
+
+- `sv_graphMaxNodes` defaults to 16384: generated graphs need 15014 nodes on `mp_brecourt` and 1377–3788 on the other stock maps (1.0 and 1.3 maps measured with no cap). Generation adds under a second to the first load only; a bots run on `mp_brecourt` showed no hitches after loading.
+- Rejected: caching the graph across SD rounds; it is read back from a binary file in milliseconds, and a persistent graph would leak on a map change.
+
 ## 2026-10-24 — snapshot counters and the clock wrap
 
 - Risk R3 closed. The seven snapshot counter checks in `SV_Frame` reload the map instead of `Com_Shutdown`: `SV_SpawnServer` already resets every counter, so players stay connected. A fast restart resets the archived and cached ones too, so round-based modes rarely get there.
