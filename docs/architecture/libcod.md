@@ -83,3 +83,12 @@ are safe for any mod resolve paths under `fs_homepath` instead. See
 ## Not ported on purpose
 
 See [ADR 0003](adr/0003-zk-libcod-names.md).
+
+Also left out after the ADR, for the same reasons:
+
+| Left out | Why |
+|---|---|
+| `setWeaponFuseTime`, `setWeaponRaiseTime` | `PM_Weapon` predicts both on the client |
+| `net_noFragmentationDelay` | The libcod send loop already sends all pending fragments at once |
+| `sv_disconnectMessages` | The disconnect message is already not shown |
+| `sv_botReconnectMode` | Bots come back after a map change; `sv_kickbots` drops them |

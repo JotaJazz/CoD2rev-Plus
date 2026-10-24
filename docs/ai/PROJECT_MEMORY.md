@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 6: last functions
+
+- `getAuthorizationStatus`, `setActivateOnUseButtonRelease`, `lookAtKiller`, `playScriptAnimation` ported. The authorize answer is kept per challenge and copied to the client before `ClientConnect`, so the connect callback can read it.
+- Left out: `setWeaponFuseTime` and `setWeaponRaiseTime` (`PM_Weapon` predicts both on the client; ADR 0003's rule). With this batch every zk_libcod builtin is either here or in the left-out list.
+
 ## 2026-10-24 — zk_libcod batch 5: mod folders
 
 - `fs_callbacks`, `fs_gametypes`, `fs_mapScriptDirectories`, `fs_replaceStockMaps`, `loc_loadLocalizedMods` ported; every `_callbacksetup` lookup (stock and libcod) goes through `Libcod_CallbacksScript`.
