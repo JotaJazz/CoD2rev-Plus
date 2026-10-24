@@ -5,6 +5,10 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — walkable normal as a float
+
+- `MIN_WALK_NORMAL` was the double `0.69999999`; every site that uses it (mantle `0x512131`, prone `0x514863`/`0x5149ea`/`0x514be8`/`0x514eaa`, pmove `0x5172b6`/`0x519db7`, missile `0x521f18`) compares with the float `0.7` at `0x5c427c` in 1.3, as `WALKABLE_NORMAL_Z` already did in the collision code. Only a normal of exactly `0.7f` changes side.
+
 ## 2026-10-23 — eye bob
 
 - `BG_GetSpeed` used the 3D velocity, so the shot origin (`G_GetPlayerViewOrigin`) bobbed while jumping or falling; 1.3's game (`0x4fde06`) and client (`0x4cfa44`) use x and y only. Found while porting the client's view in OpenCoD2-Plus, which had the same bug.
