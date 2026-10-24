@@ -18,6 +18,7 @@ directly into our functions. The user-facing list is in
 | `src/libcod/gsc_bots.cpp` | Bot control builtins |
 | `src/libcod/gsc_graph.cpp` | Waypoint graphs and A\* (`graph*`) |
 | `src/libcod/libcod_physics.cpp` | Script model gravity/bounce, bullet drop |
+| `src/libcod/libcod_callbacks.cpp` | zk_libcod callbacks for events, notifies, movers, map weapons/turrets, debug prints and request spam |
 | `src/libcod/libcod_sound.cpp` | WAV loading and Speex sounds sent as voice packets |
 | `src/libcod/gsc_json.cpp` | JSON (yyjson) |
 | `src/libcod/net_http.cpp`, `gsc_http.cpp` | HTTP/HTTPS client and WebSocket (Mbed TLS) |

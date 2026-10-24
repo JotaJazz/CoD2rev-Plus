@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 2: callbacks
+
+- Nine zk_libcod callbacks in `src/libcod/libcod_callbacks.cpp`, hooked with one call each in `BG_AddPredictableEventToPlayerstate`, `G_AddEvent`, `Scr_Notify`, `VM_Notify`, `G_MoverPush`, `G_CallSpawn`, `Scr_LoadGameType`, `Com_DPrintf` and the four rate limit sites. Notify arguments are kept as `VariableValue`s with `AddRefToValue`, which covers every type; zk copies a few types by hand.
+- Event callbacks do not call themselves again (a callback that plays a sound would recurse); the NotifyDebug queue drops its references in `Libcod_ShutdownLevel`.
+- Tested in the harness on 1.0 and 1.3, except `CodeCallback_MoverBlockage`/`g_noMoverBlockage` (no reproducible blockage on stock maps) and `CodeCallback_CLSpam` (rate limits skip LAN addresses, and the test only has local ones).
+
 ## 2026-10-24 — zk_libcod batch 1: precache limits
 
 - `g_safePrecache`, `g_reservedModels`, `logErrors`, `error()` and the `execute*` aliases ported from zk_libcod. The stand-ins take model and effect index 1, set in `Libcod_SpawnServerConfigstrings` right after `SV_SpawnServer` empties the configstrings; the precache dvars are latched and registered again there.
