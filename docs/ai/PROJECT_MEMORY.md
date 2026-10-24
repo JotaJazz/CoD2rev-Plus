@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — animation script as the 1.3 client
+
+- Compared with the 1.3 client (CoD2MP_s.exe) while porting it into OpenCoD2-Plus: the parser set the strafe flags 0x10/0x20 for every condition but STRAFING (1.3 `0x4f7f54` checks STRAFING only), which turned the legs of 55 anims (the MG42 ones too) as strafes; `BG_IsCrouchingAnim` counted the crouched runs and turns and not the crouched stumbles (`0x4f9750`), and it and `BG_IsProneAnim` answered a bit mask, not 0 or 1, so two prone anims compared as a stance change (`0x4f97b0`).
+- `BG_SetNewAnimation` divided the start time as integers, so every looping anim started at its first frame (1.3 divides as floats, `0x4f9adb`); the angles, swing, blend and rate code now uses 1.3's float constants (`0x4fa000`, `0x4fa230`, `0x4f9850`, `0x4f9d80`, `0x4faff0`), with 1/130 multiplied as 1.3 does.
+
 ## 2026-10-24 — player controllers as floats
 
 - `BG_Player_DoControllersInternal` multiplied the torso, neck and head angles by double literals (`0.69999999`, `0.30000001`, ...) and `fLeanFrac * 50.0 * 0.925`; 1.3 (`0x4fa8c4`, controllers `0x4fac80`-`0x4fad54`) uses only float constants, with `50 * 0.925` and `50 * 0.075` folded to `46.25f` and `3.7500002f`. Under x87 the double products rounded differently in the last bit now and then; the hit-location bones follow 1.3 exactly now.
