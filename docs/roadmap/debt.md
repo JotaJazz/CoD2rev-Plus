@@ -15,7 +15,6 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 |---|---|---|
 | `SV_FX_GetVisibility` unimplemented: `sightTracePassed` ignores smoke | `src/server/sv_client_mp.cpp` | Returns 1.0 |
 | `sv_pure` only proves the client has the server's iwds, not that it uses no others: the client reports only the iwds it has read from (`FS_ReferencedIwdPureChecksums`), so the server cannot require them all, and anyone with the stock files can compute the pure checksums from the `checksumFeed` in the gamestate; protocol 119 skips the check | `src/server/sv_client_mp.cpp` | Inherent to the Quake 3 design; a stricter check drops legit clients |
-| `fprintln` adds no newline | `src/game/g_scr_main_mp.cpp` | Check against stock behaviour first |
 | zPAM 4.x needs the CoD2x API (`getHWID`, `match*`, `g_cod2x` ≥ 5) | — | zPAM 3.36 runs on 1.0 and 1.3 |
 | Protocol 119 fragment offset format | `src/qcommon/net_chan_mp.cpp` | Needs a Game Pass client |
 | Script runtime errors cascade outside developer mode | `src/script/scr_vm.cpp` | Stock behaviour |

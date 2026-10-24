@@ -5,6 +5,10 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — fprintln is stock
+
+- `fprintln` writing each argument followed by `,` and no newline matches the stock game: OpenCoD2-Plus reversed the same function from the 1.3 client, in its `g_scr_main_mp.c`, with the same body. Gap closed, nothing changed.
+
 ## 2026-10-24 — graph node cap
 
 - `sv_graphMaxNodes` defaults to 16384: generated graphs need 15014 nodes on `mp_brecourt` and 1377–3788 on the other stock maps (1.0 and 1.3 maps measured with no cap). Generation adds under a second to the first load only; a bots run on `mp_brecourt` showed no hitches after loading.
