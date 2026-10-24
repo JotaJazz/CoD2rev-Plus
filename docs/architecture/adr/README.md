@@ -14,6 +14,7 @@ folder existed, with the date the decision was made.
 | [0005](0005-readme-and-changes.md) | READMEs summarize, `docs/CHANGES.md` details | Superseded by 0007 |
 | [0006](0006-ai-documentation-layer.md) | Documentation as a continuity system | Accepted |
 | [0007](0007-readme-front-page.md) | README front page | Accepted |
+| [0008](0008-unsafe-builtins-behind-a-dvar.md) | Unsafe libcod builtins behind a startup dvar | Accepted |
 
 ## Template
 

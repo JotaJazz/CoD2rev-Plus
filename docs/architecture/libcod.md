@@ -71,6 +71,14 @@ directly into our functions. The user-facing list is in
   `cmd_executestring` or `processRemoteCommand` are deferred until the script
   returns: changing the map frees the VM the script is running in.
 
+## Unsafe builtins
+
+Builtins that reach the shell, raw memory, files by raw path or any network
+address are wrapped with `gsc_unsafe<>` in `src/libcod/gsc.cpp` and fail
+unless the server starts with `+set sv_libcodUnsafe 1`; file functions that
+are safe for any mod resolve paths under `fs_homepath` instead. See
+[ADR 0008](adr/0008-unsafe-builtins-behind-a-dvar.md).
+
 ## Not ported on purpose
 
 See [ADR 0003](adr/0003-zk-libcod-names.md).

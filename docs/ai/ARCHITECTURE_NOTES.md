@@ -35,3 +35,4 @@ Normative summary. Details: [../architecture/boundaries.md](../architecture/boun
 | Upstream merges, no copying incompatible code | [0004](../architecture/adr/0004-upstream-and-references.md) |
 | READMEs summarize, CHANGES.md details; README front page | [0005](../architecture/adr/0005-readme-and-changes.md), [0007](../architecture/adr/0007-readme-front-page.md) |
 | Documentation as a continuity system | [0006](../architecture/adr/0006-ai-documentation-layer.md) |
+| Unsafe libcod builtins off unless `sv_libcodUnsafe` | [0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md) |

@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — unsafe builtins behind a dvar
+
+- Risk R5 closed ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)): shell, raw memory, raw path and any-address builtins fail without `+set sv_libcodUnsafe 1`; `sqlite_open` is kept under `fs_homepath/<mod>`; HTTP refuses private addresses without `sv_httpAllowPrivate`. Off by default, so old mods need the dvar.
+- Both dvars are read once at startup: a script's `setCvar` uses the internal source and ignores `DVAR_INIT`. `fread` and the other handle functions are gated too, since a forged handle is a raw pointer.
+- Checked with `scripts/http_test.py` (now starts with `sv_httpAllowPrivate 1`) and a local harness test on 1.0 and 1.3.
+
 ## 2026-10-24 — sv_pure left as is
 
 - Risk R1 closed as an inherent limit, not fixed: the client (`FS_ReferencedIwdPureChecksums`, read in OpenCoD2-Plus) sends only the iwds it has referenced, in a 1024-byte command, so requiring every server iwd drops legit clients, and a cheater with the stock files computes the same pure checksums from the `checksumFeed`.

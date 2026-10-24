@@ -200,6 +200,8 @@ DESC = {
  'g_bulletDrop':'let enableBulletDrop give a player\'s bullets travel time and drop',
  'g_bulletDropMaxTime':'milliseconds a dropping bullet flies before it is dropped',
  'sv_httpAllowedHosts':'hosts httpFetch and webSocketConnect may reach (spaces or commas, *.example.com for subdomains); empty = all',
+ 'sv_libcodUnsafe':'let scripts use the libcod functions that reach the shell, raw memory, any file or any address',
+ 'sv_httpAllowPrivate':'let httpFetch and webSocketConnect reach loopback and private addresses',
  'sv_httpCaFile':'PEM file with the certificates https and wss trust; empty = the system\'s',
  'g_debugGraph':'print debug messages from the graph (A*) script functions',
  'sv_graphAstarMaxIterations':'maximum nodes expanded by one graphFindPath; 0 = no limit',

@@ -112,6 +112,7 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // --- libcod extensions ---
 // set sv_httpAllowedHosts ""                  // string: hosts httpFetch and webSocketConnect may reach (spaces or commas, *.example.com for subdomains); empty = all
 // set sv_httpCaFile ""                        // string: PEM file with the certificates https and wss trust; empty = the system's
+// set sv_httpAllowPrivate 0                   // bool, command line only: let httpFetch and webSocketConnect reach loopback and private addresses
 // set scr_json_max_load_bytes 8388608         // int, 1 to 33554432: largest JSON file json_load and json_load_async read, in bytes
 // set scr_json_slow_warn_ms 25                // int, 1 to 60000: a JSON call slower than this many milliseconds prints a warning
 // set scr_json_async_max_jobs 64              // int, 1 to 1024: JSON jobs that can run in the background at once
@@ -123,6 +124,7 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_fastDownload 0                       // bool: send in-game downloads faster
 // set sv_cracked 0                            // bool: accept clients whatever the key authorization server answers
 // set sv_kickbots 0                           // bool: drop bots when the map restarts or changes
+// set sv_libcodUnsafe 0                       // bool, command line only: let scripts use the libcod functions that reach the shell, raw memory, any file or any address
 // set jump_bounceEnable 0                     // bool, needs sv_cheats 1: keep speed when landing on slopes (bouncing)
 // set g_mantleBlockEnable 1                   // bool
 // set g_fixedWeaponSpreads 0                  // bool: use a fixed spread pattern instead of random spread
