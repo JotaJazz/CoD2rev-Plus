@@ -5,6 +5,10 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-23 — eye speed while jumping
+
+- `BG_GetSpeed` used the 3D velocity, so the shot origin (`G_GetPlayerViewOrigin`) bobbed while jumping or falling; 1.3's game (`0x4fde06`) and client (`0x4cfa44`) use x and y only. Found while porting the client's view in OpenCoD2-Plus, which had the same bug.
+
 ## 2026-10-22 — README front page
 
 - The six READMEs now open with what the server is for, "What it does today", how to run it and a section for contributors; build, running, testing and layout fold into `<details>`, with Notice and License at the end ([ADR 0007](../architecture/adr/0007-readme-front-page.md)), following OpenCoD2-Plus.
