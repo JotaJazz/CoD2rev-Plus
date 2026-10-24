@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — zk_libcod batch 4: load and network
+
+- `sv_isLookingAtOnDemand`, `sv_fastDownloadSpeed` and `sv_minimizeSysteminfo` ported. The minimized dvars are found by name and only moved if they have `DVAR_SYSTEMINFO` here (`sv_cheats` is `DVAR_INIT` only); turning the dvar off restores the flags on the next map.
+- Not ported: `net_noFragmentationDelay`; the `#ifdef LIBCOD` loop in `SV_SendClientMessages` already sends every pending fragment before a snapshot.
+
 ## 2026-10-24 — zk_libcod batch 3: admin switches
 
 - `g_corpseHit`, `g_spectateBots`, `g_logPickup`, `sv_botKickMessages`, `sv_noAuthorize`, `sv_authorizeTimeout`, `sv_limitLocalRcon` ported. `sv_limitLocalRcon` defaults to 0 here (zk: 1) so LAN rcon tools keep working as before.
