@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — full dvar pool
+
+- Risk R4 closed: dvars named by a script, the console, rcon or a config check `Dvar_CanCreate` first, so a full pool (1280) is a script error or a printed message; engine registrations stay fatal, as in the binary.
+- Checked with a local harness test that fills the pool from a script and then sets new names over rcon, on 1.0 and 1.3.
+
 ## 2026-10-24 — unsafe builtins behind a dvar
 
 - Risk R5 closed ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)): shell, raw memory, raw path and any-address builtins fail without `+set sv_libcodUnsafe 1`; `sqlite_open` is kept under `fs_homepath/<mod>`; HTTP refuses private addresses without `sv_httpAllowPrivate`. Off by default, so old mods need the dvar.

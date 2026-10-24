@@ -10,7 +10,6 @@ entry in the commit that resolves it and record the stage in
 |---|---|---|---|
 | R2 | `svs.time` reaches `0x70000000` at about day 21.7 and the restart kicks everyone mid-match | `src/server/sv_main_mp.cpp` | Move the restart to the next map rotation after about day 18 |
 | R3 | `Sys_Milliseconds` wraps at day 24.8; one map running more than 11 h hits the snapshot buffer counter checks, which restart the map | `src/unix`, `src/win32`, `SV_Frame` in `src/server/sv_main_mp.cpp` | Audit the time differences that survive a wrap |
-| R4 | `MAX_DVARS` (1280) is fatal when exceeded | `src/universal/dvar.cpp` | Error instead of fatal for script-created dvars |
 
 ## Known gaps
 
