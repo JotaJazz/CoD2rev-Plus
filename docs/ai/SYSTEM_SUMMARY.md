@@ -1,7 +1,8 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-22 (`master` after the upstream sync to
-voron00 `8301c00`).
+Live snapshot. Last updated: 2026-10-24 (branches `r5-unsafe-builtins` →
+`r4-max-dvars` → `r2-time-wrap-restart` → `r3-milliseconds-wrap`, stacked on
+`master`, not merged yet).
 
 ## Tree
 
@@ -35,8 +36,9 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 | Reversed engine | Upstream's; synced to voron00 `8301c00` (xanim review merged 2026-10-22) |
 | Network hardening | Done: message/fragment bounds, rate limits, rcon lockout and whitelist, download checks, format strings |
 | Logging and admin | Done: log naming/rotation/timestamps, `g_logRotateSize`, forced rate/snaps, kick/timeout messages, clean SIGTERM/SIGINT/SIGHUP quit |
+| Long uptime | Time wrap restart moved to a map change after day 18.6; snapshot counters reload the map; full dvar pool is not fatal for scripts or rcon |
 | Crash reports | Done: `crash.log` in `fs_homepath`, Linux and Windows |
-| libcod | 198 function and 196 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)) |
+| libcod | 198 function and 196 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)); shell, memory, raw path and any-address builtins need `+set sv_libcodUnsafe 1` ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)) |
 | JSON, HTTP/WebSocket, sounds | Done: yyjson, Mbed TLS 3.6.7 with own HTTP client, Speex 1.2.1 |
 | Bots mod | dm, tdm, sd, ctf; A\* over per-map cached graphs; no HQ roles |
 | Listen server | `LISTEN_SERVER` builds the server into a client, for the maintainer's client project; off in this repo's builds |

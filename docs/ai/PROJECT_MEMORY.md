@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — snapshot counters and the clock wrap
+
+- Risk R3 closed. The seven snapshot counter checks in `SV_Frame` reload the map instead of `Com_Shutdown`: `SV_SpawnServer` already resets every counter, so players stay connected. A fast restart resets the archived and cached ones too, so round-based modes rarely get there.
+- Audit of `Sys_Milliseconds` at day 24.8: every use compares differences, which wrap safely with `-fwrapv`; `Com_Frame` loses one frame (`com_lastFrameTime` is clamped). `getSystemMilliseconds` jumps back to 0 for scripts. No change needed.
+- Checked by writing the counters through `/proc/<pid>/mem` with a client and bots connected, on 1.0 and 1.3.
+
 ## 2026-10-24 — time wrap restart between maps
 
 - Risk R2 closed: `SV_Map_f` shuts the server down before loading the map once `svs.time` passes `0x60000000` (day 18.6); `SV_Frame`'s mid-match restart at `0x70000000` stays as the fallback. The snapshot counters were already reset on every map load, so only `svs.time` grows across maps.

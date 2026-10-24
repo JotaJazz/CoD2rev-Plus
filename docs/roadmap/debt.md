@@ -6,9 +6,8 @@ entry in the commit that resolves it and record the stage in
 
 ## Risks
 
-| ID | Risk | Where | Fix needs |
-|---|---|---|---|
-| R3 | `Sys_Milliseconds` wraps at day 24.8; one map running more than 11 h hits the snapshot buffer counter checks, which restart the map | `src/unix`, `src/win32`, `SV_Frame` in `src/server/sv_main_mp.cpp` | Audit the time differences that survive a wrap |
+None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
+(see [../ai/PROJECT_MEMORY.md](../ai/PROJECT_MEMORY.md)).
 
 ## Known gaps
 
