@@ -5,6 +5,10 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — player controllers as floats
+
+- `BG_Player_DoControllersInternal` multiplied the torso, neck and head angles by double literals (`0.69999999`, `0.30000001`, ...) and `fLeanFrac * 50.0 * 0.925`; 1.3 (`0x4fa8c4`, controllers `0x4fac80`-`0x4fad54`) uses only float constants, with `50 * 0.925` and `50 * 0.075` folded to `46.25f` and `3.7500002f`. Under x87 the double products rounded differently in the last bit now and then; the hit-location bones follow 1.3 exactly now.
+
 ## 2026-10-24 — zk_libcod batch 6: last functions
 
 - `getAuthorizationStatus`, `setActivateOnUseButtonRelease`, `lookAtKiller`, `playScriptAnimation` ported. The authorize answer is kept per challenge and copied to the client before `ClientConnect`, so the connect callback can read it.
