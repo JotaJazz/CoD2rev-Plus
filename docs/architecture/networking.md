@@ -59,7 +59,9 @@ New code that reads from the network follows them:
 
 ## Known gaps
 
-- `sv_pure` can be bypassed with a forged `cp` checksum feed, and protocol 119
-  skips the pure check. See [../roadmap/debt.md](../roadmap/debt.md).
+- `sv_pure` only proves a client has the server's iwds: clients report just
+  the iwds they have read from, and the pure checksums can be computed from
+  the stock files, so it cannot detect extra iwds. Protocol 119 skips the
+  check. See [../roadmap/debt.md](../roadmap/debt.md).
 - The protocol 119 fragment offset format is not verified against a real
   client.

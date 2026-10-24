@@ -8,7 +8,6 @@ entry in the commit that resolves it and record the stage in
 
 | ID | Risk | Where | Fix needs |
 |---|---|---|---|
-| R1 | `sv_pure` bypass: a client can send `cp @ <checksumFeed>` with no iwd checksums; protocol 119 skips the pure check | `src/server/sv_client_mp.cpp` | Require every referenced iwd checksum; a real-client test so legit clients are not dropped |
 | R2 | `svs.time` reaches `0x70000000` at about day 21.7 and the restart kicks everyone mid-match | `src/server/sv_main_mp.cpp` | Move the restart to the next map rotation after about day 18 |
 | R3 | `Sys_Milliseconds` wraps at day 24.8; one map running more than 11 h hits the snapshot buffer counter checks, which restart the map | `src/unix`, `src/win32`, `SV_Frame` in `src/server/sv_main_mp.cpp` | Audit the time differences that survive a wrap |
 | R4 | `MAX_DVARS` (1280) is fatal when exceeded | `src/universal/dvar.cpp` | Error instead of fatal for script-created dvars |
@@ -19,6 +18,7 @@ entry in the commit that resolves it and record the stage in
 | Gap | Where | Notes |
 |---|---|---|
 | `SV_FX_GetVisibility` unimplemented: `sightTracePassed` ignores smoke | `src/server/sv_client_mp.cpp` | Returns 1.0 |
+| `sv_pure` only proves the client has the server's iwds, not that it uses no others: the client reports only the iwds it has read from (`FS_ReferencedIwdPureChecksums`), so the server cannot require them all, and anyone with the stock files can compute the pure checksums from the `checksumFeed` in the gamestate; protocol 119 skips the check | `src/server/sv_client_mp.cpp` | Inherent to the Quake 3 design; a stricter check drops legit clients |
 | `fprintln` adds no newline | `src/game/g_scr_main_mp.cpp` | Check against stock behaviour first |
 | zPAM 4.x needs the CoD2x API (`getHWID`, `match*`, `g_cod2x` ≥ 5) | — | zPAM 3.36 runs on 1.0 and 1.3 |
 | Protocol 119 fragment offset format | `src/qcommon/net_chan_mp.cpp` | Needs a Game Pass client |

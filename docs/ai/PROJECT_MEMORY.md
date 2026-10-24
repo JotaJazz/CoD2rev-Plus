@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-24 — sv_pure left as is
+
+- Risk R1 closed as an inherent limit, not fixed: the client (`FS_ReferencedIwdPureChecksums`, read in OpenCoD2-Plus) sends only the iwds it has referenced, in a 1024-byte command, so requiring every server iwd drops legit clients, and a cheater with the stock files computes the same pure checksums from the `checksumFeed`.
+- Rejected: a draft that required all checksums and removed the protocol 119 skip.
+
 ## 2026-10-24 — walkable normal as a float
 
 - `MIN_WALK_NORMAL` was the double `0.69999999`; every site that uses it (mantle `0x512131`, prone `0x514863`/`0x5149ea`/`0x514be8`/`0x514eaa`, pmove `0x5172b6`/`0x519db7`, missile `0x521f18`) compares with the float `0.7` at `0x5c427c` in 1.3, as `WALKABLE_NORMAL_Z` already did in the collision code. Only a normal of exactly `0.7f` changes side.
