@@ -1,8 +1,7 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-24 (branches `zk-stability` →
-`zk-callbacks` → `zk-admin-dvars` → `zk-perf-net` → `zk-mod-folders` →
-`zk-functions`, stacked on `master`, not merged yet).
+Live snapshot. Last updated: 2026-10-24 (`master` after the zk_libcod
+callbacks, dvars and last functions).
 
 ## Tree
 
