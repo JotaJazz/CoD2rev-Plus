@@ -1,7 +1,8 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-24 (`master` after closing risks R1–R5
-and raising the graph node cap).
+Live snapshot. Last updated: 2026-10-24 (branches `zk-stability` →
+`zk-callbacks` → `zk-admin-dvars` → `zk-perf-net` → `zk-mod-folders` →
+`zk-functions`, stacked on `master`, not merged yet).
 
 ## Tree
 
@@ -37,7 +38,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 | Logging and admin | Done: log naming/rotation/timestamps, `g_logRotateSize`, forced rate/snaps, kick/timeout messages, clean SIGTERM/SIGINT/SIGHUP quit |
 | Long uptime | Time wrap restart moved to a map change after day 18.6; snapshot counters reload the map; full dvar pool is not fatal for scripts or rcon |
 | Crash reports | Done: `crash.log` in `fs_homepath`, Linux and Windows |
-| libcod | 198 function and 196 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)); shell, memory, raw path and any-address builtins need `+set sv_libcodUnsafe 1` ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)) |
+| libcod | 203 function and 200 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete, its callbacks and dvars included (left-outs in [libcod.md](../architecture/libcod.md#not-ported-on-purpose)) ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)); shell, memory, raw path and any-address builtins need `+set sv_libcodUnsafe 1` ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)) |
 | JSON, HTTP/WebSocket, sounds | Done: yyjson, Mbed TLS 3.6.7 with own HTTP client, Speex 1.2.1 |
 | Bots mod | dm, tdm, sd, ctf; A\* over per-map cached graphs; no HQ roles |
 | Listen server | `LISTEN_SERVER` builds the server into a client, for the maintainer's client project; off in this repo's builds |
