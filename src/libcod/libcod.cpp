@@ -23,6 +23,11 @@ dvar_t *sv_authorizeTimeout;
 dvar_t *sv_limitLocalRcon;
 dvar_t *sv_isLookingAtOnDemand;
 dvar_t *sv_fastDownloadSpeed;
+dvar_t *g_ambientSound;
+dvar_t *g_fireFx;
+dvar_t *g_smokeFx;
+dvar_t *g_weatherFx;
+dvar_t *g_fog;
 dvar_t *fs_callbacks;
 dvar_t *fs_gametypes;
 dvar_t *fs_mapScriptDirectories;
@@ -139,6 +144,11 @@ void RegisterLibcodDvars()
 	sv_limitLocalRcon = Dvar_RegisterBool("sv_limitLocalRcon", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_isLookingAtOnDemand = Dvar_RegisterBool("sv_isLookingAtOnDemand", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_fastDownloadSpeed = Dvar_RegisterInt("sv_fastDownloadSpeed", MAX_DOWNLOAD_WINDOW, 1, MAX_DOWNLOAD_WINDOW, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_ambientSound = Dvar_RegisterBool("g_ambientSound", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_fireFx = Dvar_RegisterBool("g_fireFx", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_smokeFx = Dvar_RegisterBool("g_smokeFx", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_weatherFx = Dvar_RegisterBool("g_weatherFx", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_fog = Dvar_RegisterBool("g_fog", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
 	// only from the command line; kept in a variable because setCvar from a script can change any dvar
 	libcod_unsafeBuiltins = Dvar_RegisterBool("sv_libcodUnsafe", false, DVAR_INIT | DVAR_CHANGEABLE_RESET)->current.boolean;
@@ -852,6 +862,55 @@ bool Libcod_IsNotSolidFor(int entityNum, int clientNum)
 {
 	return clientNum >= 0 && clientNum < MAX_CLIENTS
 	       && (libcodEntities[entityNum].notSolidMask[clientNum >> 5] & (1 << (clientNum & 0x1F)));
+}
+
+// g_fireFx, g_smokeFx and g_weatherFx: whether a looped map effect is left
+// out, by the folder of its file. Its entity is still spawned, so scripts that
+// keep or delete it work as before; it is only never sent to the clients.
+bool Libcod_IsHiddenMapFx(int fxId)
+{
+	static const struct { const char *prefix; dvar_t **dvar; } folders[] =
+	{
+		{ "fx/fire/", &g_fireFx },
+		{ "fx/smoke/", &g_smokeFx },
+		{ "fx/dust/", &g_weatherFx },
+		{ "fx/misc/snow_", &g_weatherFx },
+		{ "fx/misc/fogbank_", &g_weatherFx },
+	};
+	char name[MAX_STRING_CHARS];
+
+	if (fxId <= 0 || fxId >= MAX_EFFECT_NAMES)
+		return false;
+
+	SV_GetConfigstring(CS_EFFECT_NAMES + fxId, name, sizeof(name));
+	for (char *c = name; *c; c++)
+	{
+		if (*c == '\\')
+			*c = '/';
+	}
+
+	for (size_t i = 0; i < sizeof(folders) / sizeof(folders[0]); i++)
+	{
+		if (!(*folders[i].dvar)->current.boolean && !I_strnicmp(name, folders[i].prefix, strlen(folders[i].prefix)))
+			return true;
+	}
+
+	return false;
+}
+
+// g_fireFx 0 also silences the crackle of map fires: looped sounds whose alias
+// contains "fire" (smallfire, medfire and bigfire on the stock maps)
+bool Libcod_IsHiddenLoopSound(const char *alias)
+{
+	char name[MAX_STRING_CHARS];
+
+	if (g_fireFx->current.boolean)
+		return false;
+
+	I_strncpyz(name, alias, sizeof(name));
+	I_strlwr(name);
+
+	return strstr(name, "fire") != NULL;
 }
 
 void Libcod_FreeEntity(int entityNum)

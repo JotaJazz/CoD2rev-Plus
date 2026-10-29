@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — map ambience switches
+
+- `g_ambientSound`, `g_fireFx`, `g_smokeFx`, `g_weatherFx`, `g_fog`: zPAM's `scr_allow_ambient_*` done in the engine, so they work for every mod and custom map. Looped effects are matched by the folder of their file; their entities are still spawned with `SVF_NOCLIENT`, as scripts keep and delete them.
+- Played by hand: walking skipped steps on servers inside WSL2, and also on the build from before the upstream merge; the stock `CoD2MP_s.exe` and the fork's Windows build, both run natively, played smoothly ([../development/testing.md](../development/testing.md)).
+
 ## 2026-10-29 — upstream sync: q_shared and com_math review
 
 - Merged voron00 up to `672a220`: `q_shared` and `com_math` reviewed (string helpers split into `com_shared.cpp`), double literals turned into floats across `bgame` and `game`, `sv_fastDownload` loop fix, SQLite 3.54.1.

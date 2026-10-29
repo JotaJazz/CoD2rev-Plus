@@ -51,6 +51,9 @@ The bots tests also accept the ASan binary with `--binary`.
   at once, stop only your own PIDs: matching a shared path in
   `/proc/*/cmdline` once killed other agents' servers.
 - Parallel servers need their own port and `fs_homepath`.
+- A game client on Windows playing on a server inside WSL2 (NAT networking)
+  skips steps now and then while walking; the same build run natively on
+  Windows plays smoothly. Use the Windows build for play tests by hand.
 - `+set x ""` on the Linux command line must reach the server (fixed in
   `src/unix/unix_main.cpp`; the smoke test checks it with `sv_master2`).
 - Bullet tests: antilag rewinds targets to recorded positions; wait about

@@ -139,6 +139,11 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set sv_limitLocalRcon 0                     // bool: apply the rcon rate limit to LAN addresses too
 // set sv_isLookingAtOnDemand 0                // bool: trace what players look at only for isLookingAt (no crosshair names or trigger_lookat)
 // set sv_fastDownloadSpeed <set at startup>   // int, 1 to MAX_DOWNLOAD_WINDOW: messages a frame sv_fastDownload sends a downloading client
+// set g_ambientSound 1                        // bool: play the map's distant battle sounds (ambientPlay)
+// set g_fireFx 1                              // bool: send the map's looped fx/fire/ effects and fire sounds
+// set g_smokeFx 1                             // bool: send the map's looped fx/smoke/ effects
+// set g_weatherFx 1                           // bool: send the map's looped dust, snow and fog bank effects
+// set g_fog 1                                 // bool: let map scripts set fog (setExpFog, setCullFog)
 // set sv_libcodUnsafe 0                       // bool, command line only: let scripts use the libcod functions that reach the shell, raw memory, any file or any address
 // set jump_bounceEnable 0                     // bool, needs sv_cheats 1: keep speed when landing on slopes (bouncing)
 // set g_mantleBlockEnable 1                   // bool
@@ -241,9 +246,9 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set friction 5.5                            // float, 0 to 100, needs sv_cheats 1: ground friction
 // set stopspeed 100                           // float, 0 to 1000, needs sv_cheats 1: speed below which a player stops
 // set bg_swingSpeed 0.2                       // float, 0 to 1, needs sv_cheats 1
-// set bg_bobAmplitudeStanding 0.0070000002    // float, 0 to 1, needs sv_cheats 1
-// set bg_bobAmplitudeDucked 0.0074999998      // float, 0 to 1, needs sv_cheats 1
-// set bg_bobAmplitudeProne 0.029999999        // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeStanding 0.007           // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeDucked 0.0075            // float, 0 to 1, needs sv_cheats 1
+// set bg_bobAmplitudeProne 0.03               // float, 0 to 1, needs sv_cheats 1
 // set bg_bobMax 8                             // float, 0 to 36, needs sv_cheats 1
 // set bg_aimSpreadMoveSpeedThreshold 11       // float, 0 to 300, needs sv_cheats 1
 // set player_breath_hold_time 4.5             // float, 0 to 30, needs sv_cheats 1: seconds a sniper can hold breath
@@ -257,10 +262,10 @@ set sv_mapRotation "gametype tdm map mp_toujane gametype tdm map mp_carentan gam
 // set player_toggleBinoculars 1               // bool
 // set player_scopeExitOnDamage 0              // bool, needs sv_cheats 1
 // set player_adsExitDelay 0                   // int, 0 to 1000, needs sv_cheats 1
-// player_moveThreshhold = 10                  // float, 0.0000000099999999 to 20, read-only, needs sv_cheats 1
+// player_moveThreshhold = 10                  // float, 0.00000001 to 20, read-only, needs sv_cheats 1
 // player_footstepsThreshhold = 0              // float, 0 to 50000, read-only, needs sv_cheats 1
-// set player_strafeSpeedScale 0.80000001      // float, 0 to 20, needs sv_cheats 1: speed multiplier when strafing
-// set player_backSpeedScale 0.69999999        // float, 0 to 20, needs sv_cheats 1: speed multiplier when moving backwards
+// set player_strafeSpeedScale 0.8             // float, 0 to 20, needs sv_cheats 1: speed multiplier when strafing
+// set player_backSpeedScale 0.7               // float, 0 to 20, needs sv_cheats 1: speed multiplier when moving backwards
 // set player_spectateSpeedScale 2             // float, 0 to 20, needs sv_cheats 1: speed multiplier for spectators
 // set player_turnAnims 0                      // bool, needs sv_cheats 1
 // set player_dmgtimer_timePerPoint 100        // float, 0 or more, needs sv_cheats 1
