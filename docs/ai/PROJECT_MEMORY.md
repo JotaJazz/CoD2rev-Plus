@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — smoke and sightTracePassed
+
+- Not a gap: in the 1.3 dedicated server (`cod2_lnxded`, `pc_1.3_1_1`) `sightTracePassed` also sees through smoke. `SV_FX_GetVisibility` reads blockers that only the client adds while drawing smoke particles; the dedicated server initialises the FX system, registers effects and reads their length, but never runs them, so the answer is always 1. The stub was right; it is now documented.
+- Rejected: reversing the FX system (about 10k lines, Raven's effects code) for no change on a dedicated server; OpenCoD2 has it but no license, so it is read only ([ADR 0004](../architecture/adr/0004-upstream-and-references.md)). Left open: a smoke model of our own for bots, off by default, if wanted.
+
 ## 2026-10-29 — Linux 64-bit build
 
 - `make ARCH=x64` ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)): upstream already builds 64-bit, so only the Makefile, Mbed TLS's AES-NI flags (`-maes -mpclmul`), `rip` in the crash report and six libcod format strings changed. 32-bit stays the default.

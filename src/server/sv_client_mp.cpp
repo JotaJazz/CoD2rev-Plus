@@ -131,11 +131,18 @@ bool SV_IsTempBannedGuid( int guid )
 /*
 =================
 SV_FX_GetVisibility
+
+How much the smoke between two points lets through. The 1.3 dedicated server
+(0x8090afa) calls FX_GetServerVisibility (0x8133c18), which multiplies the
+visibility of each blocker in an array (0x8a53d00, 20 bytes each: origin,
+radius squared, visibility) that crosses the segment, and returns 1 for an
+empty array or a segment shorter than fx_visMinTraceDist. Only the client adds
+blockers, while it draws the smoke particles; a dedicated server never runs
+the effects, so the array stays empty and the answer is always 1, as here.
 =================
 */
 float SV_FX_GetVisibility( const vec3_t start, const vec3_t end )
 {
-	UNIMPLEMENTED(__FUNCTION__);
 	return 1.0;
 }
 
