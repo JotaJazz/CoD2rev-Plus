@@ -26,6 +26,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 |---|---|---|
 | `bin/cod2rev_lnxded` | `make` | protocols 115–119 (libcod) |
 | `bin/cod2rev_lnxded` | `make PROTOCOL=118` | protocol 118 |
+| `bin/cod2rev_lnxded` (64-bit) | `make ARCH=x64` (with or without `PROTOCOL=118`) | as the 32-bit build of the same version |
 | `bin/cod2rev_win32.exe` | `make windows` / `PROTOCOL=118` | as the Linux build of the same version |
 
 ## State per subsystem
@@ -49,7 +50,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 
 | Task | Command |
 |---|---|
-| Build 1.0 / 1.3 / Windows | `make`, `make PROTOCOL=118`, `make windows` |
+| Build 1.0 / 1.3 / Windows / 64-bit | `make`, `make PROTOCOL=118`, `make windows`, `make ARCH=x64` |
 | Smoke test | `python3 scripts/smoke_test.py <game>` (`--protocol 118 --binary <bin>`) |
 | Bots test | `python3 scripts/bots_test.py <game> [--gametype sd\|ctf]` |
 | HTTP test | `python3 scripts/http_test.py <game>` |

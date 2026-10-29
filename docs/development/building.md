@@ -9,13 +9,16 @@ This page covers what a contributor needs on top.
 |---|---|
 | `make` | Linux 32-bit, 1.0 (protocol 115) → `bin/cod2rev_lnxded` |
 | `make PROTOCOL=118` | Linux 32-bit, 1.3 → same name in `bin/` |
+| `make ARCH=x64` | Linux 64-bit ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)); combines with `PROTOCOL=118` → same name in `bin/` |
 | `make windows` | MinGW cross-build → `bin/cod2rev_win32.exe` (`PROTOCOL=118` for 1.3) |
 | `make BIN_DIR=<folder>` | Same build into another folder, to keep 1.0 and 1.3 side by side |
 | `make clean` | Removes the binary and the objects |
 
-- Objects go to `obj/<binary>_<protocol>`, so switching platform or version
-  does not rebuild everything; the binary name in `bin/` is shared.
-- Linux needs `gcc-multilib` and `g++-multilib`; Windows needs the posix
+- Objects go to `obj/<binary>_<protocol>` (`_x64` added for 64-bit), so
+  switching platform, version or architecture does not rebuild everything;
+  the binary name in `bin/` is shared.
+- The 32-bit Linux build needs `gcc-multilib` and `g++-multilib`, the
+  64-bit one only the usual `gcc`/`g++`; Windows needs the posix
   thread variant of MinGW-w64 (`i686-w64-mingw32-gcc-posix`; Debian/Ubuntu
   package `gcc-mingw-w64-i686-posix`).
 - `-D LIBCOD` and the `LIBCOD_COMPILE_*` switches are on by default (see the
@@ -28,16 +31,21 @@ This page covers what a contributor needs on top.
   Linux. The reversed code relies on `-fno-strict-aliasing` and `-fwrapv`. A
   command-line `CFLAGS`/`LFLAGS`, as in the ASan build below, replaces them.
 - Known warnings: four (`-Wwrite-strings`, `-Wmultichar`) in reversed files;
-  new code adds none.
+  new code adds none. The 64-bit build adds about 15 `-Wformat` ones in
+  reversed files (a pointer difference printed with `%d`/`%i`); harmless on
+  x86-64, where each variadic argument has its own 8-byte slot, and kept as
+  upstream has them.
 
 ## Before committing a change under src/
 
-1. `make` and `make PROTOCOL=118`.
+1. `make` and `make PROTOCOL=118`; `make ARCH=x64` for changes that touch
+   pointers, sizes or the Makefile.
 2. `make windows`.
 3. The smoke test for both versions ([testing.md](testing.md)).
 4. For memory-sensitive changes, an ASan run with bots.
 
-CI (`.github/workflows/build.yml`) builds the four variants on pushes to
+CI (`.github/workflows/build.yml`) builds the six variants (Linux 32 and
+64-bit, Windows, each for 1.0 and 1.3) on pushes to
 `master` and on pull requests that change `src/`, the `Makefile` or the
 workflow, and on a manual run (`workflow_dispatch`).
 
@@ -52,7 +60,8 @@ make OBJ_ROOT=<scratch>/asan_obj BIN_DIR=<scratch>/asan_bin \
   LFLAGS="-no-pie -m32 -fsanitize=address"
 ```
 
-Use `-DPROTOCOL_VERSION=118` and other folders for 1.3.
+Use `-DPROTOCOL_VERSION=118` and other folders for 1.3. For 64-bit add
+`ARCH=x64` and write `-m64` instead of `-m32` in both.
 
 ## Line endings
 

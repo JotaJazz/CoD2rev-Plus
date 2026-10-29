@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — Linux 64-bit build
+
+- `make ARCH=x64` ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)): upstream already builds 64-bit, so only the Makefile, Mbed TLS's AES-NI flags (`-maes -mpclmul`), `rip` in the crash report and six libcod format strings changed. 32-bit stays the default.
+- Verified on x64: smoke (1.0, 1.3), bots dm/sd/ctf (1.0) and dm/sd (1.3), HTTP, an 11-minute ASan rotation with 10 bots. The local GSC harness: 17 of 22 pass; the other 5 fail the same way on 32-bit (tests not updated for `sv_libcodUnsafe`, an old scratch path, changed messages; `t_collide` is position-dependent).
+- Left open: making x64 the default, a Windows x64 build, the engine's `-Wformat` warnings on x64 (kept as upstream has them).
+
 ## 2026-10-29 — map ambience switches
 
 - `g_ambientSound`, `g_fireFx`, `g_smokeFx`, `g_weatherFx`, `g_fog`: zPAM's `scr_allow_ambient_*` done in the engine, so they work for every mod and custom map. Looped effects are matched by the folder of their file; their entities are still spawned with `SVF_NOCLIENT`, as scripts keep and delete them.

@@ -4,6 +4,8 @@ WINDRES=windres
 
 # Game version to build: 115 = 1.0, 118 = 1.3.
 PROTOCOL=115
+# CPU architecture of the Linux build: x86 (32-bit) or x64 (64-bit).
+ARCH=x86
 
 CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -Wformat -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
 LFLAGS=-no-pie
@@ -16,11 +18,21 @@ CFLAGS+=-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fno-strict-aliasing -fwrap
 CFLAGS+=-Wno-unused-result
 
 ifeq ($(OS),Windows_NT)
+ifneq ($(ARCH),x86)
+$(error The Windows build is 32-bit only)
+endif
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
 else
-# The server is 32-bit only, so force it on 64-bit hosts (needs gcc-multilib and g++-multilib).
+ifeq ($(ARCH),x86)
+# Force a 32-bit build on 64-bit hosts (needs gcc-multilib and g++-multilib).
 CFLAGS+=-m32
 LFLAGS+=-m32
+else ifeq ($(ARCH),x64)
+CFLAGS+=-m64
+LFLAGS+=-m64
+else
+$(error ARCH must be x86 or x64)
+endif
 # Without 64-bit file offsets and inodes a 32-bit binary cannot list or open files
 # on file systems with large inode numbers (Windows drives under WSL, big XFS volumes).
 CFLAGS+=-D_FILE_OFFSET_BITS=64
@@ -44,10 +56,16 @@ endif
 
 # Setup directory names.
 BIN_DIR=bin
+# Empty for the default 32-bit build, so its object folders and stamps stay as before.
+ifeq ($(ARCH),x86)
+BUILD_ARCH=
+else
+BUILD_ARCH=_$(ARCH)
+endif
 # Each platform and game version keeps its own objects, so they can be built side by side.
 OBJ_ROOT=obj
-OBJ_DIR=$(OBJ_ROOT)/$(BIN_NAME)_$(PROTOCOL)
-# Records which game version the binary in bin/ was built for.
+OBJ_DIR=$(OBJ_ROOT)/$(BIN_NAME)_$(PROTOCOL)$(BUILD_ARCH)
+# Records which game version and architecture the binary in bin/ was built for.
 BUILD_STAMP=$(BIN_DIR)/.$(BIN_NAME).build
 SRC_DIR=src
 
@@ -131,6 +149,10 @@ MBEDTLS_SOURCES=$(wildcard $(MBEDTLS_DIR)/library/*.c)
 # In their own folder: several names (cipher, platform, sha1...) are generic.
 MBEDTLS_OBJ=$(patsubst $(MBEDTLS_DIR)/library/%.c,$(OBJ_DIR)/mbedtls/%.o,$(MBEDTLS_SOURCES))
 MBEDTLS_FLAGS=-I$(MBEDTLS_DIR) -I$(MBEDTLS_DIR)/include -DMBEDTLS_CONFIG_FILE=\"cod2rev_mbedtls_config.h\"
+ifeq ($(ARCH),x64)
+# On x86-64 Mbed TLS only builds AES-NI with these; it still checks the CPU at run time.
+MBEDTLS_FLAGS+=-maes -mpclmul
+endif
 ifeq ($(OS),Windows_NT)
 # BCryptGenRandom for the entropy source, the system certificate store for the CA list
 LLIBS+=-lbcrypt -lcrypt32
@@ -181,14 +203,14 @@ cod2rev: mkdir $(TARGET)
 	$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
 	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SPEEX_OBJ) $(SQLITE_OBJ) $(MBEDTLS_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
-	@echo $(PROTOCOL) > $(BUILD_STAMP)
+	@echo $(PROTOCOL)$(BUILD_ARCH) > $(BUILD_STAMP)
 
 # Create the output folders before compiling anything, also with -j.
 $(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
 $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(YYJSON_OBJ) $(SPEEX_OBJ) $(SQLITE_OBJ) $(MBEDTLS_OBJ): | mkdir
 
-# Link again when the binary in bin/ was built for another game version.
-ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL))
+# Link again when the binary in bin/ was built for another game version or architecture.
+ifneq ($(strip $(file <$(BUILD_STAMP))),$(PROTOCOL)$(BUILD_ARCH))
 .PHONY: $(TARGET)
 endif
 

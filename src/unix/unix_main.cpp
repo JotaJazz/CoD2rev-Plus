@@ -529,6 +529,9 @@ static void Sys_CrashHandler( int sig, siginfo_t *info, void *context )
 #if defined __i386__
     snprintf( text, sizeof( text ), "eip %p, fault address %p\n",
               (void *)( (const ucontext_t *)context )->uc_mcontext.gregs[REG_EIP], info->si_addr );
+#elif defined __x86_64__
+    snprintf( text, sizeof( text ), "rip %p, fault address %p\n",
+              (void *)( (const ucontext_t *)context )->uc_mcontext.gregs[REG_RIP], info->si_addr );
 #else
     snprintf( text, sizeof( text ), "fault address %p\n", info->si_addr );
 #endif

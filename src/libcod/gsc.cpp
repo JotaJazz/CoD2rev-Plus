@@ -673,7 +673,7 @@ int stackGetParams(const char *params, ...)
 			int *tmp = va_arg(args, int *);
 			if ( ! stackGetParamInt(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not an int\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not an int\n", (int)i);
 				errors++;
 			}
 			break;
@@ -684,7 +684,7 @@ int stackGetParams(const char *params, ...)
 			long int *tmp = va_arg(args, long int *);
 			if ( ! stackGetParamInt64(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not an int64\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not an int64\n", (int)i);
 				errors++;
 			}
 			break;
@@ -695,7 +695,7 @@ int stackGetParams(const char *params, ...)
 			float *tmp = va_arg(args, float *);
 			if ( ! stackGetParamVector(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not a vector\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not a vector\n", (int)i);
 				errors++;
 			}
 			break;
@@ -706,7 +706,7 @@ int stackGetParams(const char *params, ...)
 			float *tmp = va_arg(args, float *);
 			if ( ! stackGetParamFloat(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not a float\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not a float\n", (int)i);
 				errors++;
 			}
 			break;
@@ -717,7 +717,7 @@ int stackGetParams(const char *params, ...)
 			const char **tmp = va_arg(args, const char **);
 			if ( ! stackGetParamString(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not a string\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not a string\n", (int)i);
 				errors++;
 			}
 			break;
@@ -728,7 +728,7 @@ int stackGetParams(const char *params, ...)
 			unsigned int *tmp = va_arg(args, unsigned int *);
 			if ( ! stackGetParamConstString(i, tmp))
 			{
-				Com_DPrintf("\nstackGetParams() Param %i is not a const string\n", i);
+				Com_DPrintf("\nstackGetParams() Param %i is not a const string\n", (int)i);
 				errors++;
 			}
 			break;

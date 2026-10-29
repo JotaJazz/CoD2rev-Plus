@@ -7,6 +7,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Windows build with MinGW** (32-bit), including cross-compiling from Linux.
 - **Game version selectable at build time:** the server can be built as 1.0 or as 1.3.
 - **Hardened builds:** the stack protector, `_FORTIFY_SOURCE` checks and, on Linux, read-only relocations are on, so many buffer overflows stop the server instead of being exploitable. `-fno-strict-aliasing` and `-fwrapv` keep the reversed code, which casts between types and relies on signed overflow wrapping, correct at higher optimization levels.
+- **Linux 64-bit build:** `make ARCH=x64` builds a 64-bit server that needs no 32-bit packages (`gcc-multilib`); it works as the 32-bit one, which stays the default. GitHub Actions publishes both.
 - **Simpler builds:** `make` builds the 32-bit Linux binary directly, `make windows` cross-compiles for Windows, and GitHub Actions builds every variant on each push.
 - **Example `server.cfg`:** `scripts/server.cfg.example` lists every variable the server registers; `scripts/gen_server_cfg.py` regenerates it from the source.
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode. Both use port `28960`, and they set `logfile 2` (and `sv_cracked 1` in LAN mode only) before `+exec server.cfg`, so `server.cfg` can change them; they used to set them after it, overriding the admin's config, and turned on `sv_cracked` in internet mode too.

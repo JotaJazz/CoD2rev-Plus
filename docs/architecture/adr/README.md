@@ -15,6 +15,7 @@ folder existed, with the date the decision was made.
 | [0006](0006-ai-documentation-layer.md) | Documentation as a continuity system | Accepted |
 | [0007](0007-readme-front-page.md) | README front page | Accepted |
 | [0008](0008-unsafe-builtins-behind-a-dvar.md) | Unsafe libcod builtins behind a startup dvar | Accepted |
+| [0009](0009-linux-64-bit-build.md) | Linux 64-bit build next to the 32-bit one | Accepted |
 
 ## Template
 
