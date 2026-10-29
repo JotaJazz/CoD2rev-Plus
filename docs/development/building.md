@@ -49,6 +49,18 @@ CI (`.github/workflows/build.yml`) builds the six variants (Linux 32 and
 `master` and on pull requests that change `src/`, the `Makefile` or the
 workflow, and on a manual run (`workflow_dispatch`).
 
+## MySQL
+
+`make ARCH=x64 WITH_MYSQL=true` builds the MySQL script functions against the
+system's client library: MariaDB Connector/C (`libmariadb-dev`) or MySQL's
+(`libmysqlclient-dev`), found with `mariadb_config` or `mysql_config`.
+Distributions ship it 64-bit only. `MYSQL_LIBS=-l:libmariadb.so.3` links
+against the runtime package alone. The binary needs the library where it
+runs, so CI builds it (job `mysql`) but does not publish it. Use other
+`OBJ_ROOT`/`BIN_DIR` folders: libcod objects differ with `WITH_MYSQL`.
+`docs/superpowers/harness/t_mysql.py` (local) tests it against a server with
+database `cod2test` and user `cod2`.
+
 ## AddressSanitizer build
 
 A command-line `CFLAGS` replaces the Makefile's, so `-m32` and

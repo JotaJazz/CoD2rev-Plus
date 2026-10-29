@@ -60,7 +60,9 @@ directly into our functions. The user-facing list is in
 
 - Type names: zk_libcod names them after the 1.3 binary. Its `VAR_OBJECT` is our
   `VAR_POINTER`, its `VAR_STRUCT` is our `VAR_OBJECT`; our enum also has
-  `VAR_INT64`.
+  `VAR_INT64` (upstream's), which holds libcod's handles (MySQL, SQLite,
+  files, memory). An `int` meeting an `int64` in an operator becomes `int64`
+  (`Scr_CastWeakerPair`, `Scr_CastWeakerStringPair`), so `handle == 0` works.
 - Callback arguments: the last value pushed is the first parameter.
 - A runtime error ends the script thread. Outside developer mode, execution
   continues with `undefined`, which can cascade.

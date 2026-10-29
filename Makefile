@@ -124,7 +124,11 @@ ifeq ($(OS),Windows_NT)
 MYSQL_COPY_CMD=xcopy $(SRC_DIR)\libcod\mysql\windows\lib\libmysql.dll $(BIN_DIR) /Y
 LLIBS+=$(SRC_DIR)/libcod/mysql/windows/lib/libmysql.lib
 else
-LLIBS+=-lmysqlclient -L$(SRC_DIR)/libcod/mysql/unix/lib
+# The system's client library: MariaDB Connector/C (libmariadb-dev) or MySQL's
+# (libmysqlclient-dev), as their config tool reports it. Distributions ship it
+# 64-bit only, so this needs ARCH=x64; MYSQL_LIBS=... overrides it.
+MYSQL_LIBS?=$(shell mariadb_config --libs 2>/dev/null || mysql_config --libs 2>/dev/null || echo -lmysqlclient)
+LLIBS+=$(MYSQL_LIBS)
 endif
 endif
 LIBCOD_DIR=$(SRC_DIR)/libcod

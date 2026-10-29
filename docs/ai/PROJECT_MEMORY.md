@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — MySQL on 64-bit Linux
+
+- `make ARCH=x64 WITH_MYSQL=true` links the system client (`mariadb_config`/`mysql_config`, or `MYSQL_LIBS`); the vendored 5.7 headers work with MariaDB's library (only `field->name`, the first member, is read). CI builds it without publishing.
+- Fixed while testing against a private `mariadbd`: a 0 handle crashed the server; the async worker wrote `done`/`result` without the lock (TSan: 15 races before, none after); `mysql_close` left `mysql_reuse_connection` pointing at the closed connection; `int64 == int` was a type error in the VM, which broke `handle == 0` in every build.
+- Local harness: `t_mysql.py` added; `t_zk4` placed `a` next to b's random spawn, sometimes inside a wall, and now picks a clear spot.
+
 ## 2026-10-29 — smoke and sightTracePassed
 
 - Not a gap: in the 1.3 dedicated server (`cod2_lnxded`, `pc_1.3_1_1`) `sightTracePassed` also sees through smoke. `SV_FX_GetVisibility` reads blockers that only the client adds while drawing smoke particles; the dedicated server initialises the FX system, registers effects and reads their length, but never runs them, so the answer is always 1. The stub was right; it is now documented.

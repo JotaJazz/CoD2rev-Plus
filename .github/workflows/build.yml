@@ -60,6 +60,21 @@ jobs:
           path: bin/cod2rev_lnxded
           if-no-files-found: error
 
+  mysql:
+    # Only checks that the MySQL functions build; the binary needs the
+    # client library at run time, so it is not published.
+    name: Linux (64-bit) with MySQL, CoD2 1.0
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the MariaDB client library
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmariadb-dev
+      - name: Build
+        run: |
+          make -j"$(nproc)" ARCH=x64 WITH_MYSQL=true
+
   windows:
     name: Windows (MinGW cross-build), CoD2 ${{ matrix.version }}
     runs-on: ubuntu-latest

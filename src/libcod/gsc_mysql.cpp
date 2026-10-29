@@ -28,18 +28,31 @@ mysql_async_connection *first_async_connection = NULL;
 mysql_async_task *first_async_task = NULL;
 MYSQL *cod_mysql_connection = NULL;
 
+// A failed mysql_real_connect and mysql_store_result for a statement without
+// rows give 0; the client library dereferences it, so it is refused here
+static bool mysql_valid_handle(const char *function, long int handle)
+{
+	if(handle != 0)
+		return true;
+
+	stackError("%s() handle is 0", function);
+	stackPushUndefined();
+	return false;
+}
+
 void *mysql_async_execute_query(void *input_c) //cannot be called from gsc, is threaded.
 {
 	mysql_async_connection *c = (mysql_async_connection *) input_c;
+	MYSQL_RES *result = NULL;
 	int res = mysql_query(c->connection, c->task->query);
 	if(!res && c->task->save)
-		c->task->result = mysql_store_result(c->connection);
-	else if(res)
-	{
-		//mysql show error here?
-	}
+		result = mysql_store_result(c->connection);
+	// the handler and the scripts read these under the lock
+	Sys_EnterCriticalSection(CRITSECT_MYSQL);
+	c->task->result = result;
 	c->task->done = true;
 	c->task = NULL;
+	Sys_LeaveCriticalSection(CRITSECT_MYSQL);
 	return NULL;
 }
 
@@ -321,12 +334,8 @@ void gsc_mysql_real_connect()
 		return;
 	}
 
-	if(mysql == 0)
-	{
-		stackError("gsc_mysql_real_connect() mysql handle is null");
-		stackPushUndefined();
+	if(!mysql_valid_handle("gsc_mysql_real_connect", mysql))
 		return;
-	}
 
 	// options go before connecting, and a failed connect returns NULL
 	// rather than the handle, which stays the script's to close
@@ -354,6 +363,12 @@ void gsc_mysql_close()
 		return;
 	}
 
+	if(!mysql_valid_handle("gsc_mysql_close", mysql))
+		return;
+
+	// mysql_reuse_connection must not hand out a closed connection
+	if((MYSQL *)mysql == cod_mysql_connection)
+		cod_mysql_connection = NULL;
 	mysql_close((MYSQL *)mysql);
 	stackPushInt(0);
 }
@@ -370,6 +385,9 @@ void gsc_mysql_query()
 		return;
 	}
 
+	if(!mysql_valid_handle("gsc_mysql_query", mysql))
+		return;
+
 	int ret = mysql_query((MYSQL *)mysql, query);
 	stackPushInt(ret);
 }
@@ -384,6 +402,9 @@ void gsc_mysql_errno()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_errno", mysql))
+		return;
 
 	int ret = mysql_errno((MYSQL *)mysql);
 	stackPushInt(ret);
@@ -400,6 +421,9 @@ void gsc_mysql_error()
 		return;
 	}
 
+	if(!mysql_valid_handle("gsc_mysql_error", mysql))
+		return;
+
 	char *ret = (char *)mysql_error((MYSQL *)mysql);
 	stackPushString(ret);
 }
@@ -414,6 +438,9 @@ void gsc_mysql_affected_rows()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_affected_rows", mysql))
+		return;
 
 	int ret = mysql_affected_rows((MYSQL *)mysql);
 	stackPushInt(ret);
@@ -430,6 +457,9 @@ void gsc_mysql_store_result()
 		return;
 	}
 
+	if(!mysql_valid_handle("gsc_mysql_store_result", mysql))
+		return;
+
 	stackPushInt64((intptr_t)mysql_store_result((MYSQL *)mysql));
 }
 
@@ -443,6 +473,9 @@ void gsc_mysql_num_rows()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_num_rows", result))
+		return;
 
 	int ret = mysql_num_rows((MYSQL_RES *)result);
 	stackPushInt(ret);
@@ -458,6 +491,9 @@ void gsc_mysql_num_fields()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_num_fields", result))
+		return;
 
 	int ret = mysql_num_fields((MYSQL_RES *)result);
 	stackPushInt(ret);
@@ -475,6 +511,9 @@ void gsc_mysql_field_seek()
 		return;
 	}
 
+	if(!mysql_valid_handle("gsc_mysql_field_seek", result))
+		return;
+
 	int ret = mysql_field_seek((MYSQL_RES *)result, offset);
 	stackPushInt(ret);
 }
@@ -489,6 +528,9 @@ void gsc_mysql_fetch_field()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_fetch_field", result))
+		return;
 
 	MYSQL_FIELD *field = mysql_fetch_field((MYSQL_RES *)result);
 	if (field == NULL)
@@ -510,6 +552,9 @@ void gsc_mysql_fetch_row()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_fetch_row", result))
+		return;
 
 	MYSQL_ROW row = mysql_fetch_row((MYSQL_RES *)result);
 	if (!row)
@@ -542,12 +587,8 @@ void gsc_mysql_free_result()
 		stackPushUndefined();
 		return;
 	}
-	if(result == 0)
-	{
-		stackError("mysql_free_result() input is a NULL-pointer");
-		stackPushUndefined();
+	if(!mysql_valid_handle("gsc_mysql_free_result", result))
 		return;
-	}
 	mysql_free_result((MYSQL_RES *)result);
 	stackPushUndefined();
 }
@@ -563,6 +604,9 @@ void gsc_mysql_real_escape_string()
 		stackPushUndefined();
 		return;
 	}
+
+	if(!mysql_valid_handle("gsc_mysql_real_escape_string", mysql))
+		return;
 
 	char *to = (char *) malloc(strlen(str) * 2 + 1);
 	mysql_real_escape_string((MYSQL *)mysql, to, str, strlen(str));
