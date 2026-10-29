@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — upstream sync: q_shared and com_math review
+
+- Merged voron00 up to `672a220`: `q_shared` and `com_math` reviewed (string helpers split into `com_shared.cpp`), double literals turned into floats across `bgame` and `game`, `sv_fastDownload` loop fix, SQLite 3.54.1.
+- Conflicts: `bg_animation_mp.cpp` kept the fork's 1.3 constants (folded `46.25f`, float start-time division, which upstream still divides as integers); `q_shared` took upstream's and re-applied `I_strcmpConstantTime`, the `>=` info-string checks and the printf attributes; the fast download loop kept `sv_fastDownloadSpeed`.
+- Rejected for now: upstream's SSE math flags; the Makefile stays on x87 and `sse_mathfun.h` is only included with `USE_SSE2` ([../roadmap/debt.md](../roadmap/debt.md)). Verified with smoke tests and ASan bots runs (dm, sd, ctf on 1.0; dm, sd on 1.3) and a rotation soak.
+
 ## 2026-10-24 — animation script as the 1.3 client
 
 - Compared with the 1.3 client (CoD2MP_s.exe) while porting it into OpenCoD2-Plus: the parser set the strafe flags 0x10/0x20 for every condition but STRAFING (1.3 `0x4f7f54` checks STRAFING only), which turned the legs of 55 anims (the MG42 ones too) as strafes; `BG_IsCrouchingAnim` counted the crouched runs and turns and not the crouched stumbles (`0x4f9750`), and it and `BG_IsProneAnim` answered a bit mask, not 0 or 1, so two prone anims compared as a stance change (`0x4f97b0`).

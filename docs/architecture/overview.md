@@ -19,7 +19,7 @@ binaries (Quake 3 lineage), not a design of this fork.
 | `src/libcod` | Fork's script extensions (libcod) and their vendored libraries | `libcod.cpp`, `gsc*.cpp`, `net_http.cpp` |
 | `src/unix`, `src/win32` | Platform layer: entry point, sockets, threads, console | `unix_main.cpp`, `win_main.cpp` |
 | `src/zlib` | Vendored zlib (iwd archives) | |
-| `src/ui`, `src/misc` | Single headers (`keycodes.h`, `hexrays_defs.h`) | |
+| `src/ui`, `src/misc` | Single headers (`keycodes.h`, `hexrays_defs.h`, `sse_mathfun.h`) | |
 | `mods/bots` | GSC bots mod, runs on the libcod graph and bot functions | `maps/mp/bots/_bots.gsc` |
 | `scripts` | Launchers, systemd unit, `server.cfg` generator, bots installer, tests | see [../development/testing.md](../development/testing.md) |
 

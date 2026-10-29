@@ -1616,7 +1616,7 @@ void SV_BotUserMove( client_t *cl )
 		if ( randomf() < 0.5 )
 			ucmd.buttons |= (BUTTON_USE | BUTTON_USERELOAD);
 
-		if ( randomf() < 0.33000001 )
+		if ( randomf() < 0.33f )
 		{
 			ucmd.forwardmove = BUTTON_FORWARD;
 		}
@@ -1626,7 +1626,7 @@ void SV_BotUserMove( client_t *cl )
 				ucmd.forwardmove = BUTTON_BACK;
 		}
 
-		if ( randomf() < 0.33000001 )
+		if ( randomf() < 0.33f )
 		{
 			ucmd.rightmove = BUTTON_FORWARD;
 		}
@@ -1636,13 +1636,13 @@ void SV_BotUserMove( client_t *cl )
 				ucmd.rightmove = BUTTON_BACK;
 		}
 
-		if ( randomf() < 0.33000001 )
+		if ( randomf() < 0.33f )
 			ucmd.angles[0] = (int)(crandom() * 360.0);
 
-		if ( randomf() < 0.33000001 )
+		if ( randomf() < 0.33f )
 			ucmd.angles[1] = (int)(crandom() * 360.0);
 
-		if ( randomf() < 0.33000001 )
+		if ( randomf() < 0.33f )
 			ucmd.angles[2] = (int)(crandom() * 360.0);
 	}
 

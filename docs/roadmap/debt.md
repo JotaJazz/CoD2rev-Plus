@@ -38,6 +38,7 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 | MySQL async functions | No 32-bit MySQL client in the default toolchain |
 | soundalias functions | See [ADR 0003](../architecture/adr/0003-zk-libcod-names.md) |
 | CPU profile with 20 bots | Not measured yet |
+| SSE math (`-msse2 -mfpmath=sse -DUSE_SSE2`, upstream since `8319e9b`/`672a220`) | Kept x87 to stay with the original binary's rounding; `USE_SSE2` also swaps `FastSinCos` (animation, hit bones, weapons) for the `sse_mathfun.h` approximation. Adopting it needs bots and ASan runs and a look at hit locations |
 | Releases page | The READMEs' "How to run" points to it; CI already builds the four binaries as artifacts |
 
 ## Accepted simplifications

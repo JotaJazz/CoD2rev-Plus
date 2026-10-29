@@ -51,7 +51,7 @@ new ones are not added.
 6. **Client prediction is not desynced.** Anything the client also computes
    (`src/bgame`, movement parameters) is not changed per player from the
    server.
-7. **Vendored libraries are not edited.** `src/zlib` and the libraries under
+7. **Vendored libraries are not edited.** `src/zlib`, `src/misc/sse_mathfun.h` and the libraries under
    `src/libcod` (`sqlite`, `yyjson`, `speex`, `mbedtls`, `mysql`) are kept as
    upstream; configuration goes in our own files
    (`src/libcod/mbedtls/cod2rev_mbedtls_config.h`).
