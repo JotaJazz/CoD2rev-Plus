@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — bot graph reload per SD round measured
+
+- Rejected a graph cache across `map_restart`: `graphLoad` of a saved graph takes 0.36–0.40 ms on mp_toujane (1370 nodes), 0.44–0.51 ms on mp_burgundy (1659) and 0.57–1.08 ms on mp_carentan (2040), against a 50 ms frame. Building a graph the first time a map is played costs more, but happens once and is saved.
+- If ever needed, `graphLoad(path, 1)` already keeps a graph across map restarts and map changes; the mod would only have to find its id again (for example in a cvar).
+
 ## 2026-10-29 — MySQL on 64-bit Linux
 
 - `make ARCH=x64 WITH_MYSQL=true` links the system client (`mariadb_config`/`mysql_config`, or `MYSQL_LIBS`); the vendored 5.7 headers work with MariaDB's library (only `field->name`, the first member, is read). CI builds it without publishing.
