@@ -212,7 +212,10 @@ playLife()
 				continue;
 
 			self maps\mp\bots\_bots_combat::fight(self.botTarget, skill);
-			self.botPath = undefined;
+			// the fight moved the bot off its path: search again soon, but an
+			// enemy flickering in and out of sight must not cost a search a tick
+			if(self.botRepathAt > now + 500)
+				self.botRepathAt = now + 500;
 			checkPos = self.origin;
 			checkAt = now + 1000;
 			continue;
@@ -283,7 +286,8 @@ playLife()
 
 		self lookAt((0, yaw, 0));
 		self setWalkDir("none");
-		self setWalkDir("forward");
+		if(!isDefined(goalPos) || !(self maps\mp\bots\_bots_combat::nearOwnGrenade(goalPos)))
+			self setWalkDir("forward");
 	}
 }
 

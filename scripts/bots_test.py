@@ -69,6 +69,24 @@ def log_lines(path):
     return [re.sub(r'^\s*\d+:\d+ ', '', l) for l in open(path, encoding='latin-1').read().splitlines()]
 
 
+def stock_defuse_race(lines):
+    """Indexes of the errors stock sd.gsc raises when the defuser dies on the
+    last tick of a defuse: it still defuses, then destroys the progress bars
+    the death already removed (sd.gsc lines 1925 and 1926). A stock bug, about
+    one SD run in twenty."""
+    known = set()
+    for i, line in enumerate(lines):
+        if not (line.startswith('A;') and line.endswith(';bomb_defuse')):
+            continue
+        num = line.split(';')[2]
+        if not any(k.startswith('K;') and k.split(';')[2] == num for k in lines[max(0, i - 6):i]):
+            continue
+        for j in range(i + 1, min(len(lines), i + 4)):
+            if lines[j].startswith('BOTERROR') and 'removed entity is not an entity' in lines[j]:
+                known.add(j)
+    return known
+
+
 def wait_lines(path, pattern, count, seconds):
     deadline = time.time() + seconds
     while time.time() < deadline:
@@ -251,7 +269,10 @@ def main():
         allowed_nades = max(2, len(kills) // 20)
         check('few grenade suicides', self_nades <= allowed_nades, f'{self_nades} of at most {allowed_nades}')
 
-        errors = [l for l in lines if l.startswith('BOTERROR')]
+        stock = stock_defuse_race(lines)
+        if stock:
+            print(f'     {len(stock)} errors of the stock sd.gsc defuse race left out')
+        errors = [l for i, l in enumerate(lines) if l.startswith('BOTERROR') and i not in stock]
         allowed = 1 if args.corrupt_cache else 0
         check('no script errors', len(errors) <= allowed, '; '.join(errors[:3]))
 

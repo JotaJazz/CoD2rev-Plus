@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-29 — bot script error cascade located; repaths and grenade suicides
+
+- The "rare cascade when a bot joins a freed slot during a grenade kill" was misdescribed: 120 `developer 2` runs (tdm, dm, sd, ctf) showed one error source, stock `sd.gsc` (defuser killed on the last tick still defuses, lines 1925–1926). A grenade never passes to the next player in a slot: `G_FreeEntityRefs` clears `parent`, so a gone player's grenade does no damage. `bots_test.py` leaves out exactly that stock race.
+- The same runs showed DM failing `bots search paths sparingly` in 16 of 40: repath on every goal-node change and after every combat tick. Fixed in the mod (moving goal twice a second, combat repath at most 0.5 s away). Grenade suicides were measured with a probe: most walked into their own grenade, the rest threw at cover past the 150-unit check; both fixed, 2.8 to 1.4 per 100 throws. Fight runs failing any check: 19 of 80 before, 1 of 24 after.
+
 ## 2026-10-29 — bot graph reload per SD round measured
 
 - Rejected a graph cache across `map_restart`: `graphLoad` of a saved graph takes 0.36–0.40 ms on mp_toujane (1370 nodes), 0.44–0.51 ms on mp_burgundy (1659) and 0.57–1.08 ms on mp_carentan (2040), against a 50 ms frame. Building a graph the first time a map is played costs more, but happens once and is saved.
