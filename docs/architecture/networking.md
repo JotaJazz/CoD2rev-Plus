@@ -51,8 +51,10 @@ New code that reads from the network follows them:
   `ipAuthorize` and `disconnect` have none.
 
   rcon also counts wrong passwords per address (`sv_rconMaxAttempts`,
-  `sv_rconLockTime`, `sv_rconWhitelist`). A new connectionless command that
+  `sv_rconLockTime`), and its global limit runs before the password check;
+  `sv_rconWhitelist` skips both limits. A new connectionless command that
   answers gets the same rate limits.
+
 - A gamestate a client can ask for (`donedl`, `wwwdl fail`, a dropped one) goes
   through `SV_SendRequestedGameState`: 5 at once, then 1 a second per slot.
 - Text from players never becomes a format string
