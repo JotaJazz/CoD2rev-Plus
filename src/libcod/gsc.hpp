@@ -205,6 +205,7 @@ void Libcod_ClearMapItems();
 bool Libcod_SkipMapEntity(const char *classname);
 void Libcod_MapItemsCallbacks();
 void Libcod_DPrintf(const char *message);
+void Libcod_ResetCallbackGuards();
 bool Libcod_SpamCallback(const char *type, netadr_t from);
 void Libcod_RunCallbacksFrame();
 void Libcod_ShutdownCallbacks();

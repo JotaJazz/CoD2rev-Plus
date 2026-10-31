@@ -297,6 +297,8 @@ unsigned int libcodLevelGeneration = 1;
 
 // Called from G_InitGame on every level start, map_restart and
 // fast_restart included
+static void Libcod_ClearRemoteCommand();
+
 void Libcod_InitLevel()
 {
 	libcodLevelGeneration++;
@@ -316,6 +318,11 @@ void Libcod_InitLevel()
 	// errors of the previous map are not reported to the new one
 	numQueuedScriptErrors = 0;
 	hitchFrameTime = 0;
+
+	// nor does a callback or rcon command that an error cut short stay running
+	Libcod_ResetCallbackGuards();
+	runningErrorCallback = false;
+	Libcod_ClearRemoteCommand();
 
 #if LIBCOD_COMPILE_HTTP == 1
 	gsc_http_cleanup_on_level_load();
@@ -1088,6 +1095,11 @@ static struct
 	netadr_t from;
 	char command[1024];
 } remoteCommand;
+
+static void Libcod_ClearRemoteCommand()
+{
+	remoteCommand.pending = false;
+}
 
 // Hands an accepted rcon command to CodeCallback_RemoteCommand(from, args).
 // Returns false when there is no callback and the server should run it.
