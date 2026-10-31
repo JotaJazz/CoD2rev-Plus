@@ -658,6 +658,38 @@ SV_DirectConnect
 A "connect" OOB command has been received
 ==================
 */
+/*
+==================
+SV_ConnectBanMessage
+
+The text to refuse a client with, or NULL if it isn't banned
+==================
+*/
+static const char *SV_ConnectBanMessage( netadr_t adr, int guid )
+{
+#ifdef LIBCOD
+	if ( SV_IsBannedIp(adr) )
+	{
+		Com_Printf("rejected connection from permanently banned IP %s\n", NET_AdrToStringNoPort(adr));
+		return "\x15You are permanently banned from this server";
+	}
+#endif
+
+	if ( SV_IsBannedGuid(guid) )
+	{
+		Com_Printf("rejected connection from permanently banned GUID %i\n", guid);
+		return "\x15You are permanently banned from this server";
+	}
+
+	if ( SV_IsTempBannedGuid(guid) )
+	{
+		Com_Printf("rejected connection from temporarily banned GUID %i\n", guid);
+		return "\x15You are temporarily banned from this server";
+	}
+
+	return NULL;
+}
+
 #if LIBCOD_COMPILE_RATELIMITER == 1
 static leakyBucket_t gamestateBuckets[MAX_CLIENTS];
 #endif
@@ -759,6 +791,20 @@ void SV_DirectConnect( netadr_t from )
 			NET_OutOfBandPrint( NS_SERVER, from, "error\nEXE_BAD_CHALLENGE" );
 			return;
 		}
+
+		// the authorize reply isn't always there to check this: a kicked
+		// client can resend its old challenge, and LAN addresses and
+		// sv_noAuthorize never get one
+		const char *banMessage = SV_ConnectBanMessage( from, guid );
+
+		if ( banMessage )
+		{
+			NET_OutOfBandPrint( NS_SERVER, from, va( "error\n%s", banMessage ) );
+			// clear the challenge record so it won't timeout and let them through
+			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
+			return;
+		}
+
 
 		if ( svs.challenges[i].firstPing == 0 )
 		{
@@ -1048,33 +1094,12 @@ void SV_AuthorizeIpPacket( netadr_t from )
 	{
 		svs.challenges[i].guid = atoi(SV_Cmd_Argv( 4 ));
 
-#ifdef LIBCOD
-		if ( SV_IsBannedIp(svs.challenges[i].adr) )
-		{
-			Com_Printf("rejected connection from permanently banned IP %s\n", NET_AdrToStringNoPort(svs.challenges[i].adr));
-			// they are a demo client trying to connect to a real server
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "error\n\x15You are permanently banned from this server" );
-			// clear the challenge record so it won't timeout and let them through
-			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-			return;
-		}
-#endif
+		const char *banMessage = SV_ConnectBanMessage( svs.challenges[i].adr, svs.challenges[i].guid );
 
-		if ( SV_IsBannedGuid(svs.challenges[i].guid) )
+		if ( banMessage )
 		{
-			Com_Printf("rejected connection from permanently banned GUID %i\n", svs.challenges[i].guid);
 			// they are a demo client trying to connect to a real server
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "error\n\x15You are permanently banned from this server" );
-			// clear the challenge record so it won't timeout and let them through
-			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-			return;
-		}
-
-		if ( SV_IsTempBannedGuid(svs.challenges[i].guid) )
-		{
-			Com_Printf("rejected connection from temporarily banned GUID %i\n", svs.challenges[i].guid);
-			// they are a demo client trying to connect to a real server
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "error\n\x15You are temporarily banned from this server" );
+			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, va( "error\n%s", banMessage ) );
 			// clear the challenge record so it won't timeout and let them through
 			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
 			return;
