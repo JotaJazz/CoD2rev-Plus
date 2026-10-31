@@ -618,6 +618,10 @@ void gsc_sqlite_open()
 	char error[COD2_MAX_STRINGLENGTH];
 	int rc = sqlite3_open(osPath, &db);
 
+	// ATTACH and VACUUM INTO take a path of their own, past the checks above
+	sqlite3_limit(db, SQLITE_LIMIT_ATTACHED, 0);
+
+
 	// a failed open still allocates a handle that must be closed
 	if (rc != SQLITE_OK)
 	{
