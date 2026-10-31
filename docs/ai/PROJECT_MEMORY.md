@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-30 — libcod data safety
+
+- From the audit. `ATTACH` and `VACUUM INTO` wrote files past `sqlite_open`'s folder; `map_restart` dropped queued async SQLite writes (498 of 500 in a test); on Windows `json_save_async` only worked once, confirmed by running the `.exe` through WSL; big JSON or a 64 KB cell ended the map; `mysql_*` had no gate, timeouts or queue cap.
+- Outside developer mode a script error does not stop the thread: the statement goes on with `undefined`. Tests must check return values, and the `stackPushUndefined()` after `stackError()` is needed.
+- Left open: many distinct cells of a few KB in one sync query can still run the string pool out; only each cell is cut.
+
 ## 2026-10-30 — network floods
 
 - From an audit of the whole repo. `donedl` before entering the game cost 95% of a core and 130 MB in 6 s; `connect` had no limit; `getchallenge` shared the 10 replies a second of `getinfo`; a full bucket table refused every new address; bans were only read in the authorize reply. Fixed; the `donedl` run uses 1% of a core now.
