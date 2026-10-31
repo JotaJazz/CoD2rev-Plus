@@ -19,6 +19,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PREFIX = b'\xff\xff\xff\xff'
 
 
+def log_lines(path, timed=False):
+    """A log's lines, without the time each one starts with, as in " 1:23 K;..."."""
+    if not os.path.exists(path):
+        return []
+    lines = open(path, encoding='latin-1').read().splitlines()
+    return lines if timed else [re.sub(r'^\s*\d+:\d+ ', '', l) for l in lines]
+
+
 def query(port, command, timeout=2.0):
     """Sends a connectionless command and returns the reply as (header, info dict), or None."""
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -147,14 +155,8 @@ def check_client(port, protocol, password, game_log, check):
         # line, and a say right after a userinfo must not be flood protected
         client.commands(server_id, ['userinfo "\\name\\smokelog\nfakename\\rate\\25000\\snaps\\20"',
                                     'say "smokesay\nK;fakekill"'])
-        def game_log_lines():
-            if not os.path.exists(game_log):
-                return []
-            # each line starts with the time, as in " 1:23 say;..."
-            return [re.sub(r'^\s*\d+:\d+ ', '', l)
-                    for l in open(game_log, encoding='latin-1').read().splitlines()]
-        said = wait_for(lambda: any('smokesay' in l for l in game_log_lines()))
-        lines = game_log_lines()
+        said = wait_for(lambda: any('smokesay' in l for l in log_lines(game_log)))
+        lines = log_lines(game_log)
         check('say right after userinfo runs', said)
         check('no line break in names', wait_for(lambda: listed('smokelogfakename')), ', '.join(players(port) or {}))
         check('no fake lines in the game log', said and not any(

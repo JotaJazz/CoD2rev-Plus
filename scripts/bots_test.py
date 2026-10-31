@@ -8,9 +8,10 @@ BOTNAV and BOTCOMBAT lines to games_mp.log. The map is loaded twice: the first
 load must build and save the waypoint graph, the second must read it back.
 Exits with 0 when every check passes.
 """
-import argparse, glob, os, re, secrets, shutil, subprocess, sys, tempfile, time, zipfile
+import argparse, os, re, secrets, shutil, subprocess, sys, tempfile, time
 
-from smoke_test import free_port, query, rcon
+from install_bots import read_game_script
+from smoke_test import free_port, log_lines, query, rcon
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MOD = 'bottest'
@@ -50,23 +51,6 @@ botsTestMelee()
 '''
 HOOK = 'thread maps\\mp\\bots\\_bots::init();'
 SD_SCRIPT = 'maps/mp/gametypes/sd.gsc'
-
-
-def stock_sd(game_dir):
-    """The stock sd.gsc from the game's iwds (the last iwd wins, as in the game)."""
-    text = None
-    for iwd in sorted(glob.glob(os.path.join(game_dir, 'main', 'iw_*.iwd'))):
-        with zipfile.ZipFile(iwd) as z:
-            if SD_SCRIPT in z.namelist():
-                text = z.read(SD_SCRIPT).decode('latin-1')
-    return text
-
-
-def log_lines(path):
-    if not os.path.exists(path):
-        return []
-    # each line starts with the game time, as in " 1:23 K;..."
-    return [re.sub(r'^\s*\d+:\d+ ', '', l) for l in open(path, encoding='latin-1').read().splitlines()]
 
 
 def stock_defuse_race(lines):
@@ -135,8 +119,8 @@ def main():
             f.write(text)
 
         if args.bombmode is not None:
-            sd = stock_sd(args.game_dir)
-            if sd is None or 'level.bombmode = 0;' not in sd:
+            sd, _ = read_game_script(args.game_dir, SD_SCRIPT)
+            if 'level.bombmode = 0;' not in sd:
                 ap.error('no stock sd.gsc with level.bombmode in the game folder')
             path = os.path.join(home, MOD, *SD_SCRIPT.split('/'))
             sd = sd.replace('level.bombmode = 0;', f'level.bombmode = {args.bombmode};')
@@ -206,7 +190,7 @@ def main():
         # a moving goal (an enemy, a flag carrier) must not make a bot search
         # every tick (10 a second); a few goal changes in a row are normal
         repaths = {}
-        for raw in open(game_log, encoding='latin-1').read().splitlines() if os.path.exists(game_log) else []:
+        for raw in log_lines(game_log, timed=True):
             m = re.match(r'^\s*(\d+):(\d+) BOTNAV (\d+) repath', raw)
             if m:
                 key = (m.group(3), int(m.group(1)) * 60 + int(m.group(2)))
@@ -223,7 +207,7 @@ def main():
         # should rarely get stuck on the same node again; the game time
         # prefix gives the seconds
         stuck = []
-        for raw in open(game_log, encoding='latin-1').read().splitlines() if os.path.exists(game_log) else []:
+        for raw in log_lines(game_log, timed=True):
             m = re.match(r'^\s*(\d+):(\d+) BOTNAV (\d+) stuck (\d+)', raw)
             if m:
                 stuck.append((int(m.group(1)) * 60 + int(m.group(2)), m.group(3), m.group(4)))
