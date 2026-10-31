@@ -658,6 +658,10 @@ SV_DirectConnect
 A "connect" OOB command has been received
 ==================
 */
+#if LIBCOD_COMPILE_RATELIMITER == 1
+static leakyBucket_t gamestateBuckets[MAX_CLIENTS];
+#endif
+
 void SV_DirectConnect( netadr_t from )
 {
 	char userinfo[MAX_INFO_STRING];
@@ -899,6 +903,9 @@ gotnewcl:
 	newcl->nextSnapshotTime = svs.time;
 	newcl->lastPacketTime = svs.time;
 	newcl->lastConnectTime = svs.time;
+#if LIBCOD_COMPILE_RATELIMITER == 1
+	memset( &gamestateBuckets[clientNum], 0, sizeof( gamestateBuckets[clientNum] ) );
+#endif
 
 	SV_UserinfoChanged( newcl );
 
@@ -1828,6 +1835,29 @@ void SV_SendClientGameState( client_t *client )
 }
 
 /*
+==================
+SV_SendRequestedGameState
+
+A gamestate a client asked for. Each one is the whole map state compressed and
+sent at once, so the requests a client can make are limited; a client that
+really lost one asks again with its next packet.
+==================
+*/
+static bool SV_SendRequestedGameState( client_t *cl )
+{
+#if LIBCOD_COMPILE_RATELIMITER == 1
+	if ( SVC_RateLimit( &gamestateBuckets[cl - svs.clients], 5, 1000 ) )
+	{
+		Com_DPrintf( "SV_SendRequestedGameState: rate limit from %s exceeded\n", cl->name );
+		return false;
+	}
+#endif
+
+	SV_SendClientGameState( cl );
+	return true;
+}
+
+/*
 =================
 SV_AuthorizeRequest
 =================
@@ -2170,7 +2200,7 @@ static void SV_DoneDownload_f( client_t *cl )
 
 	Com_DPrintf( "clientDownload: %s Done\n", cl->name );
 	// resend the game state to update any clients that entered during the download
-	SV_SendClientGameState( cl );
+	SV_SendRequestedGameState( cl );
 }
 
 /*
@@ -2242,7 +2272,7 @@ static void SV_WWWDownload_f( client_t *cl )
 		SV_CloseDownload(cl);
 		cl->clientDownloadingWWW = 0;
 		cl->wwwFallback = 1;
-		SV_SendClientGameState(cl);
+		SV_SendRequestedGameState(cl);
 		return;
 	}
 
@@ -2253,7 +2283,7 @@ static void SV_WWWDownload_f( client_t *cl )
 		SV_CloseDownload(cl);
 		cl->clientDownloadingWWW = 0;
 		cl->wwwFallback = 1;
-		SV_SendClientGameState(cl);
+		SV_SendRequestedGameState(cl);
 		return;
 	}
 
@@ -2463,10 +2493,10 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 		if ( cl->messageAcknowledge > cl->gamestateMessageNum )
 		{
 			Com_DPrintf( "%s : dropped gamestate, resending\n", cl->name );
-			SV_SendClientGameState( cl );
 
-			if ( net_lanauthorize->current.boolean || !Sys_IsLANAddress(cl->netchan.remoteAddress) )
+			if ( SV_SendRequestedGameState( cl ) && ( net_lanauthorize->current.boolean || !Sys_IsLANAddress(cl->netchan.remoteAddress) ) )
 				SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
+
 		}
 
 		return;

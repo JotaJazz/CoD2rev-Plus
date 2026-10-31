@@ -108,6 +108,15 @@ def check_client(port, protocol, password, game_log, check):
         reply = client.download(server_id, 'main/zz_smoke_download.iwd')
         check('mod iwd download starts', refused not in reply and b'PK\x03\x04' in reply)
 
+        # each donedl answers with a full gamestate, so a flood of them is capped
+        before = client.state.gamestate_count
+        client.commands(server_id, ['donedl'] * 40)
+        for sequence, data in client.receive(2.0):
+            client._parse(sequence, data)
+        sent = client.state.gamestate_count - before
+        check('donedl flood gets a few gamestates', 1 <= sent <= 5, f'{sent} of 40')
+
+
         client.enter_game(server_id, 2.0)
         ping = (players(port) or {}).get('smokeclient')
         check('client enters the game', ping is not None and 0 <= ping < 999, f'ping {ping}')
