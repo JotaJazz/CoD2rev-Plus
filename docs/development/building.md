@@ -7,9 +7,9 @@ This page covers what a contributor needs on top.
 
 | Command | Output |
 |---|---|
-| `make` | Linux 32-bit, 1.0 (protocol 115) → `bin/cod2rev_lnxded` |
-| `make PROTOCOL=118` | Linux 32-bit, 1.3 → same name in `bin/` |
-| `make ARCH=x64` | Linux 64-bit ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)); combines with `PROTOCOL=118` → same name in `bin/` |
+| `make` | Linux 64-bit, 1.0 (protocol 115) → `bin/cod2rev_lnxded` |
+| `make PROTOCOL=118` | Linux 64-bit, 1.3 → same name in `bin/` |
+| `make ARCH=x86` | Linux 32-bit ([ADR 0010](../architecture/adr/0010-64-bit-default-on-linux.md)); combines with `PROTOCOL=118` → same name in `bin/` |
 | `make windows` | MinGW cross-build → `bin/cod2rev_win32.exe` (`PROTOCOL=118` for 1.3) |
 | `make BIN_DIR=<folder>` | Same build into another folder, to keep 1.0 and 1.3 side by side |
 | `make clean` | Removes the binary and the objects |
@@ -38,7 +38,7 @@ This page covers what a contributor needs on top.
 
 ## Before committing a change under src/
 
-1. `make` and `make PROTOCOL=118`; `make ARCH=x64` for changes that touch
+1. `make` and `make PROTOCOL=118`; `make ARCH=x86` for changes that touch
    pointers, sizes or the Makefile.
 2. `make windows`.
 3. The smoke test for both versions ([testing.md](testing.md)).
@@ -51,7 +51,7 @@ workflow, and on a manual run (`workflow_dispatch`).
 
 ## MySQL
 
-`make ARCH=x64 WITH_MYSQL=true` builds the MySQL script functions against the
+`make WITH_MYSQL=true` builds the MySQL script functions against the
 system's client library: MariaDB Connector/C (`libmariadb-dev`) or MySQL's
 (`libmysqlclient-dev`), found with `mariadb_config` or `mysql_config`.
 Distributions ship it 64-bit only. `MYSQL_LIBS=-l:libmariadb.so.3` links
@@ -63,17 +63,17 @@ database `cod2test` and user `cod2`. Scripts need `+set sv_libcodUnsafe 1`.
 
 ## AddressSanitizer build
 
-A command-line `CFLAGS` replaces the Makefile's, so `-m32` and
+A command-line `CFLAGS` replaces the Makefile's, so `-m64` and
 `-D_FILE_OFFSET_BITS=64` must be repeated:
 
 ```bash
 make OBJ_ROOT=<scratch>/asan_obj BIN_DIR=<scratch>/asan_bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-Use `-DPROTOCOL_VERSION=118` and other folders for 1.3. For 64-bit add
-`ARCH=x64` and write `-m64` instead of `-m32` in both.
+Use `-DPROTOCOL_VERSION=118` and other folders for 1.3. For 32-bit add
+`ARCH=x86` and write `-m32` instead of `-m64` in both.
 
 ## Line endings
 

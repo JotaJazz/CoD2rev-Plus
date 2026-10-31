@@ -1,6 +1,6 @@
 # 0009. Linux 64-bit build next to the 32-bit one
 
-- Status: Accepted
+- Status: Superseded by [0010](0010-64-bit-default-on-linux.md)
 - Date: 2026-10-29
 
 ## Context

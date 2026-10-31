@@ -1,7 +1,8 @@
 # Architecture overview
 
-Reverse-engineered Call of Duty 2 multiplayer dedicated server, one 32-bit x86
-binary per platform and game version, plus a 64-bit Linux build (`make ARCH=x64`). The structure follows the original
+Reverse-engineered Call of Duty 2 multiplayer dedicated server, one binary per
+platform and game version: 64-bit on Linux (`make ARCH=x86` for 32-bit), 32-bit
+on Windows. The structure follows the original
 binaries (Quake 3 lineage), not a design of this fork.
 
 ## Modules

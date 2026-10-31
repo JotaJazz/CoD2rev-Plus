@@ -17,7 +17,7 @@ Es un fork de [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Server
 
 ## Qué hace hoy
 
-- **Compilación para Windows y Linux:** compilación con MinGW para Windows, `make` para Linux de 32 bits, versión del juego (1.0 o 1.3) elegida al compilar, compilaciones automáticas en cada push, lanzadores y un `server.cfg` de ejemplo.
+- **Compilación para Windows y Linux:** compilación con MinGW para Windows, `make` para Linux de 64 bits, versión del juego (1.0 o 1.3) elegida al compilar, compilaciones automáticas en cada push, lanzadores y un `server.cfg` de ejemplo.
 - **Seguridad y estabilidad:** se valida la entrada de red que tumbaba el servidor o sobrescribía su memoria; rcon bloquea las IP tras contraseñas erróneas; las descargas ya no entregan los archivos originales del juego; los baneos por IP se aplican; y un fallo deja un informe en `crash.log`.
 - **Compatibilidad:** mensajes grandes de clientes 1.3, clientes de Game Pass, servidores maestros como `host:puerto`, `dedicated 1`, archivos del juego en unidades de Windows bajo WSL, un reloj de juego estable y bots que vuelven tras un cambio de mapa.
 - **Administración:** contraseñas fuera del log, nombre, rotación y marcas de tiempo del log, rate y snapshots forzados, servidor de autorización de CD key configurable, mensajes de kick y timeout opcionales, un apagado limpio con SIGTERM y una unidad de systemd.
@@ -69,7 +69,7 @@ El resultado queda en `bin/` y los objetos intermedios en `obj/`.
 
 ### Linux
 
-Por defecto el servidor es un binario x86 de 32 bits; `make ARCH=x64` compila uno de 64 bits sin estos paquetes. Para el de 32 bits en un sistema de 64 bits hace falta el soporte de 32 bits de GCC (en Debian y Ubuntu, los paquetes `gcc-multilib` y `g++-multilib`):
+Por defecto el servidor es un binario de 64 bits y solo necesita `gcc` y `g++`. `make ARCH=x86` compila uno de 32 bits, que en un sistema de 64 bits necesita el soporte de 32 bits de GCC (en Debian y Ubuntu, los paquetes `gcc-multilib` y `g++-multilib`):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
@@ -147,11 +147,11 @@ Para buscar errores de memoria, compila el servidor con AddressSanitizer en una 
 
 ```bash
 make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-`CFLAGS` en la línea de comandos reemplaza al del Makefile, así que hay que repetir `-m32` y `-D_FILE_OFFSET_BITS=64`. Dejar corriendo esa compilación un rato con el mod de bots y un `sv_mapRotation` corto cubre también los cambios de mapa y la partida.
+`CFLAGS` en la línea de comandos reemplaza al del Makefile, así que hay que repetir `-m64` y `-D_FILE_OFFSET_BITS=64`. Dejar corriendo esa compilación un rato con el mod de bots y un `sv_mapRotation` corto cubre también los cambios de mapa y la partida.
 
 </details>
 

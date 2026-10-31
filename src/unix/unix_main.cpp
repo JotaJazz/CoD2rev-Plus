@@ -315,6 +315,8 @@ void Sys_Init(void)
 #if defined __linux__
 #if defined __i386__
   Dvar_RegisterString( "arch", "linux i386", DVAR_ROM );
+#elif defined __x86_64__
+  Dvar_RegisterString( "arch", "linux x64", DVAR_ROM );
 #elif defined __alpha__
   Dvar_RegisterString( "arch", "linux alpha", DVAR_ROM );
 #elif defined __sparc__

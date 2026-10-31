@@ -17,7 +17,7 @@
 
 ## O que faz hoje
 
-- **Compilação para Windows e Linux:** compilação com MinGW para Windows, `make` para Linux de 32 bits, versão do jogo (1.0 ou 1.3) escolhida ao compilar, compilações automáticas em cada push, lançadores e um `server.cfg` de exemplo.
+- **Compilação para Windows e Linux:** compilação com MinGW para Windows, `make` para Linux de 64 bits, versão do jogo (1.0 ou 1.3) escolhida ao compilar, compilações automáticas em cada push, lançadores e um `server.cfg` de exemplo.
 - **Segurança e estabilidade:** a entrada de rede que derrubava o servidor ou sobrescrevia a sua memória é agora validada; o rcon bloqueia IPs após palavras-passe erradas; os downloads já não entregam os ficheiros originais do jogo; os banimentos por IP são aplicados; e uma falha deixa um relatório em `crash.log`.
 - **Compatibilidade:** mensagens grandes de clientes 1.3, clientes da Game Pass, servidores master como `host:porta`, `dedicated 1`, ficheiros do jogo em unidades do Windows no WSL, um relógio de jogo estável e bots que voltam após uma mudança de mapa.
 - **Administração:** palavras-passe fora do log, nome, rotação e carimbos de tempo do log, rate e snapshots forçados, servidor de autorização de CD key configurável, mensagens de kick e timeout opcionais, um encerramento limpo com SIGTERM e uma unidade do systemd.
@@ -69,7 +69,7 @@ O resultado fica em `bin/` e os objetos intermédios em `obj/`.
 
 ### Linux
 
-Por omissão, o servidor é um binário x86 de 32 bits; `make ARCH=x64` compila um de 64 bits sem estes pacotes. Para o de 32 bits num sistema de 64 bits é necessário o suporte de 32 bits do GCC (em Debian e Ubuntu, os pacotes `gcc-multilib` e `g++-multilib`):
+Por omissão, o servidor é um binário de 64 bits e só precisa de `gcc` e `g++`. `make ARCH=x86` compila um de 32 bits, que num sistema de 64 bits precisa do suporte de 32 bits do GCC (em Debian e Ubuntu, os pacotes `gcc-multilib` e `g++-multilib`):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
@@ -147,11 +147,11 @@ Para procurar erros de memória, compile o servidor com AddressSanitizer numa pa
 
 ```bash
 make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-`CFLAGS` na linha de comandos substitui o do Makefile, pelo que é preciso repetir `-m32` e `-D_FILE_OFFSET_BITS=64`. Deixar essa compilação a correr algum tempo com o mod de bots e um `sv_mapRotation` curto cobre também as mudanças de mapa e a partida.
+`CFLAGS` na linha de comandos substitui o do Makefile, pelo que é preciso repetir `-m64` e `-D_FILE_OFFSET_BITS=64`. Deixar essa compilação a correr algum tempo com o mod de bots e um `sv_mapRotation` curto cobre também as mudanças de mapa e a partida.
 
 </details>
 

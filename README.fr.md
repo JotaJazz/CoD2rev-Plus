@@ -17,7 +17,7 @@ C'est un fork de [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Ser
 
 ## Ce qu'il fait aujourd'hui
 
-- **Compilation pour Windows et Linux :** compilation MinGW pour Windows, `make` pour Linux 32 bits, version du jeu (1.0 ou 1.3) choisie à la compilation, compilations automatiques à chaque push, lanceurs et un `server.cfg` d'exemple.
+- **Compilation pour Windows et Linux :** compilation MinGW pour Windows, `make` pour Linux 64 bits, version du jeu (1.0 ou 1.3) choisie à la compilation, compilations automatiques à chaque push, lanceurs et un `server.cfg` d'exemple.
 - **Sécurité et stabilité :** les entrées réseau qui faisaient planter le serveur ou écrasaient sa mémoire sont maintenant vérifiées ; rcon bloque les IP après des mots de passe erronés ; les téléchargements ne livrent plus les fichiers d'origine du jeu ; les bannissements d'IP sont appliqués ; et un plantage laisse un rapport dans `crash.log`.
 - **Compatibilité :** grands messages des clients 1.3, clients Game Pass, serveurs maîtres en `hôte:port`, `dedicated 1`, fichiers du jeu sur des lecteurs Windows sous WSL, une horloge de jeu stable et des bots qui reviennent après un changement de carte.
 - **Administration :** mots de passe absents du log, nom, rotation et horodatage du log, rate et snapshots imposés, serveur d'autorisation de clé CD configurable, messages de kick et de timeout optionnels, un arrêt propre sur SIGTERM et une unité systemd.
@@ -69,7 +69,7 @@ Le résultat est placé dans `bin/` et les objets intermédiaires dans `obj/`.
 
 ### Linux
 
-Par défaut, le serveur est un binaire x86 32 bits ; `make ARCH=x64` en construit un de 64 bits sans ces paquets. Pour le binaire 32 bits sur un système 64 bits, il faut la prise en charge 32 bits de GCC (sous Debian et Ubuntu, les paquets `gcc-multilib` et `g++-multilib`) :
+Par défaut, le serveur est un binaire 64 bits et ne demande que `gcc` et `g++`. `make ARCH=x86` en construit un de 32 bits, qui sur un système 64 bits demande la prise en charge 32 bits de GCC (sous Debian et Ubuntu, les paquets `gcc-multilib` et `g++-multilib`) :
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
@@ -147,11 +147,11 @@ Pour chercher des erreurs mémoire, compilez le serveur avec AddressSanitizer da
 
 ```bash
 make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-`CFLAGS` donné en ligne de commande remplace celui du Makefile, il faut donc répéter `-m32` et `-D_FILE_OFFSET_BITS=64`. Laisser tourner cette compilation un moment avec le mod de bots et un `sv_mapRotation` court couvre aussi les changements de carte et le jeu.
+`CFLAGS` donné en ligne de commande remplace celui du Makefile, il faut donc répéter `-m64` et `-D_FILE_OFFSET_BITS=64`. Laisser tourner cette compilation un moment avec le mod de bots et un `sv_mapRotation` court couvre aussi les changements de carte et le jeu.
 
 </details>
 

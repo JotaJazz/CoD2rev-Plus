@@ -7,7 +7,7 @@ Commands: [../development/building.md](../development/building.md),
 
 1. Work on a local branch, in batches of related commits.
 2. Verify each batch: `make`, `make PROTOCOL=118`, `make windows`,
-   `make ARCH=x64`, smoke test
+   `make ARCH=x86`, smoke test
    on 1.0 and 1.3; bots tests and ASan for gameplay or memory changes;
    `scripts/check_docs.py` when docs changed.
 3. Merge to `master` by fast-forward after the maintainer approves. Push only

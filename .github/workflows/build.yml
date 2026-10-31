@@ -26,24 +26,24 @@ jobs:
         include:
           - version: "1.0"
             protocol: 115
-            arch: x86
-            bits: 32
+            arch: x64
+            bits: 64
             artifact: cod2rev_lnxded-1.0
           - version: "1.3"
             protocol: 118
-            arch: x86
-            bits: 32
+            arch: x64
+            bits: 64
             artifact: cod2rev_lnxded-1.3
           - version: "1.0"
             protocol: 115
-            arch: x64
-            bits: 64
-            artifact: cod2rev_lnxded-1.0-x64
+            arch: x86
+            bits: 32
+            artifact: cod2rev_lnxded-1.0-x86
           - version: "1.3"
             protocol: 118
-            arch: x64
-            bits: 64
-            artifact: cod2rev_lnxded-1.3-x64
+            arch: x86
+            bits: 32
+            artifact: cod2rev_lnxded-1.3-x86
     steps:
       - uses: actions/checkout@v7
       - name: Install 32-bit toolchain
@@ -84,7 +84,7 @@ jobs:
           sudo apt-get install -y libmariadb-dev
       - name: Build
         run: |
-          make -j"$(nproc)" ARCH=x64 WITH_MYSQL=true
+          make -j"$(nproc)" WITH_MYSQL=true
 
   windows:
     name: Windows (MinGW cross-build), CoD2 ${{ matrix.version }}

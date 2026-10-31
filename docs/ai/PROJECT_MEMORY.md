@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — 64-bit by default on Linux
+
+- `make` builds 64-bit, `make ARCH=x86` 32-bit, Windows stays 32-bit ([ADR 0010](../architecture/adr/0010-64-bit-default-on-linux.md)). Forcing `-m32` had been the maintainer's early choice, not a need.
+- Checked before the switch: smoke, HTTP, bots and the harness on 64-bit, and a 15-minute ASan soak over five gametypes with no reports. Graph files came out byte-identical from both builds, so existing caches keep working.
+- CI artifact names follow the default: the plain name is 64-bit, `-x86` the 32-bit one.
+
 ## 2026-10-31 — upstream review to dbe3621
 
 - Merged voron00 up to `dbe3621` keeping our tree (`-s ours`): six commits read, two lines of their work taken. `iplist.txt` now also checks a proxied client's real address, through our trusted `proxy_realip`, and `sqrtInv` uses `I_rsqrt`, which drops `Q_rsqrt` and its `long` type punning.

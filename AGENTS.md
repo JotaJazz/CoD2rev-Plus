@@ -1,7 +1,7 @@
 # AGENTS.md
 
 CoD2rev-Plus: reverse-engineered Call of Duty 2 dedicated server (1.0 and
-1.3), C++, 32-bit x86 with a 64-bit Linux build. A fork of
+1.3), C++, 64-bit on Linux with a 32-bit build, 32-bit on Windows. A fork of
 voron00/CoD2rev_Server that adds hardening, admin features, libcod script
 functions and a bots mod.
 
@@ -18,7 +18,7 @@ functions and a bots mod.
 - Script extensions go in `src/libcod`, attached with `#ifdef LIBCOD` hooks;
   hardening and admin fixes are small changes in the engine file they fix.
 - Check both sides of `#ifdef LIBCOD` and of `#if PROTOCOL_VERSION`; build
-  `make`, `make PROTOCOL=118`, `make windows` and `make ARCH=x64` before
+  `make`, `make PROTOCOL=118`, `make windows` and `make ARCH=x86` before
   committing under `src/`.
 - Never change network formats, engine limits or client-predicted behaviour.
 - Keep each file's line endings (`.gitattributes` is `* -text`).

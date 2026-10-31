@@ -17,7 +17,7 @@ It is a fork of [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Serv
 
 ## What it does today
 
-- **Builds for Windows and Linux:** a MinGW build for Windows, `make` for 32-bit Linux, the game version (1.0 or 1.3) chosen at build time, automated builds on every push, launchers and an example `server.cfg`.
+- **Builds for Windows and Linux:** a MinGW build for Windows, `make` for 64-bit Linux, the game version (1.0 or 1.3) chosen at build time, automated builds on every push, launchers and an example `server.cfg`.
 - **Security and stability:** network input that crashed the server or overwrote its memory is now bounds-checked; rcon locks out IPs after wrong passwords; downloads can't fetch the stock game files; IP bans are enforced; and a crash leaves a report in `crash.log`.
 - **Compatibility:** large messages from 1.3 clients, Game Pass clients, master servers given as `host:port`, `dedicated 1`, game files on Windows drives under WSL, a steady game clock, and bots that come back after a map change.
 - **Administration:** passwords kept out of the log, log naming, rotation and timestamps, a forced rate and snapshot rate, a configurable CD key authorization server, optional kick and timeout messages, a clean shutdown on SIGTERM and a systemd unit.
@@ -69,7 +69,7 @@ The output goes to `bin/` and intermediate objects to `obj/`.
 
 ### Linux
 
-The server is a 32-bit x86 binary by default; `make ARCH=x64` builds a 64-bit one without these packages. For the 32-bit one on a 64-bit system you need GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
+The server is a 64-bit binary by default and needs only `gcc` and `g++`. `make ARCH=x86` builds a 32-bit one, which on a 64-bit system needs GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
@@ -147,11 +147,11 @@ To look for memory errors, build the server with AddressSanitizer in a separate 
 
 ```bash
 make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-`CFLAGS` given on the command line replaces the Makefile's, so `-m32` and `-D_FILE_OFFSET_BITS=64` must be repeated. Running that build for a while with the bots mod and a short `sv_mapRotation` also covers map changes and gameplay.
+`CFLAGS` given on the command line replaces the Makefile's, so `-m64` and `-D_FILE_OFFSET_BITS=64` must be repeated. Running that build for a while with the bots mod and a short `sv_mapRotation` also covers map changes and gameplay.
 
 </details>
 

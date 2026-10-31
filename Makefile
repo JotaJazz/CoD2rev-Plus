@@ -4,8 +4,12 @@ WINDRES=windres
 
 # Game version to build: 115 = 1.0, 118 = 1.3.
 PROTOCOL=115
-# CPU architecture of the Linux build: x86 (32-bit) or x64 (64-bit).
+# CPU architecture: x64 (64-bit) or x86 (32-bit). Windows is 32-bit only.
+ifeq ($(OS),Windows_NT)
 ARCH=x86
+else
+ARCH=x64
+endif
 
 CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -Wformat -DPROTOCOL_VERSION=$(PROTOCOL) -MMD -MP
 LFLAGS=-no-pie
@@ -52,7 +56,7 @@ endif
 
 # Setup directory names.
 BIN_DIR=bin
-# Empty for the default 32-bit build, so its object folders and stamps stay as before.
+# Empty for the 32-bit build, whose object folders and stamps are older than ARCH.
 ifeq ($(ARCH),x86)
 BUILD_ARCH=
 else
@@ -122,7 +126,7 @@ LLIBS+=$(SRC_DIR)/libcod/mysql/windows/lib/libmysql.lib
 else
 # The system's client library: MariaDB Connector/C (libmariadb-dev) or MySQL's
 # (libmysqlclient-dev), as their config tool reports it. Distributions ship it
-# 64-bit only, so this needs ARCH=x64; MYSQL_LIBS=... overrides it.
+# 64-bit only, so ARCH=x86 usually cannot use it; MYSQL_LIBS=... overrides it.
 MYSQL_LIBS?=$(shell mariadb_config --libs 2>/dev/null || mysql_config --libs 2>/dev/null || echo -lmysqlclient)
 LLIBS+=$(MYSQL_LIBS)
 endif

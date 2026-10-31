@@ -17,7 +17,7 @@ Er ist ein Fork von [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_
 
 ## Was es heute kann
 
-- **Builds für Windows und Linux:** ein MinGW-Build für Windows, `make` für 32-Bit-Linux, die Spielversion (1.0 oder 1.3) beim Bauen wählbar, automatische Builds bei jedem Push, Startskripte und eine Beispiel-`server.cfg`.
+- **Builds für Windows und Linux:** ein MinGW-Build für Windows, `make` für 64-Bit-Linux, die Spielversion (1.0 oder 1.3) beim Bauen wählbar, automatische Builds bei jedem Push, Startskripte und eine Beispiel-`server.cfg`.
 - **Sicherheit und Stabilität:** Netzwerkeingaben, die den Server abstürzen ließen oder seinen Speicher überschrieben, werden jetzt geprüft; rcon sperrt IPs nach falschen Passwörtern; Downloads liefern die Originaldateien des Spiels nicht mehr aus; IP-Sperren werden durchgesetzt; und ein Absturz hinterlässt einen Bericht in `crash.log`.
 - **Kompatibilität:** große Nachrichten von 1.3-Clients, Game-Pass-Clients, Masterserver als `host:port`, `dedicated 1`, Spieldateien auf Windows-Laufwerken unter WSL, eine gleichmäßige Spieluhr und Bots, die nach einem Kartenwechsel zurückkommen.
 - **Administration:** Passwörter nicht im Log, Name, Rotation und Zeitstempel des Logs, erzwungene Rate und Snapshot-Rate, ein einstellbarer CD-Key-Autorisierungsserver, abschaltbare Kick- und Timeout-Meldungen, ein sauberes Beenden bei SIGTERM und eine systemd-Unit.
@@ -69,7 +69,7 @@ Das Ergebnis landet in `bin/`, die Zwischenobjekte in `obj/`.
 
 ### Linux
 
-Der Server ist standardmäßig eine 32-Bit-x86-Binärdatei; `make ARCH=x64` baut ohne diese Pakete eine 64-Bit-Version. Für die 32-Bit-Version auf einem 64-Bit-System wird die 32-Bit-Unterstützung von GCC benötigt (unter Debian und Ubuntu die Pakete `gcc-multilib` und `g++-multilib`):
+Der Server ist standardmäßig eine 64-Bit-Binärdatei und braucht nur `gcc` und `g++`. `make ARCH=x86` baut eine 32-Bit-Version, die auf einem 64-Bit-System die 32-Bit-Unterstützung von GCC benötigt (unter Debian und Ubuntu die Pakete `gcc-multilib` und `g++-multilib`):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
@@ -147,11 +147,11 @@ Um Speicherfehler zu finden, baue den Server mit AddressSanitizer in einem eigen
 
 ```bash
 make OBJ_ROOT=/tmp/asan/obj BIN_DIR=/tmp/asan/bin \
-  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m32 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
-  LFLAGS="-no-pie -m32 -fsanitize=address"
+  CFLAGS="-fno-pie -O1 -g -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG -DPROTOCOL_VERSION=115 -MMD -MP -m64 -D_FILE_OFFSET_BITS=64 -fsanitize=address" \
+  LFLAGS="-no-pie -m64 -fsanitize=address"
 ```
 
-Ein auf der Kommandozeile angegebenes `CFLAGS` ersetzt das des Makefiles, daher müssen `-m32` und `-D_FILE_OFFSET_BITS=64` wiederholt werden. Lässt man diesen Build eine Weile mit dem Bots-Mod und einer kurzen `sv_mapRotation` laufen, sind auch Kartenwechsel und das Spiel abgedeckt.
+Ein auf der Kommandozeile angegebenes `CFLAGS` ersetzt das des Makefiles, daher müssen `-m64` und `-D_FILE_OFFSET_BITS=64` wiederholt werden. Lässt man diesen Build eine Weile mit dem Bots-Mod und einer kurzen `sv_mapRotation` laufen, sind auch Kartenwechsel und das Spiel abgedeckt.
 
 </details>
 
