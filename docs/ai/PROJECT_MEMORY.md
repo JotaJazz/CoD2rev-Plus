@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-30 — script callbacks
+
+- From the audit. `CodeCallback_DPrintf` cleared the arguments of the running builtin, because `stackGetParams` prints on a type mismatch; `getArrayKeys` dropped integer keys; re-entry guards stayed set after a `Com_Error`, so a callback never ran again.
+- `connectionlessPacket` was reported broken and is not: the three stray `0xff` bytes read as whitespace by the tokenizer.
+
 ## 2026-10-30 — libcod data safety
 
 - From the audit. `ATTACH` and `VACUUM INTO` wrote files past `sqlite_open`'s folder; `map_restart` dropped queued async SQLite writes (498 of 500 in a test); on Windows `json_save_async` only worked once, confirmed by running the `.exe` through WSL; big JSON or a 64 KB cell ended the map; `mysql_*` had no gate, timeouts or queue cap.
