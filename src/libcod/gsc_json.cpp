@@ -246,7 +246,7 @@ static void json_collect_strings(yyjson_val *node, int depth, std::unordered_set
 
 		yyjson_obj_foreach(node, idx, max, key, val)
 		{
-			json_collect_strings(key, depth + 1, seen, bytes);
+			json_collect_strings(key, depth, seen, bytes);
 			json_collect_strings(val, depth + 1, seen, bytes);
 		}
 	}
