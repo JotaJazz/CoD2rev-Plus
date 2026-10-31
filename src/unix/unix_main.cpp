@@ -421,9 +421,12 @@ void  Sys_Error( const char *error, ...)
 #endif
 
   va_start (argptr,error);
-  vsprintf (string,error,argptr);
+  vsnprintf (string,sizeof(string),error,argptr);
   va_end (argptr);
   fprintf(stderr, "Sys_Error: %s\n", string);
+
+  // Sys_Exit ends in _exit, and the game log may be buffered
+  fflush (NULL);
 
   Sys_Exit( 1 ); // bk010104 - use single exit point.
 } 

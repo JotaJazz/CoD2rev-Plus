@@ -14,4 +14,4 @@ if [ "$1" = "internet" ]; then
 	CRACKED=
 fi
 
-exec ./cod2rev_lnxded +set dedicated "$MODE" +set net_port "$PORT" +set logfile 2 $CRACKED +exec server.cfg +map mp_toujane
+exec ./cod2rev_lnxded +set dedicated "$MODE" +set net_port "$PORT" +set logfile 2 +set logfileRotate 5 $CRACKED +exec server.cfg +map mp_toujane

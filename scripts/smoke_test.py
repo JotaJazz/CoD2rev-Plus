@@ -402,7 +402,8 @@ def check_strict_port(args, port, check):
              '+set', 'fs_homepath', home,
              '+set', 'dedicated', '1',
              '+set', 'net_port', str(port),
-             '+set', 'net_strictPort', '1'],
+             '+set', 'net_strictPort', '1',
+             '+set', 'logfile', '2'],
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         try:
             out = server.communicate(timeout=30)[0].decode('latin-1')
@@ -411,6 +412,9 @@ def check_strict_port(args, port, check):
             out = server.communicate()[0].decode('latin-1')
         check('net_strictPort stops on a busy port', server.returncode not in (None, 0) and 'net_strictPort' in out,
               f'exit code {server.returncode}')
+        log_path = os.path.join(home, 'main', 'console_mp_server.log')
+        log = open(log_path, encoding='latin-1').read() if os.path.exists(log_path) else ''
+        check('fatal error reaches the log', 'FATAL' in log and 'net_strictPort' in log)
 
 
 def free_port():

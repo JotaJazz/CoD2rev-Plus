@@ -14,4 +14,4 @@ if /i "%~1"=="internet" (
 	set MODE=2
 	set CRACKED=
 )
-start "" cod2rev_win32.exe +set dedicated %MODE% +set net_port %PORT% +set logfile 2 %CRACKED% +exec server.cfg +map mp_toujane
+start "" cod2rev_win32.exe +set dedicated %MODE% +set net_port %PORT% +set logfile 2 +set logfileRotate 5 %CRACKED% +exec server.cfg +map mp_toujane
