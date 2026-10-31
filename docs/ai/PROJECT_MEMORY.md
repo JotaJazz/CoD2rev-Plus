@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — bots play HQ
+
+- A bot takes the radio by standing watch inside it, or guards it from around when its team holds it. All 15 stock maps had captures in a 5-minute run with 6 bots (1 to 5 each).
+- The graph's islands decided the design: a neutral radio never leaves, so one no bot could reach stopped the game there, and 2 to 5 radios of most maps were like that. The mod drops them from `level.radio` before `hq_setup` when 3 others remain. A player on that server never sees those radios; the multi-floor graph work would give them back.
+- `bots_test.py` leaves out `array index -1`: stock `hq_obj_think` reads `level.radio[-1]`, and outside developer mode the script goes on.
+
 ## 2026-10-31 — network leftovers of the audit
 
 - Of the three deferred items one was as described: a refused `donedl` or `wwwdl` gamestate was lost, and is now sent later. The rcon reflection was wrong: wrong passwords get about 2 replies a second, whitelisted or not (10 of 2,400 in 5 s).

@@ -86,7 +86,7 @@ def main():
     ap.add_argument('--binary', default=os.path.join(ROOT, 'bin', 'cod2rev_lnxded'))
     ap.add_argument('--map', default='mp_toujane')
     ap.add_argument('--gametype', default='tdm')
-    ap.add_argument('--seconds', type=int, help='play time on the first load (default: 180, SD 240, CTF 300)')
+    ap.add_argument('--seconds', type=int, help='play time on the first load (default: 180, SD 240, CTF and HQ 300)')
     ap.add_argument('--bombmode', type=int, choices=(0, 1, 2),
                     help='SD bomb mode: stock SD always plays 0, so a copy with this mode is installed')
     ap.add_argument('--keep', help='copy games_mp.log and the server log to this folder')
@@ -94,7 +94,7 @@ def main():
                     help='start with a garbage waypoint file, which must be rebuilt')
     args = ap.parse_args()
     if args.seconds is None:
-        args.seconds = {'sd': 240, 'ctf': 300}.get(args.gametype, 180)
+        args.seconds = {'sd': 240, 'ctf': 300, 'hq': 300}.get(args.gametype, 180)
     fights = args.gametype in ('tdm', 'dm')
     if fights and args.seconds < 120:
         ap.error('the combat checks need --seconds 120 or more')
@@ -198,7 +198,7 @@ def main():
         busiest = max(repaths.values(), default=0)
         check('bots search paths sparingly', 0 < busiest <= 6, f'at most {busiest} searches by a bot in a second')
         goals = {l.split()[3] for l in lines if re.match(r'BOTNAV \d+ goal ', l)}
-        # in SD and CTF most bots play the objective instead of patrolling
+        # in SD, CTF and HQ most bots play the objective instead of patrolling
         if fights:
             check('bots choose patrol and hint goals', {'patrol', 'hint'} <= goals, ', '.join(sorted(goals)))
         else:
@@ -242,6 +242,14 @@ def main():
             check('bots take steal and defend roles', {'steal', 'defend'} <= roles, ', '.join(sorted(roles)))
             check('bots pick up the enemy flag', 'pickup' in events, f'{events.count("pickup")} pickups')
             print(f'     {events.count("capture")} captures, {events.count("return")} returns')
+        if args.gametype == 'hq':
+            radios = [l.split()[2] for l in lines if l.startswith('BOTOBJ radio ')]
+            check('bots take the radio role', 'radio' in roles, ', '.join(sorted(roles)))
+            # a first radio the graph can't reach stays there until a player takes it
+            check('bots capture radios', 'skipped' in radios[:1] or any(t in ('allies', 'axis') for t in radios),
+                  f'{sum(t in ("allies", "axis") for t in radios)} captures')
+            print(f'     {radios.count("none")} radios neutral again, {radios.count("skipped")} skipped,'
+                  f' {", ".join(l.split(maxsplit=1)[1] for l in lines if l.startswith("BOTOBJ radios "))[:40]}')
         kills = [l for l in lines if l.startswith('K;')]
         check('bots kill each other', len(kills) >= 5, f'{len(kills)} kills')
         nade_kills = sum(1 for l in kills if 'MOD_GRENADE_SPLASH' in l)
@@ -257,6 +265,10 @@ def main():
         if stock:
             print(f'     {len(stock)} errors of the stock sd.gsc defuse race left out')
         errors = [l for i, l in enumerate(lines) if l.startswith('BOTERROR') and i not in stock]
+        if args.gametype == 'hq':
+            # hq_obj_think reads level.radio[level.nextradio - 1] with nextradio 0;
+            # outside developer mode the value is undefined and the script goes on
+            errors = [l for l in errors if 'array index -1 out of range' not in l]
         allowed = 1 if args.corrupt_cache else 0
         check('no script errors', len(errors) <= allowed, '; '.join(errors[:3]))
 

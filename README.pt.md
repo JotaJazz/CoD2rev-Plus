@@ -22,7 +22,7 @@
 - **Compatibilidade:** mensagens grandes de clientes 1.3, clientes da Game Pass, servidores master como `host:porta`, `dedicated 1`, ficheiros do jogo em unidades do Windows no WSL, um relógio de jogo estável e bots que voltam após uma mudança de mapa.
 - **Administração:** palavras-passe fora do log, nome, rotação e carimbos de tempo do log, rate e snapshots forçados, servidor de autorização de CD key configurável, mensagens de kick e timeout opcionais, um encerramento limpo com SIGTERM e uma unidade do systemd.
 - **Scripting (libcod):** a maioria das funções e callbacks de script do [zk_libcod](https://github.com/ibuddieat/zk_libcod), com os mesmos nomes: erros de script com ficheiro e linha, botões premidos, comandos rcon, controlo de jogadores e armas, ferramentas de administração, grafos de waypoints com A\*, o que cada jogador vê, ouve e com o que colide, física, JSON, clientes HTTP e WebSocket, sons pelo chat de voz e mais, corrigindo vários dos seus erros pelo caminho.
-- **Mod de bots:** `mods/bots`, bots que se orientam por grafos de waypoints, usam a mira, granadas e faca, e jogam os objetivos de SD e CTF.
+- **Mod de bots:** `mods/bots`, bots que se orientam por grafos de waypoints, usam a mira, granadas e faca, e jogam os objetivos de SD, CTF e HQ.
 - **Testes:** um smoke test com um cliente mínimo que lê os snapshots do servidor, e um teste de bots que jogam mapas reais.
 
 Também executa as partidas locais do [OpenCoD2-Plus](https://github.com/JotaJazz/OpenCoD2-Plus), um cliente de CoD2 reconstruído. Cada alteração em detalhe, com as suas funções, variáveis e correções, está em [docs/CHANGES.md](docs/CHANGES.md) (em inglês).

@@ -22,7 +22,7 @@ It is a fork of [voron00/CoD2rev_Server](https://github.com/voron00/CoD2rev_Serv
 - **Compatibility:** large messages from 1.3 clients, Game Pass clients, master servers given as `host:port`, `dedicated 1`, game files on Windows drives under WSL, a steady game clock, and bots that come back after a map change.
 - **Administration:** passwords kept out of the log, log naming, rotation and timestamps, a forced rate and snapshot rate, a configurable CD key authorization server, optional kick and timeout messages, a clean shutdown on SIGTERM and a systemd unit.
 - **Scripting (libcod):** most of [zk_libcod](https://github.com/ibuddieat/zk_libcod)'s script functions and callbacks, with the same names: script errors with file and line, button presses, rcon commands, player and weapon control, admin tools, waypoint graphs with A\*, what each player sees, hears and collides with, physics, JSON, HTTP and WebSocket clients, sounds through voice chat and more, fixing several of its bugs on the way.
-- **Bots mod:** `mods/bots`, bots that find their way over waypoint graphs, use sights, grenades and knives, and play the SD and CTF objectives.
+- **Bots mod:** `mods/bots`, bots that find their way over waypoint graphs, use sights, grenades and knives, and play the SD, CTF and HQ objectives.
 - **Tests:** a smoke test with a minimal client that reads the server's snapshots, and a bots test that play real maps.
 
 It also runs the local games of [OpenCoD2-Plus](https://github.com/JotaJazz/OpenCoD2-Plus), a rebuilt CoD2 client. Every change in detail, with its functions, variables and fixes, is in [docs/CHANGES.md](docs/CHANGES.md).

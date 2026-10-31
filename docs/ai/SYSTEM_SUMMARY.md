@@ -40,7 +40,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 | Crash reports | Done: `crash.log` in `fs_homepath`, Linux and Windows |
 | libcod | 203 function and 200 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete, its callbacks and dvars included (left-outs in [libcod.md](../architecture/libcod.md#not-ported-on-purpose)) ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)); shell, memory, raw path and any-address builtins need `+set sv_libcodUnsafe 1` ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)) |
 | JSON, HTTP/WebSocket, sounds | Done: yyjson, Mbed TLS 3.6.7 with own HTTP client, Speex 1.2.1 |
-| Bots mod | dm, tdm, sd, ctf; A\* over per-map cached graphs; no HQ roles |
+| Bots mod | dm, tdm, sd, ctf, hq; A\* over per-map cached graphs |
 | Listen server | `LISTEN_SERVER` builds the server into a client, for the maintainer's client project; off in this repo's builds |
 | Windows build | MinGW, static, threads through a stdcall wrapper |
 | Deployment | Launchers (LAN/internet mode, port 28960), `scripts/linux/cod2rev@.service` |
@@ -52,7 +52,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 |---|---|
 | Build 1.0 / 1.3 / Windows / 32-bit | `make`, `make PROTOCOL=118`, `make windows`, `make ARCH=x86` |
 | Smoke test | `python3 scripts/smoke_test.py <game>` (`--protocol 118 --binary <bin>`) |
-| Bots test | `python3 scripts/bots_test.py <game> [--gametype sd\|ctf]` |
+| Bots test | `python3 scripts/bots_test.py <game> [--gametype sd\|ctf\|hq]` |
 | HTTP test | `python3 scripts/http_test.py <game>` |
 | Docs check | `python3 scripts/check_docs.py` and `python3 -m unittest discover -s scripts -p 'test_*.py'` |
 | Regenerate example cfg | `python3 scripts/gen_server_cfg.py` |
