@@ -24,7 +24,7 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 |---|---|
 | Stock `sd.gsc` defuse race: a defuser killed on the last tick still defuses (logged as `A;…;bomb_defuse` after the round's `W;`/`L;`) and then destroys progress bars the death already removed, two script errors at lines 1925–1926; about one SD run with bots in twenty | A stock gametype bug, also with humans; `bots_test.py` leaves exactly these two errors out. A mod's own `sd.gsc` could check `isAlive(other)` after the loop |
 | `bots_test.py` checks on rare actions (`bots use ads`, `bots use melee`) fail now and then in a game with little fighting; the staged knife duel puts the bots 40 units apart, sometimes into a wall, and in DM pairs nobody (every `pers["team"]` is the same) | About one run in twenty-four after the repath and grenade fixes |
-| Multi-floor cells in the graph builder | 1–2 days of work |
+| Multi-floor cells in the graph builder | 1–2 days of work. Upper floors and cellars that hold a spawn get a graph of their own, cut off from the rest: 10.1% of the nodes on mp_carentan, 8.8% on mp_toujane, under 2% on mp_burgundy and mp_brecourt. Dropping nodes without links does not help. Patrols already avoid them; a bot that spawns on one stays there |
 | HQ objectives not played | Only dm, tdm, sd, ctf have roles |
 | Bullet antilag rewinds are not grouped per frame | Performance only |
 

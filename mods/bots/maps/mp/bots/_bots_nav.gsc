@@ -317,11 +317,20 @@ pickPatrolPos()
 	if(isDefined(level.botGraph))
 	{
 		count = graphGetNodeCount(level.botGraph);
+		start = graphFindClosestNode(level.botGraph, self.origin);
 		pos = undefined;
 		for(i = 0; i < 8; i++)
 		{
-			pos = graphGetNodeOrigin(level.botGraph, randomInt(count));
-			if(distanceSquared(self.origin, pos) > 1000 * 1000)
+			node = randomInt(count);
+			pos = graphGetNodeOrigin(level.botGraph, node);
+			if(distanceSquared(self.origin, pos) <= 1000 * 1000)
+				continue;
+
+			// upper floors and cellars can be cut off from the rest of the
+			// graph, and a path that doesn't reach them ends at their closest
+			// node; a bot would then stand there until the patrol times out
+			path = graphFindPath(level.botGraph, start, node);
+			if(isDefined(path) && path.size && path[path.size - 1] == node)
 				break;
 		}
 		return pos;
