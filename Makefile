@@ -44,14 +44,10 @@ endif
 # Setup binary names.
 ifeq ($(OS),Windows_NT)
 BIN_NAME=cod2rev_win32
-LIB_NAME=libcod2rev
 BIN_EXT=.exe
-LIB_EXT=.dll
 else
 BIN_NAME=cod2rev_lnxded
-LIB_NAME=libcod2rev
 BIN_EXT=
-LIB_EXT=.so
 endif
 
 # Setup directory names.
@@ -236,43 +232,9 @@ endif
 # Build C sources
 
 
-# A rule to build bgame source code.
-$(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build script source code.
-$(OBJ_DIR)/%.o: $(SCR_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build game source code.
-$(OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build qcommon source code.
-$(OBJ_DIR)/%.o: $(QCOMMON_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build server source code.
-$(OBJ_DIR)/%.o: $(SERVER_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build stringed source code.
-$(OBJ_DIR)/%.o: $(STRINGED_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build universal source code.
-$(OBJ_DIR)/%.o: $(UNIVERSAL_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build xanim source code.
-$(OBJ_DIR)/%.o: $(XANIM_DIR)/%.cpp
+# A rule to build the engine source code.
+vpath %.cpp $(BGAME_DIR) $(SCR_DIR) $(GAME_DIR) $(QCOMMON_DIR) $(SERVER_DIR) $(STRINGED_DIR) $(UNIVERSAL_DIR) $(XANIM_DIR)
+$(OBJ_DIR)/%.o: %.cpp
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
@@ -328,7 +290,6 @@ $(OBJ_DIR)/mbedtls/%.o: $(MBEDTLS_DIR)/library/%.c
 ifeq ($(OS),Windows_NT)
 clean:
 	del /Q /S "$(BIN_DIR)\$(BIN_NAME)$(BIN_EXT)"
-	del /Q /S "$(BIN_DIR)\$(LIB_NAME)$(LIB_EXT)"
 	del /Q /S "$(BIN_DIR)\libmysql.dll"
 	del /Q /S "$(BIN_DIR)\.$(BIN_NAME).build"
 	del /Q /S "$(OBJ_ROOT)\*.o"
@@ -337,7 +298,6 @@ clean:
 else
 clean:
 	rm -f $(BIN_DIR)/$(BIN_NAME)$(BIN_EXT)
-	rm -f $(BIN_DIR)/$(LIB_NAME)$(LIB_EXT)
 	rm -f $(BUILD_STAMP)
 	rm -rf $(OBJ_ROOT)
 endif
