@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — lean pass
+
+- From the audit: copied libcod helpers, Makefile rules and test helpers merged, unused platform code removed, 1,420 lines fewer. Script error texts and the build commands of every configuration stayed the same.
+- The one behaviour change is on purpose: `graphAutodiscover` uses the typed flood of `graphAutodiscoverEx`. Same nodes, 23 fewer edges on `mp_toujane`; nothing in the repo calls the plain one.
+- The stream stubs stay: `com_files.cpp` and `Sys_Init` still call them. Only the disabled `#else` thread went.
+
 ## 2026-10-30 — bots: patrols and ammo
 
 - From the audit. Its cause for the graph islands was wrong: dropping nodes without links moved mp_carentan from 10.1% to 10.0%. They are upper floors and cellars with a spawn of their own, the multi-floor gap; patrols now skip what a bot cannot reach (39 of 300 picks to 0).

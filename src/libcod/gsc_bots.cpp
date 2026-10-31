@@ -147,6 +147,7 @@ void gsc_bots_set_stance(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+// Presses (1) or releases (0) one button of a bot, for the methods below
 static void gsc_bots_set_button(scr_entref_t id, const char *name, int button)
 {
 	int pressed;
@@ -184,7 +185,6 @@ static void gsc_bots_set_button(scr_entref_t id, const char *name, int button)
 	stackPushBool(qtrue);
 }
 
-// The use key plants and defuses the bomb and picks up weapons
 void gsc_bots_thrownade(scr_entref_t id)
 {
 	gsc_bots_set_button(id, "gsc_bots_thrownade", BUTTON_FRAG);
@@ -244,8 +244,7 @@ void gsc_bots_switchtoweaponid(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
-
-// Presses (1) or releases (0) one button of a bot, for the methods below
+// The use key plants and defuses the bomb and picks up weapons
 void gsc_bots_usebutton(scr_entref_t id)
 {
 	gsc_bots_set_button(id, "gsc_bots_usebutton", BUTTON_USE);
