@@ -69,7 +69,7 @@ El resultado queda en `bin/` y los objetos intermedios en `obj/`.
 
 ### Linux
 
-El servidor es un binario x86 de 32 bits. En un sistema de 64 bits hace falta el soporte de 32 bits de GCC (en Debian y Ubuntu, los paquetes `gcc-multilib` y `g++-multilib`):
+Por defecto el servidor es un binario x86 de 32 bits; `make ARCH=x64` compila uno de 64 bits sin estos paquetes. Para el de 32 bits en un sistema de 64 bits hace falta el soporte de 32 bits de GCC (en Debian y Ubuntu, los paquetes `gcc-multilib` y `g++-multilib`):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded

@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-30 — logs, CI and docs
+
+- From the audit. A fatal error's reason now reaches the console log and Linux flushes the logs before `_exit`; the launchers keep five old console logs. CI starts each Linux binary without game files and expects exit code 1; the Windows binary is still only built.
+- The docs caught up with the 64-bit build, which they still called impossible.
+
 ## 2026-10-30 — script callbacks
 
 - From the audit. `CodeCallback_DPrintf` cleared the arguments of the running builtin, because `stackGetParams` prints on a type mismatch; `getArrayKeys` dropped integer keys; re-entry guards stayed set after a `Com_Error`, so a callback never ran again.

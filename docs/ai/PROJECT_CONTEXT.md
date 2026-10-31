@@ -35,13 +35,14 @@ server mods.
 
 ## Stack
 
-C++ (C-style, Quake 3 code base), 32-bit x86, GNU Make, gcc-multilib on Linux,
+C++ (C-style, Quake 3 code base), 32-bit x86 by default and x86-64 on Linux, GNU Make, gcc-multilib on Linux,
 MinGW-w64 for Windows; GSC for the bots mod; Python 3 (standard library) for
 tools and tests; GitHub Actions for builds.
 
 ## Constraints
 
-- 32-bit only: the engine's structures and network formats assume it.
+- 32-bit is the default and the only Windows build; the 64-bit Linux build
+  keeps the same network formats ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)).
 - Fixed engine limits (`MAX_CLIENTS` 64, `MAX_GENTITIES` 1024) and wire formats.
 - Tests need a CoD2 install, which is not in the repository.
 - Protocol 119 (Game Pass) cannot be tested.

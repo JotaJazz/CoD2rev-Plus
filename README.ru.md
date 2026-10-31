@@ -69,7 +69,7 @@ iniciar_cod2rev.bat internet   :: также в публичном списке 
 
 ### Linux
 
-Сервер — это 32-битный бинарный файл x86. В 64-битной системе нужна поддержка 32 бит в GCC (в Debian и Ubuntu это пакеты `gcc-multilib` и `g++-multilib`):
+По умолчанию сервер — это 32-битный бинарный файл x86; `make ARCH=x64` собирает 64-битный без этих пакетов. Для 32-битного в 64-битной системе нужна поддержка 32 бит в GCC (в Debian и Ubuntu это пакеты `gcc-multilib` и `g++-multilib`):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded

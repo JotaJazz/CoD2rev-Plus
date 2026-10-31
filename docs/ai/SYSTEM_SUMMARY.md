@@ -1,7 +1,7 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-24 (`master` after the zk_libcod
-callbacks, dvars and last functions).
+Live snapshot. Last updated: 2026-10-30 (`master` after the repo audit's
+fixes).
 
 ## Tree
 
@@ -12,7 +12,7 @@ scripts/                 launchers, systemd unit, cfg generator, bots installer,
   linux/                 iniciar_cod2rev.sh, cod2rev@.service
   windows/               iniciar_cod2rev.bat
 docs/                    this documentation, CHANGES.md
-.github/workflows/       build.yml (4 builds)
+.github/workflows/       build.yml (7 jobs: 4 Linux, 1 MySQL, 2 Windows)
 Makefile                 all builds
 README*.md               user README in 6 languages
 AGENTS.md                agent entry point

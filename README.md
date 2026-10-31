@@ -69,7 +69,7 @@ The output goes to `bin/` and intermediate objects to `obj/`.
 
 ### Linux
 
-The server is a 32-bit x86 binary. On a 64-bit system you need GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
+The server is a 32-bit x86 binary by default; `make ARCH=x64` builds a 64-bit one without these packages. For the 32-bit one on a 64-bit system you need GCC's 32-bit support (on Debian and Ubuntu, the `gcc-multilib` and `g++-multilib` packages):
 
 ```bash
 make                 # 1.0 -> bin/cod2rev_lnxded
