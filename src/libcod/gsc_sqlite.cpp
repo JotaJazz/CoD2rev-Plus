@@ -134,7 +134,9 @@ void *async_sqlite_query_handler(void*)
 			if (task->done || task->remove)
 				continue;
 
-			if (task->store == NULL || task->store->closed || libcodLevelGeneration != task->store->levelId)
+			// a query of the last level still runs: it may be a write the
+			// script counts on, and only its callback belongs to the level
+			if (task->store == NULL || task->store->closed)
 			{
 				task->remove = true;
 				continue;
@@ -522,17 +524,21 @@ void sqlite_db_store_cleanup()
 
 			for (current_task = first_async_sqlite_task; current_task != NULL; current_task = current_task->next)
 			{
-				if (current_task->store == store && current_task->running)
+				if (current_task->store != store)
+					continue;
+
+				// sqlite_close drops what is queued, a level change doesn't
+				if (current_task->running || (!store->closed && !current_task->done && !current_task->remove))
 					busy = true;
 			}
 
-			// the worker is running a query on it, close it on a later call
+			// the worker still needs it, close it on a later call
 			if (busy)
 			{
-				store->closed = true;
 				sqlite_db_store_cleanup_pending = true;
 				continue;
 			}
+
 
 			for (current_task = first_async_sqlite_task; current_task != NULL; current_task = current_task->next)
 			{
