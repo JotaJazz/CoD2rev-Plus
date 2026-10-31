@@ -692,6 +692,7 @@ static const char *SV_ConnectBanMessage( netadr_t adr, int guid )
 
 #if LIBCOD_COMPILE_RATELIMITER == 1
 static leakyBucket_t gamestateBuckets[MAX_CLIENTS];
+static bool gamestatePending[MAX_CLIENTS];
 #endif
 
 void SV_DirectConnect( netadr_t from )
@@ -965,6 +966,7 @@ gotnewcl:
 	newcl->lastConnectTime = svs.time;
 #if LIBCOD_COMPILE_RATELIMITER == 1
 	memset( &gamestateBuckets[clientNum], 0, sizeof( gamestateBuckets[clientNum] ) );
+	gamestatePending[clientNum] = false;
 #endif
 
 	SV_UserinfoChanged( newcl );
@@ -1878,8 +1880,9 @@ void SV_SendClientGameState( client_t *client )
 SV_SendRequestedGameState
 
 A gamestate a client asked for. Each one is the whole map state compressed and
-sent at once, so the requests a client can make are limited; a client that
-really lost one asks again with its next packet.
+sent at once, so the requests a client can make are limited. A refused one is
+sent from a later packet of the client: donedl and wwwdl are not asked again,
+and the client would wait for it until it times out.
 ==================
 */
 static bool SV_SendRequestedGameState( client_t *cl )
@@ -1888,8 +1891,11 @@ static bool SV_SendRequestedGameState( client_t *cl )
 	if ( SVC_RateLimit( &gamestateBuckets[cl - svs.clients], 5, 1000 ) )
 	{
 		Com_DPrintf( "SV_SendRequestedGameState: rate limit from %s exceeded\n", cl->name );
+		gamestatePending[cl - svs.clients] = true;
 		return false;
 	}
+
+	gamestatePending[cl - svs.clients] = false;
 #endif
 
 	SV_SendClientGameState( cl );
@@ -2540,6 +2546,11 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 
 		return;
 	}
+
+#if LIBCOD_COMPILE_RATELIMITER == 1
+	if ( gamestatePending[cl - svs.clients] && cl->state != CS_ACTIVE )
+		SV_SendRequestedGameState( cl );
+#endif
 
 	// read optional clientCommand strings
 	do

@@ -56,7 +56,9 @@ New code that reads from the network follows them:
   answers gets the same rate limits.
 
 - A gamestate a client can ask for (`donedl`, `wwwdl fail`, a dropped one) goes
-  through `SV_SendRequestedGameState`: 5 at once, then 1 a second per slot.
+  through `SV_SendRequestedGameState`: 5 at once, then 1 a second per slot. A
+  refused one goes out from a later packet of the client, so a client that
+  waits for it does not time out.
 - Text from players never becomes a format string; `-Wformat` and the
   printf attributes catch it at build time.
 - The `ip` userinfo key (real address behind a local proxy) is trusted only
