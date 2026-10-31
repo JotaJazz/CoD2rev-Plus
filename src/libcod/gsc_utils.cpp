@@ -28,6 +28,10 @@ void gsc_utils_getarraykeys()
 	unsigned int index = arrIndex;
 	unsigned int name;
 
+	// pushing the result clears the parameters, and an array nothing else
+	// holds, such as what strTok returned, would be freed
+	AddRefToObject(arrIndex);
+
 	stackPushArray();
 
 	for (int i = 0; i < arraysize; i++)
@@ -48,6 +52,8 @@ void gsc_utils_getarraykeys()
 			stackPushArrayLast();
 		}
 	}
+
+	RemoveRefToObject(arrIndex);
 }
 
 // Appends formatted text to a COD2_MAX_STRINGLENGTH buffer, truncating instead of overflowing it
