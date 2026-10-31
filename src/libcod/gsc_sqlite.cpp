@@ -14,7 +14,6 @@
 #define MAX_SQLITE_DB_STORES 128
 #define SQLITE_MAX_CELL_LENGTH 64999
 
-
 #define SQLITE_TIMEOUT 4000
 
 enum
@@ -540,7 +539,6 @@ void sqlite_db_store_cleanup()
 				sqlite_db_store_cleanup_pending = true;
 				continue;
 			}
-
 
 			for (current_task = first_async_sqlite_task; current_task != NULL; current_task = current_task->next)
 			{

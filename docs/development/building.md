@@ -59,7 +59,7 @@ against the runtime package alone. The binary needs the library where it
 runs, so CI builds it (job `mysql`) but does not publish it. Use other
 `OBJ_ROOT`/`BIN_DIR` folders: libcod objects differ with `WITH_MYSQL`.
 `docs/superpowers/harness/t_mysql.py` (local) tests it against a server with
-database `cod2test` and user `cod2`.
+database `cod2test` and user `cod2`. Scripts need `+set sv_libcodUnsafe 1`.
 
 ## AddressSanitizer build
 

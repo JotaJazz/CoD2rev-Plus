@@ -6,6 +6,7 @@
 
 #include <string>
 
+#define MAX_MYSQL_TASKS 512
 
 struct mysql_async_task
 {
@@ -106,14 +107,35 @@ void *mysql_async_query_handler(void* input_nothing) //is threaded after initial
 	return NULL;
 }
 
+// Without timeouts a database that stops answering hangs the main thread on
+// connect and a worker for good on a query
+static void mysql_set_options(MYSQL *connection)
+{
+	bool reconnect = true;
+	unsigned int connectTimeout = 5, ioTimeout = 30;
+	mysql_options(connection, MYSQL_OPT_RECONNECT, &reconnect);
+	mysql_options(connection, MYSQL_OPT_CONNECT_TIMEOUT, &connectTimeout);
+	mysql_options(connection, MYSQL_OPT_READ_TIMEOUT, &ioTimeout);
+	mysql_options(connection, MYSQL_OPT_WRITE_TIMEOUT, &ioTimeout);
+}
+
 int mysql_async_query_initializer(const char *sql, bool save) //cannot be called from gsc, helper function
 {
 	static int id = 0;
-	id++;
+	int count = 1;
 	Sys_EnterCriticalSection(CRITSECT_MYSQL);
 	mysql_async_task *current = first_async_task;
 	while(current != NULL && current->next != NULL)
+	{
 		current = current->next;
+		count++;
+	}
+	if(count >= MAX_MYSQL_TASKS)
+	{
+		Sys_LeaveCriticalSection(CRITSECT_MYSQL);
+		return 0;
+	}
+	id++;
 	mysql_async_task *newtask = new mysql_async_task;
 	newtask->id = id;
 	strncpy(newtask->query, sql, COD2_MAX_STRINGLENGTH - 1);
@@ -142,6 +164,12 @@ void gsc_mysql_async_create_query_nosave()
 		return;
 	}
 	int id = mysql_async_query_initializer(query, false);
+	if (!id)
+	{
+		stackError("gsc_mysql_async_create_query_nosave() queue is full, max is %d", MAX_MYSQL_TASKS);
+		stackPushUndefined();
+		return;
+	}
 	stackPushInt(id);
 	return;
 }
@@ -156,6 +184,12 @@ void gsc_mysql_async_create_query()
 		return;
 	}
 	int id = mysql_async_query_initializer(query, true);
+	if (!id)
+	{
+		stackError("gsc_mysql_async_create_query() queue is full, max is %d", MAX_MYSQL_TASKS);
+		stackPushUndefined();
+		return;
+	}
 	stackPushInt(id);
 	return;
 }
@@ -258,8 +292,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 		connections[i] = mysql_init(NULL);
 		if(connections[i] != NULL)
 		{
-			bool reconnect = true;
-			mysql_options(connections[i], MYSQL_OPT_RECONNECT, &reconnect);
+			mysql_set_options(connections[i]);
 			if(mysql_real_connect(connections[i], host, user, pass, db, port, NULL, 0) != NULL)
 				continue;
 		}
@@ -342,8 +375,7 @@ void gsc_mysql_real_connect()
 
 	// options go before connecting, and a failed connect returns NULL
 	// rather than the handle, which stays the script's to close
-	bool reconnect = true;
-	mysql_options((MYSQL *)mysql, MYSQL_OPT_RECONNECT, &reconnect);
+	mysql_set_options((MYSQL *)mysql);
 	if(mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0) == NULL)
 	{
 		Com_Printf("gsc_mysql_real_connect() failed: %s\n", mysql_error((MYSQL *)mysql));
@@ -576,7 +608,6 @@ void gsc_mysql_fetch_row()
 			stackPushUndefined();
 		else
 			stackPushString(std::string(row[i], strnlen(row[i], 64999)).c_str());
-
 
 		stackPushArrayLast();
 	}

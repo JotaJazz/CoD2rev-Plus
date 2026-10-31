@@ -17,12 +17,12 @@ server's own network.
   network address (`exec*`, `system`, `memory_*`, `binarybuffer_*`, `fopen`
   and the functions that take its handle, `file_link`, `file_unlink`,
   `file_exists`, `remove_file`/`fremove`, `scandir`, `fs_loaddir`/`loadDir`,
-  `sendPacket`, `printOutOfBand`) stay registered, but a call is a script
+  `sendPacket`, `printOutOfBand`, `mysql_*`, whose handles are raw pointers
+  and which reach any host) stay registered, but a call is a script
   error unless the server starts with `+set sv_libcodUnsafe 1`.
 - `sqlite_open` opens files under `fs_homepath/<mod>`, as `json_save` does;
   `:memory:` is kept. `ATTACH` and `VACUUM INTO` are refused, since SQL could
   otherwise write anywhere.
-
 - `httpFetch` and `webSocketConnect` refuse loopback, private, link-local,
   shared and multicast addresses, checked after resolving the name, unless
   the server starts with `+set sv_httpAllowPrivate 1`.
