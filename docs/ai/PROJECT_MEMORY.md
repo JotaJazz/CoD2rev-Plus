@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — load measured
+
+- 64-bit 1.0 on `mp_toujane` tdm with protocol clients that join a team and take delta snapshots: 20 bots alone 3% of a core; 20 clients and 20 bots 7%, 136 KB/s; 60 clients and 4 bots 12%, 400 KB/s, 171 MB, 20 snapshots a second and no stall over 150 ms. A full server is far from the 20 fps budget, so no CPU work is planned.
+- `-O2` gave nothing over `-O1` (2.9% against 3.0%), so the build flags stay.
+- The test clients only walk and never fire, and all ran over loopback on one 32-core WSL machine: real fights, internet paths and small hosts will cost more.
+
 ## 2026-10-31 — 64-bit by default on Linux
 
 - `make` builds 64-bit, `make ARCH=x86` 32-bit, Windows stays 32-bit ([ADR 0010](../architecture/adr/0010-64-bit-default-on-linux.md)). Forcing `-m32` had been the maintainer's early choice, not a need.
