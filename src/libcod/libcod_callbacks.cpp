@@ -424,7 +424,8 @@ void Libcod_DPrintf(const char *message)
 {
 	static bool running;
 
-	if ( !codecallback_dprintf || running || !Sys_IsMainThread() || !Scr_IsSystemActive() )
+	// Scr_AddString would clear the parameters of a builtin that is running
+	if ( !codecallback_dprintf || running || !Sys_IsMainThread() || !Scr_IsSystemActive() || scrVmPub.outparamcount )
 		return;
 
 	running = true;
