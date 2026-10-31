@@ -35,7 +35,7 @@ Il fait aussi tourner les parties locales d'[OpenCoD2-Plus](https://github.com/J
 
 ## Comment le lancer
 
-Des versions prêtes à l'emploi seront publiées sur la page **Releases**. En attendant, compilez le serveur (voir [Compilation](#compilation)) et copiez-le dans votre dossier de Call of Duty 2, à côté de `main`, avec un `server.cfg` dans `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) est un bon point de départ).
+Des versions prêtes à l'emploi sont disponibles sur la page [**Releases**](https://github.com/JotaJazz/CoD2rev-Plus/releases), à partir de la version candidate `v1.0.0-rc1` ; vous pouvez aussi compiler le serveur (voir [Compilation](#compilation)). Copiez-le dans votre dossier de Call of Duty 2, à côté de `main`, avec un `server.cfg` dans `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) est un bon point de départ).
 
 **Windows :** copiez `cod2rev_win32.exe` et [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat), puis lancez :
 

@@ -35,7 +35,7 @@ También ejecuta las partidas locales de [OpenCoD2-Plus](https://github.com/Jota
 
 ## Cómo ejecutarlo
 
-Las compilaciones listas para usar se publicarán en la página de **Releases**. Hasta entonces, compila el servidor (ver [Compilar](#compilar)) y cópialo a la carpeta de Call of Duty 2, junto a `main`, con un `server.cfg` en `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) es un buen punto de partida).
+Las compilaciones listas para usar están en la página de [**Releases**](https://github.com/JotaJazz/CoD2rev-Plus/releases), desde la versión candidata `v1.0.0-rc1`; también puedes compilar el servidor (ver [Compilar](#compilar)). Cópialo a la carpeta de Call of Duty 2, junto a `main`, con un `server.cfg` en `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) es un buen punto de partida).
 
 **Windows:** copia `cod2rev_win32.exe` y [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat), y ejecuta:
 

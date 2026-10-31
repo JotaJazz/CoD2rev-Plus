@@ -35,7 +35,7 @@ Er betreibt außerdem die lokalen Spiele von [OpenCoD2-Plus](https://github.com/
 
 ## Server starten
 
-Fertige Builds werden auf der Seite **Releases** veröffentlicht. Bis dahin baust du den Server (siehe [Kompilieren](#kompilieren)) und kopierst ihn in deinen Call-of-Duty-2-Ordner, neben `main`, mit einer `server.cfg` in `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) ist ein guter Ausgangspunkt).
+Fertige Builds findest du auf der Seite [**Releases**](https://github.com/JotaJazz/CoD2rev-Plus/releases), beginnend mit dem Release Candidate `v1.0.0-rc1`; du kannst den Server auch selbst bauen (siehe [Kompilieren](#kompilieren)). Kopiere ihn in deinen Call-of-Duty-2-Ordner, neben `main`, mit einer `server.cfg` in `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) ist ein guter Ausgangspunkt).
 
 **Windows:** `cod2rev_win32.exe` und [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat) kopieren, dann ausführen:
 

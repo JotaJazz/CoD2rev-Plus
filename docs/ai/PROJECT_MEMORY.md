@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — first release candidate
+
+- `v1.0.0-rc1` is the first release, marked as a pre-release: the six CI binaries of the tagged commit, each with `LICENSE` and the example cfg. From here `master` takes fixes only.
+- The project number is separate from the game versions 1.0 and 1.3, which still name what each binary announces.
+- Left open: the bots mod is not in the archives (`scripts/install_bots.py` needs the repository), and packing is by hand until a second release asks for a script.
+
 ## 2026-10-31 — `net_altPort` on the real masters
 
 - Tested on the maintainer's public server, which settles the masters left untried in the stage below: both ports answer (115 and 118), the server is listed for 115 on both masters, and it appears in a CoD2x 1.4 client's online browser.

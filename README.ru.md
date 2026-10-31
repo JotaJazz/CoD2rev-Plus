@@ -35,7 +35,7 @@
 
 ## Как запустить
 
-Готовые к запуску сборки будут публиковаться на странице **Releases**. До тех пор соберите сервер (см. [Сборка](#сборка)) и скопируйте его в папку Call of Duty 2, рядом с `main`, а в `main` положите `server.cfg` ([`scripts/server.cfg.example`](scripts/server.cfg.example) — хорошая отправная точка).
+Готовые к запуску сборки находятся на странице [**Releases**](https://github.com/JotaJazz/CoD2rev-Plus/releases), начиная с кандидата в релизы `v1.0.0-rc1`; сервер можно собрать и самостоятельно (см. [Сборка](#сборка)). Скопируйте его в папку Call of Duty 2, рядом с `main`, а в `main` положите `server.cfg` ([`scripts/server.cfg.example`](scripts/server.cfg.example) — хорошая отправная точка).
 
 **Windows:** скопируйте `cod2rev_win32.exe` и [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat), затем запустите:
 

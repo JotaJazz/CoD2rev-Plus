@@ -1,7 +1,7 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-31 (`master` after `net_altPort` and its
-live test).
+Live snapshot. Last updated: 2026-10-31 (`master` at `v1.0.0-rc1`, the first
+release candidate).
 
 ## Tree
 
@@ -45,6 +45,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 | Listen server | `LISTEN_SERVER` builds the server into a client, for the maintainer's client project; off in this repo's builds |
 | Windows build | MinGW, static, threads through a stdcall wrapper |
 | Deployment | Launchers (LAN/internet mode, port 28960), `scripts/linux/cod2rev@.service` |
+| Releases | `v1.0.0-rc1` (pre-release): the six CI binaries with `LICENSE` and the example cfg; `master` takes fixes only until the final release |
 | Docs | This layer plus `scripts/check_docs.py` (2026-10-22) |
 
 ## Commands

@@ -35,7 +35,7 @@ It also runs the local games of [OpenCoD2-Plus](https://github.com/JotaJazz/Open
 
 ## How to run
 
-Ready-to-run builds will be published on the **Releases** page. Until then, build the server (see [Building](#building)) and copy it into your Call of Duty 2 folder, next to `main`, with a `server.cfg` in `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) is a good start).
+Ready-to-run builds are on the [**Releases**](https://github.com/JotaJazz/CoD2rev-Plus/releases) page, starting with the release candidate `v1.0.0-rc1`; you can also build the server yourself (see [Building](#building)). Copy it into your Call of Duty 2 folder, next to `main`, with a `server.cfg` in `main` ([`scripts/server.cfg.example`](scripts/server.cfg.example) is a good start).
 
 **Windows:** copy `cod2rev_win32.exe` and [`scripts/windows/iniciar_cod2rev.bat`](scripts/windows/iniciar_cod2rev.bat), then run:
 
