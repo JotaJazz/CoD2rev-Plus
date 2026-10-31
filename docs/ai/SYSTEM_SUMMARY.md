@@ -1,7 +1,7 @@
 # System summary
 
-Live snapshot. Last updated: 2026-10-30 (`master` after the repo audit's
-fixes).
+Live snapshot. Last updated: 2026-10-31 (`master` after `net_altPort` and its
+live test).
 
 ## Tree
 
@@ -41,6 +41,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 | libcod | 203 function and 200 method entries, aliases included (`src/libcod/gsc.cpp`); zk_libcod port complete, its callbacks and dvars included (left-outs in [libcod.md](../architecture/libcod.md#not-ported-on-purpose)) ([ADR 0003](../architecture/adr/0003-zk-libcod-names.md)); shell, memory, raw path and any-address builtins need `+set sv_libcodUnsafe 1` ([ADR 0008](../architecture/adr/0008-unsafe-builtins-behind-a-dvar.md)) |
 | JSON, HTTP/WebSocket, sounds | Done: yyjson, Mbed TLS 3.6.7 with own HTTP client, Speex 1.2.1 |
 | Bots mod | dm, tdm, sd, ctf, hq; A\* over per-map cached graphs |
+| One game for 1.0 and 1.3 | `net_altPort` (1.0 build): a second port announces 1.3, so one process is listed for both versions; run it without `iw_15.iwd` ([networking.md](../architecture/networking.md)) |
 | Listen server | `LISTEN_SERVER` builds the server into a client, for the maintainer's client project; off in this repo's builds |
 | Windows build | MinGW, static, threads through a stdcall wrapper |
 | Deployment | Launchers (LAN/internet mode, port 28960), `scripts/linux/cod2rev@.service` |

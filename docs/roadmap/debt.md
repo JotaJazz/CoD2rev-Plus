@@ -18,6 +18,7 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 | Protocol 119 fragment offset format | `src/qcommon/net_chan_mp.cpp` | Needs a Game Pass client |
 | A `getchallenge` flood that repeats its addresses still delays joins | `SV_GetChallenge` in `src/server/sv_client_mp.cpp` | Two addresses at 10 a second fill the 20 a second for retries. A full answer is a stateless challenge (as a SYN cookie), which reaches the connection and authorize paths |
 | Script runtime errors cascade outside developer mode | `src/script/scr_vm.cpp` | Stock behaviour |
+| The rcon lockout's entry eviction is untested | `src/server/sv_main_pc_mp.cpp` | Read, never run: `127.x` is exempt from the lockout, so a local test cannot reach it |
 
 ## Bots mod
 
@@ -25,6 +26,10 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 |---|---|
 | Stock `sd.gsc` defuse race: a defuser killed on the last tick still defuses (logged as `A;…;bomb_defuse` after the round's `W;`/`L;`) and then destroys progress bars the death already removed, two script errors at lines 1925–1926; about one SD run with bots in twenty | A stock gametype bug, also with humans; `bots_test.py` leaves exactly these two errors out. A mod's own `sd.gsc` could check `isAlive(other)` after the loop |
 | `bots_test.py` checks on rare actions (`bots use ads`, `bots use melee`) fail now and then in a game with little fighting; the staged knife duel puts the bots 40 units apart, sometimes into a wall, and in DM pairs nobody (every `pers["team"]` is the same) | About one run in twenty-four after the repath and grenade fixes |
+| `bots_test.py` check `few grenade suicides` fails now and then | Threshold noise: suicides are about 2% of kills |
+| `sd --bombmode 1` on `mp_brecourt` sometimes never plants | Cause unknown. It planted in 2 of 3 runs before the audit and 3 of 3 after, but a separate run after it failed too. `bombmode 1` only means anything on the six maps with single-mode marks |
+| Local harness `t_ammo` failed once on `a loaded weapon stays` | Cause not proven (perhaps a bot throwing a grenade); 12 of 12 passed after |
+| A charging bot keeps the strafe's `rightmove`, so it comes in on a diagonal | Cosmetic. `setWalkDir("forward")` in `mods/bots/maps/mp/bots/_bots_combat.gsc` |
 | Multi-floor cells in the graph builder | 1–2 days of work. Upper floors and cellars that hold a spawn get a graph of their own, cut off from the rest: 10.1% of the nodes on mp_carentan, 8.8% on mp_toujane, under 2% on mp_burgundy and mp_brecourt. Dropping nodes without links does not help. Patrols already avoid them; a bot that spawns on one stays there |
 | Bullet antilag rewinds are not grouped per frame | Performance only |
 
@@ -43,4 +48,6 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 
 - `playFxOnTagForPlayer` filters spectators by the followed player's
   `clientNum`: kept on purpose.
-- One announced version per binary ([ADR 0001](../architecture/adr/0001-game-version-at-build-time.md)).
+- One announced version per port; the 1.3 build has one port and the 1.0 build
+  can add a second for 1.3 with `net_altPort`
+  ([ADR 0001](../architecture/adr/0001-game-version-at-build-time.md)).

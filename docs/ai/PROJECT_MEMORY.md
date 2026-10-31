@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — `net_altPort` on the real masters
+
+- Tested on the maintainer's public server, which settles the masters left untried in the stage below: both ports answer (115 and 118), the server is listed for 115 on both masters, and it appears in a CoD2x 1.4 client's online browser.
+- A real CoD2x client joined through the second port and fetched the `mp_rhine` and `mp_harbor` iwd (26 MB) over HTTP while a real 1.0 client played the same match.
+- Left open: the plain 1.3 browser was not checked. A direct `getservers 118` returns a capped 111 servers without this one, so that query proves nothing.
+
 ## 2026-10-31 — one process for 1.0 and 1.3
 
 - Real 1.0 (from the disc) and 1.3 clients played one match on one 1.0 build, kills both ways, so only the listing was missing: `net_altPort` is a second socket that announces 1.3. Checked with the smoke test and a fake master; real masters not tried, and that was left out on purpose: a test would publish the server.
