@@ -11,7 +11,7 @@ Commands: [../development/building.md](../development/building.md),
    on 1.0 and 1.3; bots tests and ASan for gameplay or memory changes;
    `scripts/check_docs.py` when docs changed.
 3. Merge to `master` by fast-forward after the maintainer approves. Push only
-   when asked: CI runs on pushes to `master` and on pull requests that touch
+   when asked: CI runs on pushes to `master` and `plus` and on pull requests that touch
    `src/`, the `Makefile` or the workflow.
 4. Watch the CI run after a push.
 

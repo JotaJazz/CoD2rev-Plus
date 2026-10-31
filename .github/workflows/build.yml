@@ -4,7 +4,7 @@ name: Build
 # documentation and script edits do not start a run.
 on:
   push:
-    branches: [master]
+    branches: [master, plus]
     paths:
       - "src/**"
       - "Makefile"
