@@ -344,6 +344,16 @@ def check_console_log(path, check):
     check('sv_logRcon 0 hides rcon commands', 'Rcon from' in text and 'smokehidden' not in text)
 
 
+def check_challenge_during_queries(port, check):
+    """A burst of queries, which share a low global limit, must not stop a player joining."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        for _ in range(50):
+            s.sendto(PREFIX + b'getinfo x', ('127.0.0.1', port))
+    reply = query(port, 'getchallenge', timeout=0.09)
+
+    check('getchallenge survives a query burst', reply is not None and reply[0].startswith('challengeResponse'))
+
+
 def check_connect_limit(port, protocol, check):
     """Clients joining one after another all get in; a flood of connect from one address is cut."""
     joined = []
@@ -498,6 +508,8 @@ def main():
                 if protocol.isdigit():
                     check_client(port, int(protocol), password, os.path.join(home, 'main', 'games_mp.log'), check)
                     check_connect_limit(port, int(protocol), check)
+                    check_challenge_during_queries(port, check)
+
 
 
                 time.sleep(2)
