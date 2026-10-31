@@ -54,6 +54,17 @@ jobs:
       - name: Build
         run: |
           make -j"$(nproc)" PROTOCOL=${{ matrix.protocol }} ARCH=${{ matrix.arch }}
+      - name: Start the server without game files
+        # Exit code 1 with the engine's own error message; a crash at startup
+        # or a hang would end differently
+        run: |
+          mkdir ci-empty
+          cd ci-empty
+          code=0
+          timeout 30 ../bin/cod2rev_lnxded +set fs_basepath . +set dedicated 1 2>err.log >/dev/null || code=$?
+          cat err.log
+          test "$code" = 1
+          grep -q Sys_Error err.log
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
