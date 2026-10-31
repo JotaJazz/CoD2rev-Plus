@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-30 — bots: patrols and ammo
+
+- From the audit. Its cause for the graph islands was wrong: dropping nodes without links moved mp_carentan from 10.1% to 10.0%. They are upper floors and cellars with a spawn of their own, the multi-floor gap; patrols now skip what a bot cannot reach (39 of 300 picks to 0).
+- A bot with no ammo left pressed reload forever; it changes weapon or charges now. A bot that spawns on a cut-off floor still stays there ([../roadmap/debt.md](../roadmap/debt.md)).
+
 ## 2026-10-30 — logs, CI and docs
 
 - From the audit. A fatal error's reason now reaches the console log and Linux flushes the logs before `_exit`; the launchers keep five old console logs. CI starts each published Linux binary without game files and expects exit code 1; the Windows binary is still only built.
