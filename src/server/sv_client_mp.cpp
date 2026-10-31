@@ -369,6 +369,37 @@ void SV_UserinfoChanged( client_t *cl )
 	cl->wwwOk = atoi(val) > 0;
 }
 
+#if LIBCOD_COMPILE_RATELIMITER == 1
+/*
+=================
+SV_ChallengeIsRetry
+
+Records an address that asks for a challenge and tells if it asked in the last
+10 seconds. A real client asks again every 3 seconds, a flood of made-up
+addresses almost never repeats one.
+=================
+*/
+static bool SV_ChallengeIsRetry( netadr_t from )
+{
+	static struct
+	{
+		unsigned int ip;
+		int time;
+	} recent[1 << 16];
+	unsigned int ip;
+
+	memcpy( &ip, from.ip, sizeof( ip ) );
+
+	auto *entry = &recent[( ip * 2654435761u ) >> 16];
+	bool retry = entry->ip == ip && svs.time - entry->time < 10000;
+
+	entry->ip = ip;
+	entry->time = svs.time;
+
+	return retry;
+}
+#endif
+
 /*
 =================
 SV_GetChallenge
@@ -393,6 +424,7 @@ void SV_GetChallenge( netadr_t from )
 
 #if LIBCOD_COMPILE_RATELIMITER == 1
 	static leakyBucket_t bucket;
+	static leakyBucket_t retryBucket;
 	// Prevent using getchallenge as an amplifier
 	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
 	{
@@ -402,8 +434,13 @@ void SV_GetChallenge( netadr_t from )
 	}
 
 	// Not the 10 a second getinfo and getstatus share: a flood of those
-	// must not keep players out, and this reply is a few bytes
-	if ( SVC_RateLimit( &bucket, 100, 10 ) )
+	// must not keep players out, and this reply is a few bytes. Each one that
+	// passes can take a slot of the table, which must outlast a join, so the
+	// limit stays; those asking again have 20 a second of their own, or a
+	// flood of made-up addresses would keep every player out
+	bool retry = SV_ChallengeIsRetry( from );
+
+	if ( SVC_RateLimit( &bucket, 100, 10 ) && ( !retry || SVC_RateLimit( &retryBucket, 20, 50 ) ) )
 	{
 		Com_DPrintf( "SV_GetChallenge: rate limit exceeded, dropping request\n" );
 		return;

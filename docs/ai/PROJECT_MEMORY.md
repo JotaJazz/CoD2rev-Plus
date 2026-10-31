@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — network leftovers of the audit
+
+- Of the three deferred items one was as described: a refused `donedl` or `wwwdl` gamestate was lost, and is now sent later. The rcon reflection was wrong: wrong passwords get about 2 replies a second, whitelisted or not (10 of 2,400 in 5 s).
+- The challenge note missed the real problem. The table turning over was harmless, but the global limit let 1000 made-up addresses a second delay a join by 40 s, and 3000 stop it. Retries now have their own 20 a second: 3 s at either rate.
+- That lane only beats floods that do not repeat addresses (see debt.md). Rejected the stateless challenge for now: it reaches the reversed connect and authorize paths.
+
 ## 2026-10-31 — load measured
 
 - 64-bit 1.0 on `mp_toujane` tdm with protocol clients that join a team and take delta snapshots: 20 bots alone 3% of a core; 20 clients and 20 bots 7%, 136 KB/s; 60 clients and 4 bots 12%, 400 KB/s, 171 MB, 20 snapshots a second and no stall over 150 ms. A full server is far from the 20 fps budget, so no CPU work is planned.

@@ -49,7 +49,10 @@ New code that reads from the network follows them:
   `getchallenge`, `rcon`) go through `SVC_RateLimitAddress` (per address) and
   `SVC_RateLimit` (global); `connect` has the per-address one, on LAN too but
   for `127.0.0.1`, which is where a local proxy's players come from;
-  `ipAuthorize` and `disconnect` have none.
+  `ipAuthorize` and `disconnect` have none. The global `getchallenge` limit
+  keeps the 1024-slot table from turning over faster than a join takes, so an
+  address that asks again within 10 seconds gets 20 a second of its own:
+  otherwise a flood of made-up addresses keeps every player out.
   rcon also counts wrong passwords per address (`sv_rconMaxAttempts`,
   `sv_rconLockTime`), and its global limit runs before the password check;
   `sv_rconWhitelist` skips both limits. A new connectionless command that
