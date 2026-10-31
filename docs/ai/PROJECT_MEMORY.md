@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — one process for 1.0 and 1.3
+
+- Real 1.0 (from the disc) and 1.3 clients played one match on one 1.0 build, kills both ways, so only the listing was missing: `net_altPort` is a second socket that announces 1.3. Checked with the smoke test and a fake master; real masters not tried, and that was left out on purpose: a test would publish the server.
+- The hard part was data, not protocol: `iw_15.iwd` overrides 33 stock files and is referenced on every map, so a mixed server runs the disc's iwds. `mp_rhine` and `mp_harbor` work for both from a separate iwd of their 15 files; the real 1.0 client loaded `mp_rhine` that way.
+- Rejected a proxy (zk_libcod): the 1.0 build already switches formats per client. Left open: the 1.0 client has no HTTP download, only about 20 KB/s in game, so that iwd takes 20 minutes there.
+
 ## 2026-10-31 — bots play HQ
 
 - A bot takes the radio by standing watch inside it, or guards it from around when its team holds it. All 15 stock maps had captures in a 5-minute run with 6 bots (1 to 5 each).

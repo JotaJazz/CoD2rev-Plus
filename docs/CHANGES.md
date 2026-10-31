@@ -13,6 +13,8 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 - **Launchers:** `scripts/windows/iniciar_cod2rev.bat` and `scripts/linux/iniciar_cod2rev.sh`, with a LAN mode and an internet mode. Both use port `28960`, and they set `logfile 2` (and `sv_cracked 1` in LAN mode only) before `+exec server.cfg`, so `server.cfg` can change them; they used to set them after it, overriding the admin's config, and turned on `sv_cracked` in internet mode too.
 - **systemd unit:** `scripts/linux/cod2rev@.service` runs one server per instance (`cod2rev@public` execs `public.cfg`) with its own `fs_homepath` in `/var/lib/cod2rev/<instance>`, as an unprivileged user, with `net_strictPort 1`, a restart after a crash and a clean stop with SIGTERM. The port, `dedicated` and the map can be set per instance in `/etc/cod2rev/<instance>.env`.
 
+- **One server for 1.0 and 1.3:** the 1.0 build already plays with 1.3 clients, and `net_altPort` opens a second port that announces 1.3, with its own heartbeats, so the same game appears in the server lists of both versions. Real 1.0 and 1.3 clients played one match, kills both ways. Run it on the 1.0 game files: without `iw_15.iwd`, whose scripts and menus 1.0 clients lack.
+
 ## Security and stability
 
 - **Gamestate requests limited:** a client that had not entered the game could send `donedl` as often as it liked, and each one made the server compress and send the whole gamestate, which froze the map for everybody. Requests from a client are now limited to 5 at once and 1 a second per slot; a refused one is sent as soon as the limit allows it, so a client that waits for it does not time out.
@@ -118,6 +120,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `logTimestamps` | `0` | 0–1 | `1` starts each console log line with the date and time. |
 | `g_logRotateSize` | `0` | 0–2047 | Size in MB at which `g_log` (`games_mp.log`) is rotated when the next map starts. `0` never rotates it. |
 | `g_logRotate` | `1` | 1–1000 | Older game logs kept when `g_logRotateSize` rotates it, as `<name>.1` (newest) to `<name>.N`. |
+| `net_altPort` | `0` | 0–65535 | Second UDP port of the 1.0 build, announced as protocol 118 and version 1.3. `0` keeps it closed. Only read at start, so set it on the command line. |
 | `net_strictPort` | `0` | 0–1 | `1` stops the server when `net_port` is busy instead of trying the next 9 ports. Only read at startup, so set it on the command line. |
 | `sv_logRcon` | `1` | 0–1 | `0` leaves accepted rcon commands out of the log. Wrong passwords are always logged. |
 | `sv_authorizeServer` | `cod2master.activision.com` | — | CD key authorization server. A new value is used from the next connection. |

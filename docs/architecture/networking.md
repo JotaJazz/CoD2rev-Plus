@@ -33,6 +33,19 @@ Huffman: `src/qcommon/msg_mp.cpp`.
   long for 118 and a short otherwise (`Netchan_Process`,
   `Netchan_TransmitNextFragment`), and 119 has one stat less in the
   playerstate (`src/qcommon/msg_mp.cpp`).
+- `net_altPort` (1.0 build) opens a second socket: `netadr_t.altPort` marks
+  what came through it, so replies, challenges and netchans leave by the same
+  socket with no other change. `getinfo` and `getstatus` there announce 118
+  and 1.3, and heartbeats go out from both ports, so the masters list two
+  servers for one game. Any accepted protocol joins through either port.
+- A shared match needs data both clients have: run the server without
+  `iw_15.iwd`. It overrides 33 stock files and is referenced on every map,
+  and 1.0 clients do not have it nor can download it. `mp_rhine` and
+  `mp_harbor` still work from a separate iwd with only their 15 files (the
+  names with `rhine` or `harbor`). 1.3 clients fetch it over HTTP with
+  `sv_wwwDownload`; the 1.0 client has no HTTP download, about 20 KB/s in game.
+- Set `sv_wwwBaseURL` in a cfg, in quotes: on the command line or over rcon
+  the `//` starts a comment and leaves `http:`.
 - `MAX_MSGLEN` is `0x20000` in the 1.3 build and `0x4000` in the 1.0 build;
   packets are at most `MAX_PACKETLEN` (1400) bytes, fragments `FRAGMENT_SIZE`
   (1300).

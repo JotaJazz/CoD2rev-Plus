@@ -32,7 +32,6 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 
 | Lead | Notes |
 |---|---|
-| Second listening port answering as 1.3, so one process is listed for 1.0 and 1.3 | zk_libcod's `code/proxy/proxy.c` (BSD) is a base; smaller step: do not treat `127.0.0.1` clients with an `ip` key as LAN |
 | Stats mod (kills with positions into SQLite) | Compatible with Lonsofore/CoD2MapStats |
 | MySQL on Windows | The Makefile's Windows branch names a `libmysql.lib` that is not vendored; the 64-bit Linux build works ([../development/building.md](../development/building.md#mysql)) |
 | soundalias functions | See [ADR 0003](../architecture/adr/0003-zk-libcod-names.md) |

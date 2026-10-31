@@ -21,5 +21,5 @@ protocols 115–119 by direct connection, switching formats per client.
 - Every change under `#if PROTOCOL_VERSION` is built and tested for both.
 - Objects are kept per platform and version (`obj/<binary>_<protocol>`), but
   both versions write the same name in `bin/`; `BIN_DIR` separates them.
-- No single binary serves 1.0 and 1.3 server lists; a second listening port
-  for that is an open lead ([../../roadmap/debt.md](../../roadmap/debt.md)).
+- One port announces one version; `net_altPort` gives the 1.0 build a second
+  port for the 1.3 lists ([../networking.md](../networking.md)).

@@ -242,6 +242,7 @@ def check_master(args, check):
     password = secrets.token_hex(8)
     master = FakeMaster()
     unused = free_port()
+    alt_port = 0 if args.protocol == 118 else free_port()   # net_altPort exists only in the 1.0 build
     hostname = 'cod2rev master test'
     server = None
     with tempfile.TemporaryDirectory(prefix='cod2rev_master_') as home:
@@ -262,6 +263,8 @@ def check_master(args, check):
                      '+set', 'logfileRotate', '2',
                      '+set', 'dedicated', '2',
                      '+set', 'net_port', str(port),
+                     '+set', 'net_altPort', str(alt_port),
+                     '+set', 'sv_cracked', '1',
                      '+set', 'sv_hostname', hostname,
                      '+set', 'rcon_password', password,
                      '+set', 'sv_master1', f'127.0.0.1:{master.port}',
@@ -282,6 +285,10 @@ def check_master(args, check):
                 return
             server_addr = beat[0]
             check('heartbeat comes from net_port', server_addr[1] == port, f'from port {server_addr[1]}')
+            if alt_port:
+                beat = master.receive(lambda t: t.startswith('heartbeat '), 5)
+                check('second heartbeat comes from net_altPort', beat is not None and beat[0][1] == alt_port,
+                      f'from port {beat[0][1]}' if beat else 'nothing received')
 
             status = master.receive(lambda t: t.startswith('statusResponse'), 10)
             check('status sent to the master on its own', status is not None and f'\\mapname\\{args.map}' in status[1])
@@ -295,15 +302,35 @@ def check_master(args, check):
             status = master.receive(lambda t: t.startswith('statusResponse') and 'mastercheck' in t, 5)
             check('master getstatus reply', status is not None and '\\sv_maxclients\\' in status[1])
 
+            if alt_port:
+                master.send(alt_port, 'getinfo altcheck')
+                info = master.receive(lambda t: t.startswith('infoResponse') and 'altcheck' in t, 5)
+                check('net_altPort announces protocol 118', info is not None and info[0][1] == alt_port
+                      and '\\protocol\\118\\' in info[1])
+                master.send(alt_port, 'getstatus altcheck')
+                status = master.receive(lambda t: t.startswith('statusResponse') and 'altcheck' in t, 5)
+                check('net_altPort status is 1.3', status is not None and status[0][1] == alt_port
+                      and '\\shortversion\\1.3\\' in status[1] and '\\protocol\\118\\' in status[1])
+                master.send(port, 'getinfo maincheck')
+                info = master.receive(lambda t: t.startswith('infoResponse') and 'maincheck' in t, 5)
+                check('net_port still announces its own protocol', info is not None and '\\protocol\\115\\' in info[1])
+                check_alt_client(alt_port, password, port, check)
+
             # "heartbeat" sends one at once instead of after HEARTBEAT_MSEC
             rcon(port, password, 'heartbeat')
             check('heartbeat command sends one now', master.receive(lambda t: t.startswith('heartbeat '), 5) is not None)
+            if alt_port:
+                check('heartbeat command sends one from net_altPort', master.receive(lambda t: t.startswith('heartbeat '), 5) is not None)
 
             # SIGTERM quits as the quit command does
             server.send_signal(signal.SIGTERM)
             flat = master.receive(lambda t: t.startswith('heartbeat '), 10)
             check('flatline heartbeat on SIGTERM', flat is not None and flat[1] == 'heartbeat flatline\n',
                   repr(flat[1]) if flat else 'nothing received')
+            if alt_port:
+                flat = master.receive(lambda t: t.startswith('heartbeat '), 5)
+                check('flatline heartbeat from net_altPort', flat is not None and flat[0][1] == alt_port
+                      and flat[1] == 'heartbeat flatline\n', repr(flat[1]) if flat else 'nothing received')
             try:
                 server.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -353,6 +380,29 @@ def check_challenge_during_queries(port, check):
     reply = query(port, 'getchallenge', timeout=0.09)
 
     check('getchallenge survives a query burst', reply is not None and reply[0].startswith('challengeResponse'))
+
+
+def check_alt_client(alt_port, password, port, check):
+    """A 1.3 client joins through net_altPort. Its socket only hears that port,
+    so a reply from net_port would not reach it."""
+    server_id = int(re.search(r'"sv_serverid" is: ?"(-?\d+)', rcon(port, password, 'sv_serverid')).group(1))
+    client = cod2client.Client(alt_port)
+    client.sock.connect(client.addr)
+    try:
+        refused = client.connect(118, 'smokealt')
+        check('1.3 client connects through net_altPort', refused is None, refused or '')
+        if refused is not None:
+            return
+        got = client.request_gamestate(server_id)
+        check('net_altPort client receives the gamestate', got)
+        if not got:
+            return
+        client.enter_game(server_id, 1.0)
+        frames = client.read_frames(1.0)
+        check('net_altPort client parses snapshots', frames and client.parsed_clean == client.parsed,
+              f'{len(frames)} snapshots, {client.parsed_clean} of {client.parsed} messages clean')
+    finally:
+        client.close()
 
 
 def check_connect_limit(port, protocol, check):

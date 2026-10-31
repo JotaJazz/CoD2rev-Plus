@@ -1222,6 +1222,7 @@ static bool SV_ResolveMaster_libcod( int index, netadr_t *adr )
 void SV_MasterHeartbeat_libcod(const char *hbname)
 {
 	static netadr_t	adr[MAX_MASTER_SERVERS];
+	netadr_t alt;
 	int	i;
 
 	// "dedicated 1" is for lan play, "dedicated 2" is for inet public play
@@ -1245,6 +1246,11 @@ void SV_MasterHeartbeat_libcod(const char *hbname)
 
 			Com_Printf( "Sending heartbeat to %s\n", sv_master[i]->current.string );
 			NET_OutOfBandPrint( NS_SERVER, adr[i], va( "heartbeat %s\n", hbname ) );
+
+			// from net_altPort too, so the master lists that port as well; dropped when closed
+			alt = adr[i];
+			alt.altPort = 1;
+			NET_OutOfBandPrint( NS_SERVER, alt, va( "heartbeat %s\n", hbname ) );
 		}
 	}
 
@@ -1262,6 +1268,10 @@ void SV_MasterHeartbeat_libcod(const char *hbname)
 			}
 
 			SVC_Status( adr[i] );
+
+			alt = adr[i];
+			alt.altPort = 1;
+			SVC_Status( alt );
 		}
 	}
 }
