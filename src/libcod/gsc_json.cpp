@@ -76,6 +76,7 @@ extern scrVarGlob_t scrVarGlob;
 #include <unistd.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <windows.h>
 #endif
 
 // Module cap, not an engine constant: kept well under yyjson's reader
@@ -1140,8 +1141,19 @@ static int json_mkdir(const char *path)
 #endif
 }
 
+// rename(), which on Windows refuses a target that exists
+static int json_replace_file(const char *from, const char *to)
+{
+#ifdef _WIN32
+	return MoveFileExA(from, to, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
+#else
+	return rename(from, to);
+#endif
+}
+
 static bool json_is_separator(char c)
 {
+
 	return c == '/' || c == '\\';
 }
 
@@ -1230,8 +1242,9 @@ static void * json_async_save_worker(void *arg)
 	free(text);
 
 	int ok = (written == want) ? 1 : 0;
-	if ( ok && rename(tmpPath, job->abspath) != 0 )
+	if ( ok && json_replace_file(tmpPath, job->abspath) != 0 )
 		ok = 0;
+
 	if ( !ok )
 		unlink(tmpPath);
 
