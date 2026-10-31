@@ -598,12 +598,11 @@ static long SVC_HashForAddress( netadr_t address )
 	return hash;
 }
 
-static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int period )
+static leakyBucket_t *SVC_BucketForAddress( netadr_t address )
 {
+	static int nextBucket;
 	leakyBucket_t *bucket = NULL;
-	int	i;
 	long hash = SVC_HashForAddress( address );
-	uint64_t now = Sys_Milliseconds64();
 
 	for ( bucket = bucketHashes[ hash ]; bucket; bucket = bucket->next )
 	{
@@ -613,60 +612,48 @@ static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int per
 		}
 	}
 
-	for ( i = 0; i < MAX_BUCKETS; i++ )
+	// Recycle the oldest entry, in use or not: scanning for a free one cost
+	// every new address 16384 steps, and a full table refused them all
+	bucket = &buckets[ nextBucket ];
+	nextBucket = ( nextBucket + 1 ) % MAX_BUCKETS;
+
+	if ( bucket->type != 0 )
 	{
-		int interval;
-
-		bucket = &buckets[ i ];
-		interval = now - bucket->lastTime;
-
-		// Reclaim expired buckets
-		if ( bucket->lastTime > 0 && ( interval > ( burst * period ) ||
-		                               interval < 0 ) )
+		if ( bucket->prev != NULL )
 		{
-			if ( bucket->prev != NULL )
-			{
-				bucket->prev->next = bucket->next;
-			}
-			else
-			{
-				bucketHashes[ bucket->hash ] = bucket->next;
-			}
-
-			if ( bucket->next != NULL )
-			{
-				bucket->next->prev = bucket->prev;
-			}
-
-			memset( bucket, 0, sizeof( leakyBucket_t ) );
+			bucket->prev->next = bucket->next;
+		}
+		else
+		{
+			bucketHashes[ bucket->hash ] = bucket->next;
 		}
 
-		if ( bucket->type == 0 )
+		if ( bucket->next != NULL )
 		{
-			bucket->type = address.type;
-			memcpy( bucket->adr, address.ip, 4 );
-
-			bucket->lastTime = now;
-			bucket->burst = 0;
-			bucket->hash = hash;
-
-			// Add to the head of the relevant hash chain
-			bucket->next = bucketHashes[ hash ];
-			if ( bucketHashes[ hash ] != NULL )
-			{
-				bucketHashes[ hash ]->prev = bucket;
-			}
-
-			bucket->prev = NULL;
-			bucketHashes[ hash ] = bucket;
-
-			return bucket;
+			bucket->next->prev = bucket->prev;
 		}
 	}
 
-	// Couldn't allocate a bucket for this address
-	return NULL;
+	bucket->type = address.type;
+	memcpy( bucket->adr, address.ip, 4 );
+
+	bucket->lastTime = Sys_Milliseconds64();
+	bucket->burst = 0;
+	bucket->hash = hash;
+
+	// Add to the head of the relevant hash chain
+	bucket->next = bucketHashes[ hash ];
+	if ( bucketHashes[ hash ] != NULL )
+	{
+		bucketHashes[ hash ]->prev = bucket;
+	}
+
+	bucket->prev = NULL;
+	bucketHashes[ hash ] = bucket;
+
+	return bucket;
 }
+
 
 bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period )
 {
@@ -704,7 +691,8 @@ bool SVC_RateLimitAddress( netadr_t from, int burst, int period, bool limitLAN )
 	if (!limitLAN && Sys_IsLANAddress(from))
 		return false;
 
-	leakyBucket_t *bucket = SVC_BucketForAddress( from, burst, period );
+	leakyBucket_t *bucket = SVC_BucketForAddress( from );
+
 
 	return SVC_RateLimit( bucket, burst, period );
 }
