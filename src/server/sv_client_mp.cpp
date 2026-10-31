@@ -684,7 +684,20 @@ void SV_DirectConnect( netadr_t from )
 #endif
 
 	Com_DPrintf("SV_DirectConnect()\n");
+
+#if LIBCOD_COMPILE_RATELIMITER == 1
+	// Every attempt clears a client_t and can run the game's ClientConnect;
+	// bots come here too, and LAN addresses have no reason to send more
+	if ( from.type == NA_IP && SVC_RateLimitAddress( from, 10, 1000, true ) )
+	{
+		if ( !Libcod_SpamCallback( "CONNECT:ADDRESS", from ) )
+			Com_DPrintf( "SV_DirectConnect: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+#endif
+
 	Q_strncpyz( userinfo, Cmd_Argv( 1 ), sizeof( userinfo ) );
+
 
 	// DHM - Nerve :: Update Server allows any protocol to connect
 	// NOTE TTimo: but we might need to store the protocol around for potential non http/ftp clients

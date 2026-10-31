@@ -344,6 +344,37 @@ def check_console_log(path, check):
     check('sv_logRcon 0 hides rcon commands', 'Rcon from' in text and 'smokehidden' not in text)
 
 
+def check_connect_limit(port, protocol, check):
+    """Clients joining one after another all get in; a flood of connect from one address is cut."""
+    joined = []
+    for i in range(8):
+        client = cod2client.Client(port)
+        joined.append(client)
+        try:
+            refused = client.connect(protocol, f'smokejoin{i}')
+        except OSError as e:
+            refused = f'no reply ({e})'
+        if refused is not None:
+            break
+    check('clients joining together connect', refused is None, refused or '')
+    for client in joined:
+        client.close()
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.settimeout(0.5)
+        for _ in range(200):
+            s.sendto(PREFIX + b'connect "\\protocol\\%d\\challenge\\1\\qport\\7\\name\\x"' % protocol,
+                     ('127.0.0.1', port))
+        replies = 0
+        try:
+            while True:
+                s.recvfrom(65535)
+                replies += 1
+        except OSError:
+            pass
+    check('connect flood is limited', replies <= 15, f'{replies} of 200')
+
+
 def check_game_log_rotation(path, check):
     """g_logRotateSize: the oversized games_mp.log was kept as .1 and a new one started."""
     rotated = path + '.1'
@@ -466,6 +497,8 @@ def main():
 
                 if protocol.isdigit():
                     check_client(port, int(protocol), password, os.path.join(home, 'main', 'games_mp.log'), check)
+                    check_connect_limit(port, int(protocol), check)
+
 
                 time.sleep(2)
                 check('server still running', server.poll() is None)

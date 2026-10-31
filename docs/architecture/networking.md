@@ -47,7 +47,9 @@ New code that reads from the network follows them:
   voice packets).
 - Connectionless commands that answer with data (`getinfo`, `getstatus`,
   `getchallenge`, `rcon`) go through `SVC_RateLimitAddress` (per address) and
-  `SVC_RateLimit` (global); `ipAuthorize` and `disconnect` do not.
+  `SVC_RateLimit` (global); `connect` has the per-address one, on LAN too;
+  `ipAuthorize` and `disconnect` have none.
+
   rcon also counts wrong passwords per address (`sv_rconMaxAttempts`,
   `sv_rconLockTime`, `sv_rconWhitelist`). A new connectionless command that
   answers gets the same rate limits.
