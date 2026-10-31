@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — upstream review to dbe3621
+
+- Merged voron00 up to `dbe3621` keeping our tree (`-s ours`): six commits read, two lines of their work taken. `iplist.txt` now also checks a proxied client's real address, through our trusted `proxy_realip`, and `sqrtInv` uses `I_rsqrt`, which drops `Q_rsqrt` and its `long` type punning.
+- Rejected their `libcod_t` move: it clears speed, gravity, item pickup, animation and bot input on every `ClientSpawn` and map change, and it parses the client's `ip` key with `NET_StringToAdr`, so any client could set `getIP()` or make the main thread wait on DNS. Rejected the `inuse` checks: the VM already raises "removed entity" first (tested). SSE stays behind [the x87 decision](../roadmap/debt.md).
+- Upstream's later work on `libcod_t` will conflict with our per-slot arrays; read those commits by hand.
+
 ## 2026-10-31 — lean pass
 
 - From the audit: copied libcod helpers, Makefile rules and test helpers merged, unused platform code removed, 1,420 lines fewer. Script error texts and the build commands of every configuration stayed the same.

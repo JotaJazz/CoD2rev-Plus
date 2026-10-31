@@ -33,7 +33,7 @@ run_bin.sh               runs bin/ from the repository (upstream's)
 
 | Subsystem | State |
 |---|---|
-| Reversed engine | Upstream's; synced to voron00 `672a220` (q_shared and com_math review merged 2026-10-29) |
+| Reversed engine | Upstream's; synced to voron00 `dbe3621` (2026-10-31; its `libcod_t` move and SSE math not taken) |
 | Network hardening | Done: message/fragment bounds, rate limits, rcon lockout and whitelist, download checks, format strings |
 | Logging and admin | Done: log naming/rotation/timestamps, `g_logRotateSize`, forced rate/snaps, kick/timeout messages, clean SIGTERM/SIGINT/SIGHUP quit |
 | Long uptime | Time wrap restart moved to a map change after day 18.6; snapshot counters reload the map; full dvar pool is not fatal for scripts or rcon |

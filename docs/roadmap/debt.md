@@ -38,7 +38,7 @@ None open. R1 became a known gap; R2–R5 were fixed on 2026-10-24
 | soundalias functions | See [ADR 0003](../architecture/adr/0003-zk-libcod-names.md) |
 | CPU profile with 20 bots | Not measured yet |
 | Windows x64 build | Windows is LLP64 (`long` stays 32-bit) and upstream's script VM assumes LP64: GSC int64 values are a `long int` (`src/script/script_public.h`, `Scr_AddInt64`/`Scr_GetInt64`, which also carry libcod's handles) and the bytecode is read and written with `sizeof(unsigned long)` (`Scr_ReadUnsigned`, `EmitUnsigned`, `SWITCH_CASE_ENTRY_SIZE`). About 60 `long`s in reversed files would become `int64_t`/`intptr_t`, a conflict on every upstream merge; the 32-bit `.exe` already runs on 64-bit Windows. Needs `gcc-mingw-w64-x86-64-posix` ([ADR 0009](../architecture/adr/0009-linux-64-bit-build.md)) |
-| SSE math (`-msse2 -mfpmath=sse -DUSE_SSE2`, upstream since `8319e9b`/`672a220`) | Kept x87 to stay with the original binary's rounding; `USE_SSE2` also swaps `FastSinCos` (animation, hit bones, weapons) for the `sse_mathfun.h` approximation. Adopting it needs bots and ASan runs and a look at hit locations |
+| SSE math (`-msse2 -mfpmath=sse -DUSE_SSE2`, upstream since `8319e9b`, `dbe3621` adds SSE sqrt, fabs and lerp) | Kept x87 to stay with the original binary's rounding; `USE_SSE2` also swaps `FastSinCos` (animation, hit bones, weapons) for the `sse_mathfun.h` approximation. Adopting it needs bots and ASan runs and a look at hit locations |
 | Releases page | The READMEs' "How to run" points to it; CI already builds the six binaries as artifacts |
 
 ## Accepted simplifications

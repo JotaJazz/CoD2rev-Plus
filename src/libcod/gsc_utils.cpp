@@ -873,7 +873,7 @@ void gsc_utils_sqrtInv()
 		return;
 	}
 
-	stackPushFloat(Q_rsqrt(x));
+	stackPushFloat(I_rsqrt(x));
 }
 
 void gsc_make_localized_string()
