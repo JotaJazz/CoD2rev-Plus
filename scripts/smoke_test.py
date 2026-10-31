@@ -116,7 +116,6 @@ def check_client(port, protocol, password, game_log, check):
         sent = client.state.gamestate_count - before
         check('donedl flood gets a few gamestates', 1 <= sent <= 5, f'{sent} of 40')
 
-
         client.enter_game(server_id, 2.0)
         ping = (players(port) or {}).get('smokeclient')
         check('client enters the game', ping is not None and 0 <= ping < 999, f'ping {ping}')
@@ -355,9 +354,9 @@ def check_challenge_during_queries(port, check):
 
 
 def check_connect_limit(port, protocol, check):
-    """Clients joining one after another all get in; a flood of connect from one address is cut."""
+    """A local proxy's players, all from 127.0.0.1, get in together; a flood from another address is cut."""
     joined = []
-    for i in range(8):
+    for i in range(12):
         client = cod2client.Client(port)
         joined.append(client)
         try:
@@ -371,6 +370,7 @@ def check_connect_limit(port, protocol, check):
         client.close()
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.bind(('127.0.0.2', 0))
         s.settimeout(0.5)
         for _ in range(200):
             s.sendto(PREFIX + b'connect "\\protocol\\%d\\challenge\\1\\qport\\7\\name\\x"' % protocol,
@@ -509,7 +509,6 @@ def main():
                     check_client(port, int(protocol), password, os.path.join(home, 'main', 'games_mp.log'), check)
                     check_connect_limit(port, int(protocol), check)
                     check_challenge_during_queries(port, check)
-
 
 
                 time.sleep(2)

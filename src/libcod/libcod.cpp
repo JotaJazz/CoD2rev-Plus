@@ -654,7 +654,6 @@ static leakyBucket_t *SVC_BucketForAddress( netadr_t address )
 	return bucket;
 }
 
-
 bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period )
 {
 	if ( bucket != NULL )
@@ -692,7 +691,6 @@ bool SVC_RateLimitAddress( netadr_t from, int burst, int period, bool limitLAN )
 		return false;
 
 	leakyBucket_t *bucket = SVC_BucketForAddress( from );
-
 
 	return SVC_RateLimit( bucket, burst, period );
 }

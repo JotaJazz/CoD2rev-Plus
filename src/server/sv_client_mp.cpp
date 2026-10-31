@@ -405,7 +405,6 @@ void SV_GetChallenge( netadr_t from )
 	// must not keep players out, and this reply is a few bytes
 	if ( SVC_RateLimit( &bucket, 100, 10 ) )
 	{
-
 		Com_DPrintf( "SV_GetChallenge: rate limit exceeded, dropping request\n" );
 		return;
 	}
@@ -719,9 +718,10 @@ void SV_DirectConnect( netadr_t from )
 	Com_DPrintf("SV_DirectConnect()\n");
 
 #if LIBCOD_COMPILE_RATELIMITER == 1
-	// Every attempt clears a client_t and can run the game's ClientConnect;
-	// bots come here too, and LAN addresses have no reason to send more
-	if ( from.type == NA_IP && SVC_RateLimitAddress( from, 10, 1000, true ) )
+	// Every attempt clears a client_t and can run the game's ClientConnect.
+	// Bots come here too, and every player of a local proxy is 127.0.0.1,
+	// which can't be spoofed; LAN addresses have no reason to send more
+	if ( from.type == NA_IP && !( from.ip[0] == 127 && from.ip[1] == 0 && from.ip[2] == 0 && from.ip[3] == 1 ) && SVC_RateLimitAddress( from, 10, 1000, true ) )
 	{
 		if ( !Libcod_SpamCallback( "CONNECT:ADDRESS", from ) )
 			Com_DPrintf( "SV_DirectConnect: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );

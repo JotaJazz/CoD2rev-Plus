@@ -324,7 +324,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	if ( !valid )
 	{
 		// TTimo - show_bug.cgi?id=534
-
 		time = Com_Milliseconds();
 		if ( lasttime && time - lasttime < 500 )
 		{

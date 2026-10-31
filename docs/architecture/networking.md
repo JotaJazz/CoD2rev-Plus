@@ -47,9 +47,9 @@ New code that reads from the network follows them:
   voice packets).
 - Connectionless commands that answer with data (`getinfo`, `getstatus`,
   `getchallenge`, `rcon`) go through `SVC_RateLimitAddress` (per address) and
-  `SVC_RateLimit` (global); `connect` has the per-address one, on LAN too;
+  `SVC_RateLimit` (global); `connect` has the per-address one, on LAN too but
+  for `127.0.0.1`, which is where a local proxy's players come from;
   `ipAuthorize` and `disconnect` have none.
-
   rcon also counts wrong passwords per address (`sv_rconMaxAttempts`,
   `sv_rconLockTime`), and its global limit runs before the password check;
   `sv_rconWhitelist` skips both limits. A new connectionless command that
@@ -57,8 +57,7 @@ New code that reads from the network follows them:
 
 - A gamestate a client can ask for (`donedl`, `wwwdl fail`, a dropped one) goes
   through `SV_SendRequestedGameState`: 5 at once, then 1 a second per slot.
-- Text from players never becomes a format string
-; `-Wformat` and the
+- Text from players never becomes a format string; `-Wformat` and the
   printf attributes catch it at build time.
 - The `ip` userinfo key (real address behind a local proxy) is trusted only
   from `127.0.0.1`.
