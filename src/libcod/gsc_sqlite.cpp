@@ -12,6 +12,8 @@
 #define MAX_SQLITE_ROW_LENGTH 256
 #define MAX_SQLITE_TASKS 512
 #define MAX_SQLITE_DB_STORES 128
+#define SQLITE_MAX_CELL_LENGTH 64999
+
 
 #define SQLITE_TIMEOUT 4000
 
@@ -740,9 +742,10 @@ void gsc_sqlite_query()
 			{
 				const unsigned char *text = sqlite3_column_text(statement, i);
 
-				// NULL as "", like the async queries, so later columns keep their index
+				// NULL as "", like the async queries, so later columns keep their index;
+				// a string of 64 KB would end the map
 				if (text != NULL)
-					stackPushString(reinterpret_cast<const char*>(text));
+					stackPushString(std::string(reinterpret_cast<const char*>(text), strnlen(reinterpret_cast<const char*>(text), SQLITE_MAX_CELL_LENGTH)).c_str());
 				else
 					stackPushString("");
 

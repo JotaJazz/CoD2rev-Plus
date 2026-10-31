@@ -4,6 +4,9 @@
 
 #include "mysql/include/mysql.h"
 
+#include <string>
+
+
 struct mysql_async_task
 {
 	mysql_async_task *prev;
@@ -568,10 +571,12 @@ void gsc_mysql_fetch_row()
 	int numfields = mysql_num_fields((MYSQL_RES *)result);
 	for (int i=0; i<numfields; i++)
 	{
+		// a string of 64 KB would end the map
 		if (row[i] == NULL)
 			stackPushUndefined();
 		else
-			stackPushString(row[i]);
+			stackPushString(std::string(row[i], strnlen(row[i], 64999)).c_str());
+
 
 		stackPushArrayLast();
 	}
