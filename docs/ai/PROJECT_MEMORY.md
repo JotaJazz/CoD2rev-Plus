@@ -7,7 +7,7 @@ rejected and what is left open; for what changed in detail see
 
 ## 2026-10-30 — logs, CI and docs
 
-- From the audit. A fatal error's reason now reaches the console log and Linux flushes the logs before `_exit`; the launchers keep five old console logs. CI starts each Linux binary without game files and expects exit code 1; the Windows binary is still only built.
+- From the audit. A fatal error's reason now reaches the console log and Linux flushes the logs before `_exit`; the launchers keep five old console logs. CI starts each published Linux binary without game files and expects exit code 1; the Windows binary is still only built.
 - The docs caught up with the 64-bit build, which they still called impossible.
 
 ## 2026-10-30 — script callbacks

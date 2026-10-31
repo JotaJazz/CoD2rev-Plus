@@ -1,7 +1,7 @@
 # Testing
 
 User-facing summary: [README](../../README.md#testing). CI builds every binary
-and starts the Linux ones without game files, which must end with the engine's
+and starts the published Linux ones without game files, which must end with the engine's
 error and exit code 1. There are no unit
 tests for the C++ code; tests run the real server against a game folder.
 
