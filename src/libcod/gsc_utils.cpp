@@ -2,6 +2,8 @@
 
 #if LIBCOD_COMPILE_UTILS == 1
 
+VariableValue Scr_GetArrayIndexValue(unsigned int name);
+
 //thanks to riicchhaarrd/php
 void gsc_utils_getarraykeys()
 {
@@ -33,9 +35,16 @@ void gsc_utils_getarraykeys()
 		index = FindNextSibling(index);
 		name = GetVariableName(index);
 
-		if (name < 0x10000)
+		VariableValue key = Scr_GetArrayIndexValue(name);
+
+		if (key.type == VAR_STRING)
 		{
-			stackPushString(SL_ConvertToString(name));
+			stackPushString(SL_ConvertToString(key.u.stringValue));
+			stackPushArrayLast();
+		}
+		else if (key.type == VAR_INTEGER)
+		{
+			stackPushInt(key.u.intValue);
 			stackPushArrayLast();
 		}
 	}
