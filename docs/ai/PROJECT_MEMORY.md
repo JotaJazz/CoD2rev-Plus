@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-30 — network floods
+
+- From an audit of the whole repo. `donedl` before entering the game cost 95% of a core and 130 MB in 6 s; `connect` had no limit; `getchallenge` shared the 10 replies a second of `getinfo`; a full bucket table refused every new address; bans were only read in the authorize reply. Fixed; the `donedl` run uses 1% of a core now.
+- Rejected: limiting `donedl` by `messageAcknowledge`, which the client chooses. A per-slot budget covers every gamestate a client can trigger.
+- rcon's global limit runs before the password now, at the maintainer's choice: blind guessing ends, and during a flood only `sv_rconWhitelist` and local tools get rcon. The entry eviction change could not be tested, since 127.x is exempt from the lockout.
+
 ## 2026-10-29 — bot script error cascade located; repaths and grenade suicides
 
 - The "rare cascade when a bot joins a freed slot during a grenade kill" was misdescribed: 120 `developer 2` runs (tdm, dm, sd, ctf) showed one error source, stock `sd.gsc` (defuser killed on the last tick still defuses, lines 1925–1926). A grenade never passes to the next player in a slot: `G_FreeEntityRefs` clears `parent`, so a gone player's grenade does no damage. `bots_test.py` leaves out exactly that stock race.
