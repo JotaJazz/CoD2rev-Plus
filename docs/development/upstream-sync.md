@@ -13,7 +13,9 @@ Remote `upstream` is `voron00/CoD2rev_Server` (push disabled).
    `git merge --no-commit --no-ff upstream/master`.
 3. Conflicts: a conflict covering a whole file usually means only line endings
    differ (the fork keeps some files LF). Keep ours and re-apply upstream's
-   real lines by hand; keep the file's endings.
+   real lines by hand; keep the file's endings. A conflict over the unused code
+   removed from `src/unix/unix_main.cpp` and `src/win32/win_main.cpp` (the `Sys_`
+   stream thread, CD and spank functions) is expected: keep the removal.
 4. Build Linux 1.0, 1.3 and Windows; run the smoke test for both versions.
    For changes to `src/xanim`, `src/bgame` or collision, also run the bots
    tests and an ASan soak ([testing.md](testing.md)): hit locations and
