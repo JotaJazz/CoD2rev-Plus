@@ -2416,7 +2416,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 	fromF = ( int * )( (byte *)from + field->offset );
 	toF = ( int * )( (byte *)to + field->offset );
 
-	if ( fromF == toF )
+	if ( *fromF == *toF )
 	{
 		MSG_WriteBit0( msg );
 		return; // no change

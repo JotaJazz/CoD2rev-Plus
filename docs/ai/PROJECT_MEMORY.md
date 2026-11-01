@@ -5,6 +5,11 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — unchanged fields no longer resent
+
+- `MSG_WriteDeltaField` compared the field pointers, which never match, so 47–49% of the fields written were unchanged values sent in full; the bug came from upstream. Written both ways on the same snapshots in one server, comparing values saves 20.5% on `mp_toujane` and 19.8% on `mp_carentan`, from 499 to 396 and from 386 to 309 bytes a message, with 20 test clients and 20 bots.
+- OpenCoD2-Plus's real client gave the same result against `v1.0.0-rc1` and this fix: 10 prediction misses and 1 animation miss. Smoke (1.0 and 1.3) and bots pass.
+- Left open: no stock 1.3 or 1.0 client has played on it yet, and the original binary was not disassembled; the reference is OpenCoD2-Plus's reconstruction.
 ## 2026-10-31 — network measured for CoD2 Plus
 
 - `MSG_WriteDeltaField` compares pointers, not values, so unchanged fields go out in full. Comparing values takes 20% off with stock clients, written both ways on the same snapshots in one server. Comparing separate matches hid it: traffic varied too much (−6.9% and +4.3%).
