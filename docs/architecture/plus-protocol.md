@@ -97,7 +97,7 @@ and an empty value restores the default.
 | # | Work | Done when |
 |---|---|---|
 | 0 | Measure the network and the tick rate | Done, below |
-| 1 | Script time and game logic independent of `sv_fps` | The checks in [Tick rate](#tick-rate) pass at 20, 40 and 60 |
+| 1 | Script time and game logic independent of `sv_fps`, at 40 Hz first | The checks in [Tick rate](#tick-rate) pass at 20 and 40 |
 | 2 | Handshake, refusal and notice, no format change | A real 1.3 client and a real CoD2x client are refused with the notice, and the Plus client joins a Plus server and a stock 1.3 server |
 | 3 | A format that carries the tick rate | Measured against milestone 0 at the chosen rate, with a real match |
 
@@ -123,20 +123,35 @@ clients and 4 bots on `mp_toujane`, in tdm, over loopback.
 The rate is `1000 / sv_fps` in whole milliseconds: 40 (25 ms) and 50 (20 ms) are
 exact, 60 is not. The test clients only walk, so a real fight costs more.
 
-What has to change:
+`wait` now follows the frame rate, and `sv_fps` still defaults to 20. With 20
+clients and 20 bots, 100 `wait 0.05` and 10 `wait 1` took:
 
-- `WAIT_FRAME_TIME` in `src/script/scr_vm.cpp` is 20, so scripts run at the
-  frame rate. It has to follow `sv_fps`, and every `wait` has to keep its length
-  in seconds.
-- `trDuration` of 50 in `src/game/g_active_mp.cpp` and
-  `src/game/g_items_mp.cpp`, and `FRAMETIME` wherever it means a server frame.
-- Clients need `snaps` above 20, or `g_forceSnaps`, and a `rate` that fits.
+| `sv_fps` | 100 × `wait 0.05` | 10 × `wait 1` |
+|---|---|---|
+| 20 | 5,000 ms | 10,000 ms |
+| 40 | 5,000 ms | 10,000 ms |
+| 60 | 4,800 ms | 10,080 ms |
 
-The bots test passes at 40 and 60, and the OpenCoD2-Plus client reported no
-prediction misses, but neither shows the game's speed, and that client test
-holds the client at 20 fps. The checks for milestone 1: timed waits, round
-timers and weapon times match 20 Hz; zPAM 3.36 and the bots mod play a full
-match; a real client plays at its normal frame rate.
+40 Hz is the first target, because it is exact for what still works in steps of
+50 ms: at 62.5 Hz a `wait 0.05` lasts 48 ms, and the turrets, which think every
+50 ms (`src/game/g_misc_mp.cpp`), would wait for the next frame and turn slower.
+The same goes for 50 Hz, at 60 ms a think. Going past 40 means fixing those.
+
+Checked and left alone: the 50 ms step in `SpectatorClientEndFrame` searches
+back through the archive and does not set the killcam's speed;
+`src/game/g_items_mp.cpp` scales its speed by its own 50 ms; `FRAMETIME` is
+100 and is not a server frame; the archive and the antilag read `sv_fps`.
+`NUM_ARCHIVED_FRAMES` holds 60 s at 20 Hz and 30 s at 40.
+
+The rest of milestone 1:
+
+- Clients need `snaps` above 20, or `g_forceSnaps`, and a `rate` that fits. The
+  tests ran over loopback, which ignores both.
+- Bots pass in tdm and sd at 40 Hz. The OpenCoD2-Plus client reported 0
+  prediction misses at 60 fps and 1 at 125 fps. Its check that the client moves
+  fails at 125 fps at 20 Hz too, because the moves are counted in client frames.
+- Still to check by hand: round timers and weapon times against 20 Hz, zPAM
+  3.36 and a full match with people on the internet.
 
 ## Milestone 0 results
 

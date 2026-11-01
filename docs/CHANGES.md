@@ -47,6 +47,7 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 
 ## Compatibility and server behaviour
 
+- **`wait` follows `sv_fps`:** scripts keep their timing in seconds at any server frame rate, instead of running faster with it.
 - **20% less traffic to clients:** the snapshot writer sent every field of a changed entity in full, even the ones that had not changed. It now marks them as unchanged, as the original does, with the same network format, so every client benefits.
 - **Master servers:**
   - `sv_master2` is preset to `master.cod2x.me`, the CoD2x community master.
