@@ -2,6 +2,7 @@
 
 The contract between the `plus` branches of CoD2rev-Plus and OpenCoD2-Plus.
 This file is the source of truth; OpenCoD2-Plus follows it. The decision is
+[ADR 0012](adr/0012-plus-leaves-1-3-out.md), which builds on
 [ADR 0011](adr/0011-plus-protocol.md).
 
 | Field | Value |
@@ -9,31 +10,28 @@ This file is the source of truth; OpenCoD2-Plus follows it. The decision is
 | Name | CoD2 Plus |
 | Plus version | 121 |
 | Base | The 1.3 build (`make PROTOCOL=118`) |
-| State | Draft: nothing is implemented; milestone 0 is measured |
+| State | Draft, second version: nothing is implemented; milestone 0 is measured |
 
 ## Goals
 
-- A newer client gets a better network: fewer bytes first, and later what the
-  measurements justify.
-- The 1.3 clients keep playing on a Plus server for as long as possible, and
-  are always told to update.
+- Plus plays better than stock can: a tick rate of 40–60 Hz first, and the
+  network to carry it.
+- A player on an old client always learns why they cannot join, and what to do.
 - The Plus client keeps joining stock 1.3 servers.
 
 ## Non-goals
 
 - A second master server, or a new listing.
-- 1.0 clients on a Plus server: they stay on `master`, and the client's 1.0
-  core speaks protocol 115 only.
-- Refusing 1.3 clients. It waits for a feature that cannot work without it,
-  and would be a new version of this document.
+- Keeping 1.3 clients on a Plus server: `master` serves them.
+- 1.0 clients: they stay on `master`.
 
 ## Anti-goals
 
 These would make the work a failure even if it ran:
 
-- A 1.3 client on a Plus server, in a match with Plus clients, at a
-  disadvantage it cannot fix by updating.
+- A game that plays at another speed: a second of script stays a second.
 - A Plus client that cannot join a stock server.
+- A player refused with no explanation.
 - A server that trusts anything because a client claims to be Plus.
 
 ## Numbers
@@ -53,15 +51,11 @@ list, and no client needs to look at a server before connecting.
    read it. The key is set for that packet only, not as a user variable.
 2. The server compares it with its own Plus version.
    - Equal: it stores it in the client slot and answers `connectResponse 121`.
-   - Anything else, or no key: the client is a 1.3 client, and the server
-     answers a bare `connectResponse`.
+   - Anything else, or no key: it refuses the client with the update notice.
 3. The client uses the Plus format only if the answer's argument equals its
-   own version. A bare answer, from a stock server or from a Plus server of
-   another version, means 1.3.
+   own version. A bare answer comes from a stock server, and means 1.3.
 
-There is no error path: a mismatch in either direction falls back to 1.3, so
-both sides can be released at their own pace. Every incompatible change raises
-the Plus version.
+Every incompatible change raises the Plus version.
 
 A client that lies gets a format it cannot read, and hurts nobody else. The
 server's Plus decoder treats everything a client sends as hostile, like the
@@ -69,33 +63,14 @@ rest of the network code, and the value only ever selects a format.
 
 ## Update notice
 
-A client that ends up on 1.3 on a Plus server gets one line the first time it
-enters the game on each connection, not again on a `map_restart`, as a
-`SV_CMD_RELIABLE` game message (command 101, as the kick notices in
-`src/server/sv_client_mp.cpp`). That covers 1.3 clients and Plus clients of
-another version, so the default text asks for the current client rather than
-a newer one, and links to the OpenCoD2-Plus releases. Stock clients can show
-it, so it needs nothing from them.
+The refusal is an `error` packet with the text, as the ban messages in
+`SV_DirectConnect` (`src/server/sv_client_mp.cpp`), so stock clients show it on
+screen and it needs nothing from them. The default text asks for the current
+client, because it also reaches Plus clients of another version, and links to
+the OpenCoD2-Plus releases.
 
-The notice is always on. `sv_plusNotice` holds the text, for admins who need
-another language or link, and an empty value restores the default.
-
-## Fairness
-
-While a match can hold both kinds of client, a Plus client gets the same
-information as a 1.3 client, in fewer bytes, under the same caps (`sv_fps`,
-`snaps`, `rate`).
-
-One difference is accepted: the server spaces snapshots by the bytes of the
-last one (`SV_RateMsec`), so a Plus client can get more snapshots than a 1.3
-client on the same `rate`, up to those caps. With `rate` 5000, 20 snapshots a
-second only fit messages of about 200 bytes. Updating fixes it, and an admin
-who wants them level raises every client with `g_forceRate`: at 25000 the limit
-is about 1,200 bytes.
-
-Anything else that would give it more (extra entities, snapshots beyond the
-caps, different movement) waits for a server option that is off by default and
-refuses 1.3 clients while on, which needs a new version of this document.
+`sv_plusNotice` holds the text, for admins who need another language or link,
+and an empty value restores the default.
 
 ## Where the format changes
 
@@ -104,9 +79,6 @@ refuses 1.3 clients while on, which needs a new version of this document.
   one place, per client.
 - Client to server: `SV_ExecuteClientMessage` in
   `src/server/sv_client_mp.cpp` decompresses with `MSG_ReadBitsCompress`.
-- The per-client switch exists only in the 1.0 build
-  (`PROTOCOL_VERSION == 115` with `LIBCOD`). The Plus branch of the 1.3 build
-  gets its own, on the stored Plus version in the client slot.
 - New format code goes in new files under `src/qcommon`, with no engine types
   in their interface, so that OpenCoD2-Plus can vendor and compile them
   unchanged. Today each side has its own message code (`src/qcommon/msg_mp.cpp`
@@ -115,33 +87,56 @@ refuses 1.3 clients while on, which needs a new version of this document.
   under `src/`, and carries no runtime dependency.
 - Each message decodes on its own, with no state between packets: packets get
   lost, and a demo can start at any moment.
-- Demos stay stock: a Plus client that records writes Huffman again, using
-  its decoded message, so that any client can play them. This holds while
-  only the compression stage changes; a change to the message's content has to
-  revisit it.
+- A demo recorded on a Plus server plays on the Plus client; whether stock
+  clients can play it is left for milestone 3.
+- Only the Plus format exists on a Plus server, so the 1.3 path can go when
+  it gets in the way, as long as merges from `master` stay workable.
 
 ## Milestones
 
 | # | Work | Done when |
 |---|---|---|
-| 0 | Measure: server-to-client bytes per client in a match with real fights, split by message type, before and after Huffman; candidate compressors run offline on the same payloads; what a recoding of the entity and playerstate deltas could save, as an estimate | A table says what each candidate saves |
-| 1 | Handshake and notice, no format change | The checks below pass |
-| 2 | The chosen format | Same checks, with fewer bytes measured against milestone 0 |
+| 0 | Measure the network and the tick rate | Done, below |
+| 1 | Script time and game logic independent of `sv_fps` | The checks in [Tick rate](#tick-rate) pass at 20, 40 and 60 |
+| 2 | Handshake, refusal and notice, no format change | A real 1.3 client and a real CoD2x client are refused with the notice, and the Plus client joins a Plus server and a stock 1.3 server |
+| 3 | A format that carries the tick rate | Measured against milestone 0 at the chosen rate, with a real match |
 
-Milestone 1 starts only if milestone 0 finds a candidate that takes at least
-20% off the server-to-client bytes in fights, at no more than one extra point
-of a core with 64 clients. Below that the maintainer decides between a delta
-recoding, which needs engine types and a new version of this document, and
-stopping: a handshake with no format behind it only adds an update notice.
+Milestone 3 chooses from the table below. The gate of the first version of this
+document (20% less, one point of a core) is gone: at 60 Hz a client needs about
+25 KB/s, right at the `rate` limit of 25000, so the question is what fits, and
+the measurements have to be repeated at that rate.
 
 Stability work that is not about the protocol goes to `master` when it is a
 fix for stock clients too.
 
-Milestone 1 is not done until a real 1.3 client, a real CoD2x client and the
-Plus client have joined a Plus server, the first two with the notice shown and
-all three in one match, and the Plus client has joined a stock 1.3 server.
-Unit checks with `scripts/smoke_test.py`'s test client come first, and CI
-covers what it can without game files.
+## Tick rate
+
+Measured on 2026-10-31 with `sv_fps` alone, on the 1.3 build: 60 protocol
+clients and 4 bots on `mp_toujane`, in tdm, over loopback.
+
+| `sv_fps` | Real rate | CPU of one core | Per client | Total out | `wait 1` lasts |
+|---|---|---|---|---|---|
+| 20 | 20 Hz | 12.1% | 8.3 KB/s | 496 KB/s | 1.00 s |
+| 40 | 40 Hz | 21.5% | 17.4 KB/s | 1,046 KB/s | 0.50 s |
+| 60 | 62.5 Hz | 29.8% | 24.6 KB/s | 1,475 KB/s | 0.32 s |
+
+The rate is `1000 / sv_fps` in whole milliseconds: 40 (25 ms) and 50 (20 ms) are
+exact, 60 is not. The test clients only walk, so a real fight costs more.
+
+What has to change:
+
+- `WAIT_FRAME_TIME` in `src/script/scr_vm.cpp` is 20, so scripts run at the
+  frame rate. It has to follow `sv_fps`, and every `wait` has to keep its length
+  in seconds.
+- `trDuration` of 50 in `src/game/g_active_mp.cpp` and
+  `src/game/g_items_mp.cpp`, and `FRAMETIME` wherever it means a server frame.
+- Clients need `snaps` above 20, or `g_forceSnaps`, and a `rate` that fits.
+
+The bots test passes at 40 and 60, and the OpenCoD2-Plus client reported no
+prediction misses, but neither shows the game's speed, and that client test
+holds the client at 20 fps. The checks for milestone 1: timed waits, round
+timers and weapon times match 20 Hz; zPAM 3.36 and the bots mod play a full
+match; a real client plays at its normal frame rate.
 
 ## Milestone 0 results
 
@@ -154,13 +149,12 @@ snapshots.
 Entities are 86–90% of a message and the playerstate 8–12%. Huffman takes off
 only 4–7% of the raw bytes, because the data is already packed in bits.
 
-The biggest saving needs no new format. `MSG_WriteDeltaField` in
-`src/qcommon/msg_mp.cpp` compares the field pointers, not their values, so an
-unchanged field is sent in full; 47–49% of the fields written are unchanged.
-The engine's reconstruction in OpenCoD2-Plus compares values, and the decoder
-already handles it. Written both ways on the same snapshots:
+The biggest saving needed no new format. `MSG_WriteDeltaField` in
+`src/qcommon/msg_mp.cpp` compared the field pointers, not their values, so an
+unchanged field was sent in full; 47–49% of the fields written were unchanged.
+Fixed on `master`. Written both ways on the same snapshots:
 
-| Map | Messages | Today | Comparing values | Largest 10% of messages |
+| Map | Messages | Before | Comparing values | Largest 10% of messages |
 |---|---|---|---|---|
 | `mp_toujane` | 41,049 | 499 bytes | 396 (−20.5%) | 978 to 772 |
 | `mp_carentan` | 42,658 | 386 bytes | 309 (−19.8%) | 853 to 679 |
@@ -183,9 +177,8 @@ A recoding of the entity deltas (XOR for floats, variable length for integers)
 is estimated from a bit-cost model of the same field stream, without Huffman:
 26–30% below today's bytes, about 12–14% below comparing values.
 
-No candidate reaches the 20% of the gate above once values are compared, and
-none was tried together. At 64 clients and 20 snapshots a second (1,280
-messages), zstd 9 costs 1.2% of a core, above the gate's one point.
+No two candidates were tried together. At 64 clients and 20 snapshots a second
+(1,280 messages), zstd 9 costs 1.2% of a core.
 
 ## Two repositories
 
@@ -207,7 +200,6 @@ messages), zstd 9 costs 1.2% of a core, above the gate's one point.
 
 ## Before a public release
 
-The Plus client cannot be required until OpenCoD2-Plus can be distributed: it
-has no license yet, and its docs exclude distributing binaries. A release of
-this branch has to wait for that, because the update notice would point at
-something players cannot get.
+A Plus server only takes the Plus client, and OpenCoD2-Plus cannot be
+distributed yet: it has no license, and its docs exclude distributing binaries.
+A release of this branch has to wait for that.

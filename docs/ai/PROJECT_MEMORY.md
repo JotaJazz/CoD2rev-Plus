@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — Plus leaves 1.3 out and tests the tick rate
+
+- The maintainer chose a Plus that differs from stock, so a Plus server refuses other clients with an update notice and aims at 40–60 Hz ([ADR 0012](../architecture/adr/0012-plus-leaves-1-3-out.md)). Fairness stops being a limit, and `master` stays the line for stock clients.
+- `sv_fps` alone gives 40 and 62.5 Hz at 21.5% and 29.8% of a core with 64 players, but scripts run at the frame rate: `WAIT_FRAME_TIME` is 20, so `wait 1` lasts 0.5 s and 0.32 s. Bandwidth grows about 3 times at 60, to 25 KB/s a client.
+- Left open: making script time follow `sv_fps`, then a real match. The bots and client tests pass but do not show the game's speed, and the client test holds the client at 20 fps.
+
 ## 2026-10-31 — unchanged fields no longer resent
 
 - `MSG_WriteDeltaField` compared the field pointers, which never match, so 47–49% of the fields written were unchanged values sent in full; the bug came from upstream. Written both ways on the same snapshots in one server, comparing values saves 20.5% on `mp_toujane` and 19.8% on `mp_carentan`, from 499 to 396 and from 386 to 309 bytes a message, with 20 test clients and 20 bots.

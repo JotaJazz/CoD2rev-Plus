@@ -1,6 +1,6 @@
 # 0011. A negotiated Plus protocol on the plus branch
 
-- Status: Accepted
+- Status: Superseded by 0012
 - Date: 2026-10-31
 
 ## Context
