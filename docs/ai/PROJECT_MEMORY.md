@@ -9,7 +9,7 @@ rejected and what is left open; for what changed in detail see
 
 - `wait` was fixed at 20 steps a second, so scripts ran at the frame rate. It follows `sv_fps` now, and 100 `wait 0.05` take 5,000 ms at 20 and at 40 Hz. `sv_fps` still defaults to 20.
 - 40 Hz goes first because the 50 ms steps left in the game divide into it: at 62.5 Hz `wait 0.05` is 48 ms, and turrets would think late. The killcam's 50 ms looked like a speed bug and is not: it searches the archive.
-- Left open: `snaps` and `rate` on a real connection, and a match with people; see [plus-protocol.md](../architecture/plus-protocol.md#tick-rate).
+- Clients ask for 30 snapshots at most, which is 20 a second at 40 Hz, so `g_forceSnaps` and `g_forceRate` go higher on `plus`: 41 snapshots a second with the LAN exemption removed. Left open: a match with people; see [plus-protocol.md](../architecture/plus-protocol.md#tick-rate).
 
 ## 2026-10-31 — Plus leaves 1.3 out and tests the tick rate
 

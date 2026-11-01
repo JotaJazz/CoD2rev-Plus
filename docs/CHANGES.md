@@ -128,8 +128,8 @@ Everything this fork adds to [voron00/CoD2rev_Server](https://github.com/voron00
 | `sv_logRcon` | `1` | 0–1 | `0` leaves accepted rcon commands out of the log. Wrong passwords are always logged. |
 | `sv_authorizeServer` | `cod2master.activision.com` | — | CD key authorization server. A new value is used from the next connection. |
 | `sv_authorizePort` | `20700` | 1–65535 | Port of the authorization server. |
-| `g_forceRate` | `0` | 0–25000 | Rate given to every client instead of its own (minimum 1000). `0` keeps the client's. |
-| `g_forceSnaps` | `0` | 0–30 | Snapshots per second given to every client. `0` keeps the client's. |
+| `g_forceRate` | `0` | 0–1000000 | Rate given to every client instead of its own (minimum 1000). `0` keeps the client's. |
+| `g_forceSnaps` | `0` | 0–1000 | Snapshots per second given to every client. `0` keeps the client's. |
 | `sv_kickMessages` | `1` | 0–1 | `0` hides the message that tells everyone a player was kicked. |
 | `sv_timeoutMessages` | `1` | 0–1 | `0` hides the message that tells everyone a player timed out. |
 | `sv_botUseTriggerUse` | `0` | 0–1 | `1` sends a bot a `bot_trigger` notify, with the trigger, while it stands in a use trigger it could use. |

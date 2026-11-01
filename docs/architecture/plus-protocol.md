@@ -143,10 +143,27 @@ back through the archive and does not set the killcam's speed;
 100 and is not a server frame; the archive and the antilag read `sv_fps`.
 `NUM_ARCHIVED_FRAMES` holds 60 s at 20 Hz and 30 s at 40.
 
+A client asks for 30 snapshots a second at most, and the server sends them on
+frame boundaries, so at 40 Hz that is 20 a second. The 40 Hz setting is
+`sv_fps 40`, `g_forceSnaps 40` and `g_forceRate 40000`, with `sv_maxRate` at 0,
+because it stops at 25000. A `rate` of 25000 keeps the average but delays the largest
+messages: at 40 Hz it fits 577 bytes, and 10% of them reach about 770.
+
+Measured with the LAN exemption of `SV_SendMessageToClient` removed, as a client
+on the internet sees it, with 20 clients and 20 bots:
+
+| Setting | Snapshots a second | Per client |
+|---|---|---|
+| 20 Hz, stock | 21.3 | 5.9 KB/s |
+| 40 Hz, the client's settings | 21.2 | 7.3 KB/s |
+| 40 Hz, `g_forceSnaps 40`, `g_forceRate 25000` | 41.5 | 11.7 KB/s |
+| 40 Hz, `g_forceSnaps 40`, `g_forceRate 40000` | 41.2 | 14.9 KB/s |
+| 40 Hz, `g_forceSnaps 40`, `g_forceRate 60000` | 42.2 | 14.6 KB/s |
+
+The bytes vary with each match, so compare the snapshots.
+
 The rest of milestone 1:
 
-- Clients need `snaps` above 20, or `g_forceSnaps`, and a `rate` that fits. The
-  tests ran over loopback, which ignores both.
 - Bots pass in tdm and sd at 40 Hz. The OpenCoD2-Plus client reported 0
   prediction misses at 60 fps and 1 at 125 fps. Its check that the client moves
   fails at 125 fps at 20 Hz too, because the moves are counted in client frames.
