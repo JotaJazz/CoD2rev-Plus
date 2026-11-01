@@ -9,7 +9,7 @@ This file is the source of truth; OpenCoD2-Plus follows it. The decision is
 | Name | CoD2 Plus |
 | Plus version | 121 |
 | Base | The 1.3 build (`make PROTOCOL=118`) |
-| State | Draft: nothing below is implemented yet |
+| State | Draft: nothing is implemented; milestone 0 is measured |
 
 ## Goals
 
@@ -142,6 +142,50 @@ Plus client have joined a Plus server, the first two with the notice shown and
 all three in one match, and the Plus client has joined a stock 1.3 server.
 Unit checks with `scripts/smoke_test.py`'s test client come first, and CI
 covers what it can without game files.
+
+## Milestone 0 results
+
+Measured on 2026-10-31 with the 1.3 build: 20 protocol clients and 20 bots in
+tdm, on `mp_toujane` and `mp_carentan`, about 90 s each with 65 to 113 kills.
+Bytes are the server's output per message, without 28 bytes of IP and UDP. The
+test clients only walk and all ran over loopback, so `rate` did not space the
+snapshots.
+
+Entities are 86–90% of a message and the playerstate 8–12%. Huffman takes off
+only 4–7% of the raw bytes, because the data is already packed in bits.
+
+The biggest saving needs no new format. `MSG_WriteDeltaField` in
+`src/qcommon/msg_mp.cpp` compares the field pointers, not their values, so an
+unchanged field is sent in full; 47–49% of the fields written are unchanged.
+The engine's reconstruction in OpenCoD2-Plus compares values, and the decoder
+already handles it. Written both ways on the same snapshots:
+
+| Map | Messages | Today | Comparing values | Largest 10% of messages |
+|---|---|---|---|---|
+| `mp_toujane` | 41,049 | 499 bytes | 396 (−20.5%) | 978 to 772 |
+| `mp_carentan` | 42,658 | 386 bytes | 309 (−19.8%) | 853 to 679 |
+
+What a new format would add on top, against Huffman with values compared.
+Tables were trained on one map and tested on the other; the time is one
+compression, on one core:
+
+| Candidate | Saves | Time | Table |
+|---|---|---|---|
+| New order-0 Huffman table | 4.7–5.4% | none extra | 256 entries |
+| zlib 6 | 6.1–7.8% | 18 µs | none |
+| zlib 6 with a raw dictionary | 7.2–8.7% | 56 µs | 32 KB |
+| lz4 | −1.5 to −2.8% (larger) | 0.7 µs | none |
+| zstd 3 with a trained dictionary | 8.1–9.8% | 3 µs | 16 KB |
+| zstd 9 with a trained dictionary | 12.5–14.4% | 9.6 µs | 16 KB |
+| Order-1 entropy (a limit, not a codec) | 11.3–11.9% | — | 64 KB |
+
+A recoding of the entity deltas (XOR for floats, variable length for integers)
+is estimated from a bit-cost model of the same field stream, without Huffman:
+26–30% below today's bytes, about 12–14% below comparing values.
+
+No candidate reaches the 20% of the gate above once values are compared, and
+none was tried together. At 64 clients and 20 snapshots a second (1,280
+messages), zstd 9 costs 1.2% of a core, above the gate's one point.
 
 ## Two repositories
 

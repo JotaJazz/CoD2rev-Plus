@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — network measured for CoD2 Plus
+
+- `MSG_WriteDeltaField` compares pointers, not values, so unchanged fields go out in full. Comparing values takes 20% off with stock clients, written both ways on the same snapshots in one server. Comparing separate matches hid it: traffic varied too much (−6.9% and +4.3%).
+- On top of that no candidate reaches the 20% gate: zstd with a trained dictionary gives 12–14% and a delta recoding about 12–14% (estimated). Numbers in [plus-protocol.md](../architecture/plus-protocol.md#milestone-0-results).
+- Left open: the fix itself, which needs a real client, and whether milestone 1 goes ahead. Test clients only walk, so a real match may differ.
+
 ## 2026-10-31 — CoD2 Plus protocol designed
 
 - `plus` is the line for changes that do not fit stock clients. OpenCoD2-Plus is its client, and code flows one way, from here to there. The design is in [plus-protocol.md](../architecture/plus-protocol.md); nothing is implemented.
