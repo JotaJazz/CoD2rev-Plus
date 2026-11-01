@@ -20,7 +20,9 @@ functions and a bots mod.
 - Check both sides of `#ifdef LIBCOD` and of `#if PROTOCOL_VERSION`; build
   `make`, `make PROTOCOL=118`, `make windows` and `make ARCH=x86` before
   committing under `src/`.
-- Never change network formats, engine limits or client-predicted behaviour.
+- Never change network formats, engine limits or client-predicted behaviour
+  for stock clients. On `plus`, a format negotiated with the Plus client may
+  change ([ADR 0011](docs/architecture/adr/0011-plus-protocol.md)).
 - Keep each file's line endings (`.gitattributes` is `* -text`).
 - Do not edit vendored libraries; do not add runtime dependencies.
 - Tests need a CoD2 folder with only stock iwds; stop test servers by their PID

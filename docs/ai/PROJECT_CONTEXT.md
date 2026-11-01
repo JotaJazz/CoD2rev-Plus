@@ -21,7 +21,9 @@ server mods.
   only what a fix or feature needs (for example the client calls of `LISTEN_SERVER`).
 - Distributing game files (iwds, stock scripts).
 - Sending changes back upstream.
-- Protocols or features that need a modified client (CoD2x API).
+- Protocols or features that need a modified client (CoD2x API), except the
+  negotiated CoD2 Plus protocol on the `plus` branch
+  ([ADR 0011](../architecture/adr/0011-plus-protocol.md)).
 
 ## Principles
 

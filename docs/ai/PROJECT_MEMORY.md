@@ -5,6 +5,12 @@ rewritten, at most three bullets each. It records why work mattered, what was
 rejected and what is left open; for what changed in detail see
 [../CHANGES.md](../CHANGES.md) and `git log`.
 
+## 2026-10-31 — CoD2 Plus protocol designed
+
+- `plus` is the line for changes that do not fit stock clients. OpenCoD2-Plus is its client, and code flows one way, from here to there. The design is in [plus-protocol.md](../architecture/plus-protocol.md); nothing is implemented.
+- The server keeps announcing 118 and the two sides agree in the `connect` handshake, because CoD2x browsers hide anything but 118 or 120 and a new number would need a new master. A mismatch falls back to 1.3, so the repositories can be released apart.
+- Left open: what compression is worth it (milestone 0 measures that first), and OpenCoD2-Plus's license, which blocks any release that requires its client.
+
 ## 2026-10-31 — first release candidate
 
 - `v1.0.0-rc1` is the first release, marked as a pre-release: the six CI binaries of the tagged commit, each with `LICENSE` and the example cfg. From here `master` takes fixes only.
